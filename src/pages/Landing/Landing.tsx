@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import Header from '../../components/Header';
-import { LandingController } from '../../controllers/LandingController';
-import { LandingContent } from '../../models/LandingModels';
-import './Landing.css';
+import React, { useEffect, useState } from "react";
+import Header from "../../components/Header";
+import { LandingController } from "../../controllers/LandingController";
+import { LandingContent } from "../../models/LandingModels";
+import "./Landing.css";
 
 const Landing: React.FC = () => {
   const [content, setContent] = useState<LandingContent | null>(null);
@@ -18,30 +18,34 @@ const Landing: React.FC = () => {
   }
 
   const handlePrimaryAction = () => {
-    LandingController.trackUserInteraction('click', 'primary-hero-button');
+    LandingController.trackUserInteraction("click", "primary-hero-button");
     LandingController.handlePrimaryAction();
   };
 
   const handleSecondaryAction = () => {
-    LandingController.trackUserInteraction('click', 'secondary-hero-button');
+    LandingController.trackUserInteraction("click", "secondary-hero-button");
     LandingController.handleSecondaryAction();
   };
 
   const handleCallToAction = () => {
-    LandingController.trackUserInteraction('click', 'cta-button');
+    LandingController.trackUserInteraction("click", "cta-button");
     LandingController.handleCallToAction();
   };
 
   const renderStars = (rating: number) => {
-    return Array(rating).fill(0).map((_, index) => (
-      <span key={index} className="star">⭐</span>
-    ));
+    return Array(rating)
+      .fill(0)
+      .map((_, index) => (
+        <span key={index} className="star">
+          ⭐
+        </span>
+      ));
   };
 
   return (
     <div className="landing-page">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-container">
@@ -50,13 +54,13 @@ const Landing: React.FC = () => {
             <h2 className="hero-subtitle">{content.hero.subtitle}</h2>
             <p className="hero-description">{content.hero.description}</p>
             <div className="hero-actions">
-              <button 
+              <button
                 className="btn-primary-large"
                 onClick={handlePrimaryAction}
               >
                 {content.hero.primaryButtonText}
               </button>
-              <button 
+              <button
                 className="btn-secondary-large"
                 onClick={handleSecondaryAction}
               >
@@ -65,9 +69,7 @@ const Landing: React.FC = () => {
             </div>
           </div>
           <div className="hero-visual">
-            <div className="hero-image-placeholder">
-              🕊️
-            </div>
+            <div className="hero-image-placeholder">🕊️</div>
           </div>
         </div>
       </section>
@@ -75,12 +77,16 @@ const Landing: React.FC = () => {
       {/* Features Section */}
       <section className="features-section">
         <div className="container">
-          <h2 className="section-title">Por que escolher o Caminho do Perdão?</h2>
+          <h2 className="section-title">
+            Por que escolher o Caminho do Perdão?
+          </h2>
           <div className="features-grid">
-            {content.features.map((feature) => (
-              <div 
-                key={feature.id} 
-                className={`feature-card ${feature.highlighted ? 'highlighted' : ''}`}
+            {content.features.map(feature => (
+              <div
+                key={feature.id}
+                className={`feature-card ${
+                  feature.highlighted ? "highlighted" : ""
+                }`}
               >
                 <div className="feature-icon">{feature.icon}</div>
                 <h3 className="feature-title">{feature.title}</h3>
@@ -96,7 +102,7 @@ const Landing: React.FC = () => {
         <div className="container">
           <h2 className="section-title">O que nossos participantes dizem</h2>
           <div className="testimonials-grid">
-            {content.testimonials.map((testimonial) => (
+            {content.testimonials.map(testimonial => (
               <div key={testimonial.id} className="testimonial-card">
                 <div className="testimonial-content">
                   <p className="testimonial-comment">"{testimonial.comment}"</p>
@@ -124,11 +130,10 @@ const Landing: React.FC = () => {
         <div className="container">
           <div className="cta-content">
             <h2 className="cta-title">{content.callToAction.title}</h2>
-            <p className="cta-description">{content.callToAction.description}</p>
-            <button 
-              className="btn-cta"
-              onClick={handleCallToAction}
-            >
+            <p className="cta-description">
+              {content.callToAction.description}
+            </p>
+            <button className="btn-cta" onClick={handleCallToAction}>
               {content.callToAction.buttonText}
             </button>
           </div>
@@ -146,10 +151,18 @@ const Landing: React.FC = () => {
             <div className="footer-section">
               <h4>Links Úteis</h4>
               <ul>
-                <li><a href="#sobre">Sobre Nós</a></li>
-                <li><a href="#programas">Programas</a></li>
-                <li><a href="#recursos">Recursos</a></li>
-                <li><a href="#contato">Contato</a></li>
+                <li>
+                  <a href="#sobre">Sobre Nós</a>
+                </li>
+                <li>
+                  <a href="#programas">Programas</a>
+                </li>
+                <li>
+                  <a href="#recursos">Recursos</a>
+                </li>
+                <li>
+                  <a href="#contato">Contato</a>
+                </li>
               </ul>
             </div>
             <div className="footer-section">

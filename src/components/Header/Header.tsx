@@ -1,20 +1,20 @@
-import React from 'react';
-import './Header.css';
+import React from "react";
+import "./Header.css";
 
 interface HeaderProps {
   title?: string;
   showNavigation?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  title = "Caminho do Perdão", 
-  showNavigation = true 
+const Header: React.FC<HeaderProps> = ({
+  title = "Caminho do Perdão",
+  showNavigation = true,
 }) => {
   const navigationItems = [
-    { label: 'Início', href: '#home' },
-    { label: 'Sobre', href: '#about' },
-    { label: 'Serviços', href: '#services' },
-    { label: 'Contato', href: '#contact' }
+    { label: "Início", href: "#home" },
+    { label: "Sobre", href: "#about" },
+    { label: "Serviços", href: "#services" },
+    { label: "Contato", href: "#contact" },
   ];
 
   return (
@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="header-logo">
           <h1 className="header-title">{title}</h1>
         </div>
-        
+
         {showNavigation && (
           <nav className="header-navigation">
             <ul className="nav-list">
@@ -37,11 +37,9 @@ const Header: React.FC<HeaderProps> = ({
             </ul>
           </nav>
         )}
-        
+
         <div className="header-actions">
-          <button className="btn-primary">
-            Entrar
-          </button>
+          <button className="btn-primary">Entrar</button>
         </div>
       </div>
     </header>
