@@ -1,0 +1,145 @@
+.header {
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+}
+
+.header-logo {
+  flex-shrink: 0;
+}
+
+.header-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-navigation {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.5rem 0;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: #667eea;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 15px;
+    height: 60px;
+  }
+  
+  .header-title {
+    font-size: 1.4rem;
+  }
+  
+  .nav-list {
+    gap: 1rem;
+  }
+  
+  .nav-link {
+    font-size: 0.9rem;
+  }
+  
+  .btn-primary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-navigation {
+    display: none;
+  }
+  
+  .header-title {
+    font-size: 1.2rem;
+  }
+  
+  .btn-primary {
+    padding: 0.5rem 1rem;
+  }
+}
