@@ -1,15 +1,21 @@
 import React from "react";
-import { Landing, Gallery } from "./pages";
-import "./App.css";
+import { BrowserRouter } from "react-router-dom";
+import styled from "styled-components";
+import Routes from "./routes";
+import "./i18n";
 
 function App() {
-  const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
-  const isGalleryPage = path === "/gallery";
   return (
-    <div className="App">
-      {isGalleryPage ? <Gallery /> : <Landing />}
-    </div>
+    <BrowserRouter>
+      <AppShell>
+        <Routes />
+      </AppShell>
+    </BrowserRouter>
   );
 }
+
+const AppShell = styled.div`
+  min-height: 100vh;
+`;
 
 export default App;

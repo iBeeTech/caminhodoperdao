@@ -1,0 +1,35 @@
+{
+    "app": {
+        "title": "Caminho do Perdão"
+    },
+    "nav": {
+        "home": "Início",
+        "registration": "Inscrição",
+        "schedule": "Cronograma",
+        "about": "Sobre",
+        "contact": "Contato",
+        "gallery": "Galeria de Fotos"
+    },
+    "header": {
+        "menuToggle": "Abrir menu"
+    },
+    "footer": {
+        "heading": "Caminho do Perdão",
+        "description": "Transformando vidas através do perdão e autoconhecimento.",
+        "contactHeading": "Contato",
+        "email": "Email: contato@caminhodoperdao.com",
+        "phone": "Telefone: (11) 99999-9999",
+        "socialHeading": "Redes sociais",
+        "copyright": "© {{year}} Caminho do Perdão. Todos os direitos reservados."
+    },
+    "social": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp"
+    },
+    "errorPage": {
+        "title": "Algo deu errado por aqui",
+        "message": "Estamos trabalhando para consertar o site!",
+        "back": "Voltar para o início"
+    }
+}

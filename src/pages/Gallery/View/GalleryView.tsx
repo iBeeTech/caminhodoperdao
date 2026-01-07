@@ -1,7 +1,20 @@
 import React from "react";
-import Header from "../../../components/Header";
+import { useTranslation } from "react-i18next";
+import { Header } from "../../../components";
 import { GalleryContent } from "../Model";
-import "./GalleryView.css";
+import {
+  AlbumButton,
+  AlbumCard,
+  AlbumGrid,
+  AlbumHeader,
+  AlbumStatus,
+  AlbumThumb,
+  AlbumYear,
+  Container,
+  GalleryHero,
+  GalleryListSection,
+  GalleryPage,
+} from "./GalleryView.styles";
 
 interface GalleryViewProps {
   content: GalleryContent;
@@ -9,36 +22,36 @@ interface GalleryViewProps {
 }
 
 const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
+  const { t } = useTranslation();
+
   return (
-    <div className="gallery-page">
+    <GalleryPage>
       <Header />
 
-      <section className="gallery-hero">
-        <div className="container">
+      <GalleryHero>
+        <Container>
           <h1>{content.heroTitle}</h1>
           <p>{content.heroDescription}</p>
-        </div>
-      </section>
+        </Container>
+      </GalleryHero>
 
-      <section className="gallery-list-section">
-        <div className="container">
-          <div className="album-grid">
+      <GalleryListSection>
+        <Container>
+          <AlbumGrid>
             {content.albums.map(album => (
-              <article key={album.year} className="album-card">
-                <div className="album-header">
-                  <div className="album-year">{album.year}</div>
-                  <span className="album-status">{album.status ?? "Disponível"}</span>
-                </div>
-                <div className="album-thumb-placeholder">{album.thumbnailText ?? "Foto destaque"}</div>
-                <button className="album-button" onClick={() => onOpenAlbum(album.year)}>
-                  Ver fotos do álbum
-                </button>
-              </article>
+              <AlbumCard key={album.year}>
+                <AlbumHeader>
+                  <AlbumYear>{album.year}</AlbumYear>
+                  <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
+                </AlbumHeader>
+                <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
+                <AlbumButton onClick={() => onOpenAlbum(album.year)}>{t("actions.viewAlbum")}</AlbumButton>
+              </AlbumCard>
             ))}
-          </div>
-        </div>
-      </section>
-    </div>
+          </AlbumGrid>
+        </Container>
+      </GalleryListSection>
+    </GalleryPage>
   );
 };
 

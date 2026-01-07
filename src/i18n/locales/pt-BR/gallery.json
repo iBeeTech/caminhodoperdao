@@ -1,0 +1,15 @@
+{
+    "hero": {
+        "title": "Galeria de Fotos",
+        "description": "Reviva cada edição do Caminho do Perdão. Escolha o ano para abrir o álbum correspondente."
+    },
+    "albums": {
+        "defaultStatus": "Disponível",
+        "placeholderThumb": "Foto destaque do ano",
+        "comingSoon": "Em breve"
+    },
+    "actions": {
+        "viewAlbum": "Ver fotos do álbum",
+        "openAlbum": "Abrir fotos do álbum {{year}}. Integrar com DB por ano."
+    }
+}

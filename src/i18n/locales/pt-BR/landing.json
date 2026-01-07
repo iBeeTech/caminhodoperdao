@@ -1,0 +1,183 @@
+{
+    "hero": {
+        "title": "Caminho do Perdão",
+        "subtitle": "Encontre paz interior e renovação espiritual",
+        "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual. Descubra o poder libertador de perdoar e seja livre.",
+        "primaryButton": "Fazer Inscrição",
+        "secondaryButton": "Saiba Mais",
+        "imageAlt": "Assis"
+    },
+    "history": {
+        "title": "Nossa História",
+        "description": "O Caminho do Perdão nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
+    },
+    "schedule": {
+        "title": "Cronograma",
+        "note": "Lembrete: no dia da caminhada, antes de iniciá-la, fazemos um café comunitário. Leve um bolo, pão, pão de queijo ou o que quiser para somar na refeição.",
+        "confession": {
+            "title": "Confissão - 01/08/2026 (Sábado)",
+            "items": [
+                "Disponível a partir das 14h"
+            ]
+        },
+        "sleep": {
+            "title": "Para quem for dormir no Mosteiro",
+            "items": [
+                "Abertura dos quartos às 17h30",
+                "Janta às 19h"
+            ]
+        },
+        "walk": {
+            "title": "No dia da Caminhada",
+            "items": [
+                "Café Comunitário às 03h00",
+                "Alongamento e aquecimento às 04h00",
+                "Oração Inicial e saída às 04h30",
+                "Chegada prevista às 14h",
+                "Missa após a chegada",
+                "Almoço após a Missa"
+            ]
+        },
+        "distance": {
+            "title": "Distância e paradas",
+            "description": "Serão 25 km com várias paradas para hidratação e frutas. No meio do caminho, fazemos uma parada estratégica para repor as energias com um lanche reforçado."
+        }
+    },
+    "features": {
+        "title": "Por que escolher o Caminho do Perdão?",
+        "items": [
+            {
+                "id": "1",
+                "title": "Paz Interior",
+                "description": "Encontre tranquilidade e equilíbrio emocional através de práticas de perdão e autocompaixão.",
+                "highlighted": true
+            },
+            {
+                "id": "2",
+                "title": "Crescimento Pessoal",
+                "description": "Desenvolva-se como pessoa através de reflexões profundas e exercícios de autoconhecimento.",
+                "highlighted": false
+            },
+            {
+                "id": "3",
+                "title": "Relacionamentos Saudáveis",
+                "description": "Aprenda a construir e manter relacionamentos mais harmoniosos e verdadeiros.",
+                "highlighted": false
+            },
+            {
+                "id": "4",
+                "title": "Transformação Espiritual",
+                "description": "Conecte-se com sua essência mais profunda e encontre propósito em sua jornada de vida.",
+                "highlighted": true
+            }
+        ]
+    },
+    "testimonials": {
+        "title": "O que dizem os participantes",
+        "items": [
+            {
+                "id": "1",
+                "name": "Maria Silva",
+                "role": "Participante do Programa",
+                "comment": "O Caminho do Perdão transformou completamente minha vida. Consegui me libertar de mágoas antigas e encontrar paz interior.",
+                "rating": 5
+            },
+            {
+                "id": "2",
+                "name": "João Santos",
+                "role": "Facilitador Voluntário",
+                "comment": "Ser parte desta comunidade me trouxe muito crescimento. Ajudar outros a encontrarem o perdão também me cura.",
+                "rating": 5
+            },
+            {
+                "id": "3",
+                "name": "Ana Costa",
+                "role": "Coordenadora Local",
+                "comment": "Um programa que realmente funciona. Vi pessoas se transformarem de forma incrível através destes ensinamentos.",
+                "rating": 5
+            }
+        ]
+    },
+    "cta": {
+        "title": "Pronto para Começar sua Jornada?",
+        "description": "Dê o primeiro passo em direção à sua transformação pessoal e espiritual. Junte-se a milhares de pessoas que já encontraram o caminho do perdão.",
+        "button": "Fazer inscrição"
+    },
+    "availability": {
+        "error": "Não foi possível verificar vagas agora."
+    },
+    "signup": {
+        "title": "Confira sua inscrição ou Inscreva-se para o Caminho",
+        "bullets": [
+            "Se você já se inscreveu, verifique o status. Se ainda não se inscreveu, preencha os dados para gerar seu PIX.",
+            "Se você já se inscreveu, consulte o status de sua inscrição usando exatamente o mesmo e-mail."
+        ],
+        "callouts": {
+            "availabilityError": "Algo de errado aconteceu, volte mais tarde para realizar sua inscrição!",
+            "full": "As inscrições estão esgotadas no momento. Se alguém desistir, uma vaga pode ser reaberta — volte mais tarde.",
+            "capacityFull": "As inscrições estão esgotadas no momento. Volte mais tarde."
+        },
+        "checkForm": {
+            "nameLabel": "Nome completo",
+            "namePlaceholder": "Seu nome",
+            "emailLabel": "Email",
+            "emailPlaceholder": "seu@email.com",
+            "submit": "Verificar inscrição ou Inscrever-se",
+            "loading": "Verificando..."
+        },
+        "registrationForm": {
+            "nameLabel": "Nome completo",
+            "namePlaceholder": "Seu nome",
+            "emailLabel": "Email",
+            "emailPlaceholder": "seu@email.com",
+            "whatsappLabel": "WhatsApp",
+            "whatsappPlaceholder": "(DDD) 9XXXX-XXXX",
+            "cepLabel": "CEP",
+            "cepPlaceholder": "00.000-000",
+            "addressLabel": "Endereço",
+            "addressPlaceholder": "Rua, avenida, etc",
+            "numberLabel": "Número",
+            "numberPlaceholder": "123",
+            "complementLabel": "Complemento",
+            "complementPlaceholder": "Apartamento, bloco, etc",
+            "cityLabel": "Cidade",
+            "cityPlaceholder": "Sua cidade",
+            "stateLabel": "Estado",
+            "statePlaceholder": "UF",
+            "sleepQuestion": "Irá dormir no Mosteiro?",
+            "sleepLocked": "Não há mais vagas para dormir no Mosteiro. Para saber se alguma vaga abriu, entre em contato conosco via WhatsApp.",
+            "sleepPlaceholder": "Selecione",
+            "sleepYes": "Sim",
+            "sleepYesFull": "Sim (sem vagas)",
+            "sleepNo": "Não",
+            "submit": "Verificar inscrição ou Inscrever-se",
+            "loading": "Enviando..."
+        },
+        "status": {
+            "pending": "Pagamento pendente. Use o PIX abaixo.",
+            "canceled": "Pix expirado. Edite para reenviar.",
+            "paid": "Sua inscrição já está confirmada.",
+            "defaultPending": "Inscrição pendente. Você pode usar o PIX abaixo.",
+            "existing": "Inscrição existente.",
+            "processingError": "Não foi possível processar. Tente novamente.",
+            "checkError": "Não foi possível verificar agora. Tente novamente.",
+            "validationError": "Preencha os campos obrigatórios.",
+            "reopenError": "Não foi possível validar vagas agora.",
+            "pixCopyLabel": "Copia e Cola do PIX",
+            "pixExpiredLabel": "PIX expirado",
+            "pixPendingPlaceholder": "Aguardando",
+            "paidBox": "Pagamento confirmado. Nos vemos no evento!",
+            "paidWarning": "Se você quiser cancelar sua inscrição ou alterá-la, entre em contato conosco via WhatsApp.",
+            "waitingPayment": "Sua inscrição será finalizada quando você realizar o pagamento do PIX.",
+            "reopen": "Refazer inscrição"
+        },
+        "errors": {
+            "required": "Obrigatório",
+            "emailInvalid": "Email inválido",
+            "phoneInvalid": "Informe DDD + 9 dígitos",
+            "cepInvalid": "CEP inválido",
+            "sleepRequired": "Selecione uma opção",
+            "sleepFull": "Vagas no mosteiro esgotadas"
+        }
+    }
+}

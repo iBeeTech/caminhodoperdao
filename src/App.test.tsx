@@ -2,7 +2,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import App from "./App";
-import { defaultLandingContent } from "./pages/Landing/Model";
+import landingTranslations from "./i18n/locales/pt-BR/landing.json";
 
 jest.mock("./services/landing/landing.service", () => ({
   landingService: {
@@ -19,5 +19,6 @@ const renderWithClient = (ui: React.ReactElement) => {
 
 test("renderiza a landing page por padrão", async () => {
   renderWithClient(<App />);
-  expect(await screen.findByText(defaultLandingContent.hero.title)).toBeInTheDocument();
+  const heroTitle = landingTranslations.hero.title;
+  expect(await screen.findByText(heroTitle)).toBeInTheDocument();
 });

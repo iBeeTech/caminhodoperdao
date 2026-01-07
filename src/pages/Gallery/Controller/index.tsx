@@ -1,13 +1,30 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import GalleryView from "../View/GalleryView";
-import { defaultGalleryContent } from "../Model";
+import { GalleryContent } from "../Model";
 
 const GalleryController: React.FC = () => {
+  const { t, i18n } = useTranslation();
+
+  const galleryContent: GalleryContent = useMemo(
+    () => ({
+      heroTitle: t("hero.title"),
+      heroDescription: t("hero.description"),
+      albums: [2026, 2025, 2024].map(year => ({
+        year,
+        photos: 0,
+        status: t("albums.comingSoon"),
+        thumbnailText: t("albums.placeholderThumb"),
+      })),
+    }),
+    [i18n.language, t]
+  );
+
   return (
     <GalleryView
-      content={defaultGalleryContent}
+      content={galleryContent}
       onOpenAlbum={year => {
-        alert(`Abrir fotos do álbum ${year}. Integrar com DB por ano.`);
+        alert(t("actions.openAlbum", { year }));
       }}
     />
   );

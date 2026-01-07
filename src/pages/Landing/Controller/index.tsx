@@ -1,20 +1,24 @@
 import React, { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import peaceIcon from "../../../assets/pombo-white.png";
+import growIcon from "../../../assets/grow.png";
+import heartIcon from "../../../assets/heart.png";
+import starIcon from "../../../assets/star.png";
 import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
 import LandingView from "../View/LandingView";
-import {
-  AvailabilityState,
-  LandingPhase,
-  LandingTone,
-  defaultLandingContent,
-} from "../Model";
-import {
-  RegistrationPayload,
-  RegistrationStatusResponse,
-} from "../../../services/landing/landing.types";
+import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone, Testimonial } from "../Model";
+import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
 
 const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+const featureIconMap: Record<string, string> = {
+  "1": peaceIcon,
+  "2": growIcon,
+  "3": heartIcon,
+  "4": starIcon,
+};
 
 const formatPhoneDigits = (digits: string) => {
   const sanitized = digits.replace(/\D/g, "").slice(0, 11);
@@ -57,6 +61,34 @@ const maskCep = (value: string) => {
 const getFieldValue = (input: HTMLInputElement | null) => input?.value.trim() ?? "";
 
 const LandingController: React.FC = () => {
+  const { t, i18n } = useTranslation();
+
+  const landingContent: LandingContent = useMemo(() => {
+    const featuresWithoutIcon = t("landing:features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
+    const testimonials = t("landing:testimonials.items", { returnObjects: true }) as Testimonial[];
+
+    return {
+      hero: {
+        title: t("landing:hero.title"),
+        subtitle: t("landing:hero.subtitle"),
+        description: t("landing:hero.description"),
+        primaryButtonText: t("landing:hero.primaryButton"),
+        secondaryButtonText: t("landing:hero.secondaryButton"),
+      },
+      features: featuresWithoutIcon.map(feature => ({
+        ...feature,
+        icon: featureIconMap[feature.id] ?? "",
+      })),
+      testimonials,
+      callToAction: {
+        title: t("landing:cta.title"),
+        description: t("landing:cta.description"),
+        buttonText: t("landing:cta.button"),
+        buttonAction: "signup",
+      },
+    };
+  }, [i18n.language, t]);
+
   const [phase, setPhase] = useState<LandingPhase>("check");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
@@ -92,11 +124,11 @@ const LandingController: React.FC = () => {
   const availability: AvailabilityState = useMemo(
     () => ({
       loading: isAvailabilityLoading,
-      error: availabilityError ? "Não foi possível verificar vagas agora." : "",
+      error: availabilityError ? t("landing:availability.error") : "",
       totalFull: availabilityData?.totalFull ?? false,
       monasteryFull: availabilityData?.monasteryFull ?? false,
     }),
-    [availabilityData, availabilityError, isAvailabilityLoading]
+    [availabilityData, availabilityError, isAvailabilityLoading, t]
   );
 
   const isMonasterySlotUnavailable = availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
@@ -151,9 +183,9 @@ const LandingController: React.FC = () => {
     const name = getFieldValue(nameRef.current);
     const email = getFieldValue(emailRef.current);
 
-    if (!name) newErrors.name = "Obrigatório";
-    if (!email) newErrors.email = "Obrigatório";
-    else if (!emailRegex.test(email)) newErrors.email = "Email inválido";
+    if (!name) newErrors.name = t("landing:signup.errors.required");
+    if (!email) newErrors.email = t("landing:signup.errors.required");
+    else if (!emailRegex.test(email)) newErrors.email = t("landing:signup.errors.emailInvalid");
 
     return newErrors;
   };
@@ -164,19 +196,19 @@ const LandingController: React.FC = () => {
     const cepDigits = getFieldValue(cepRef.current).replace(/\D/g, "");
 
     const requiredFields: Array<{ key: string; value: string; message: string; validator?: (value: string) => boolean }> = [
-      { key: "name", value: getFieldValue(nameRef.current), message: "Obrigatório" },
+      { key: "name", value: getFieldValue(nameRef.current), message: t("landing:signup.errors.required") },
       {
         key: "email",
         value: getFieldValue(emailRef.current),
-        message: "Email inválido",
+        message: t("landing:signup.errors.emailInvalid"),
         validator: value => emailRegex.test(value),
       },
-      { key: "phone", value: phoneDigits, message: "Informe DDD + 9 dígitos", validator: value => value.length === 11 },
-      { key: "cep", value: cepDigits, message: "CEP inválido", validator: value => value.length === 8 },
-      { key: "address", value: getFieldValue(addressRef.current), message: "Obrigatório" },
-      { key: "number", value: getFieldValue(numberRef.current), message: "Obrigatório" },
-      { key: "city", value: getFieldValue(cityRef.current), message: "Obrigatório" },
-      { key: "state", value: getFieldValue(stateRef.current), message: "Obrigatório" },
+      { key: "phone", value: phoneDigits, message: t("landing:signup.errors.phoneInvalid"), validator: value => value.length === 11 },
+      { key: "cep", value: cepDigits, message: t("landing:signup.errors.cepInvalid"), validator: value => value.length === 8 },
+      { key: "address", value: getFieldValue(addressRef.current), message: t("landing:signup.errors.required") },
+      { key: "number", value: getFieldValue(numberRef.current), message: t("landing:signup.errors.required") },
+      { key: "city", value: getFieldValue(cityRef.current), message: t("landing:signup.errors.required") },
+      { key: "state", value: getFieldValue(stateRef.current), message: t("landing:signup.errors.required") },
     ];
 
     requiredFields.forEach(field => {
@@ -187,7 +219,7 @@ const LandingController: React.FC = () => {
     const sleepSelection = isMonasterySlotUnavailable
       ? "no"
       : sleepAtMonasteryRef.current?.value ?? "";
-    if (!sleepSelection) newErrors.sleepAtMonastery = "Selecione uma opção";
+    if (!sleepSelection) newErrors.sleepAtMonastery = t("landing:signup.errors.sleepRequired");
 
     const alreadySleeper = existingDataRef.current?.sleep_at_monastery === 1;
     if (
@@ -195,7 +227,7 @@ const LandingController: React.FC = () => {
       availability.monasteryFull &&
       !alreadySleeper
     ) {
-      newErrors.sleepAtMonastery = "Vagas no mosteiro esgotadas";
+      newErrors.sleepAtMonastery = t("landing:signup.errors.sleepFull");
     }
 
     return newErrors;
@@ -229,25 +261,25 @@ const LandingController: React.FC = () => {
       setQrCodeText(result.qrCodeText ?? null);
 
       if (normalizedStatus === "PAID") {
-        setStatusMessage(result.message ?? "Sua inscrição já está confirmada.");
+        setStatusMessage(result.message ?? t("landing:signup.status.paid"));
         setStatusTone("success");
         setPhase("status");
         return;
       }
 
       if (result.expired || normalizedStatus === "CANCELED") {
-        setStatusMessage("Pix expirado. Edite para reenviar.");
+        setStatusMessage(t("landing:signup.status.canceled"));
         setStatusTone("error");
         setPhase("status");
       } else if (normalizedStatus === "PENDING") {
-        setStatusMessage("Pagamento pendente. Use o PIX abaixo.");
+        setStatusMessage(t("landing:signup.status.pending"));
         setStatusTone("warn");
         setPhase("status");
       } else {
         setPhase("form");
       }
     } catch (error) {
-      setStatusMessage("Não foi possível verificar agora. Tente novamente.");
+      setStatusMessage(t("landing:signup.status.checkError"));
       setStatusTone("error");
     }
   };
@@ -258,14 +290,14 @@ const LandingController: React.FC = () => {
     setErrors({});
 
     if (availability.totalFull && !existingDataRef.current?.exists) {
-      setCapacityCallout("As inscrições estão esgotadas no momento. Volte mais tarde.");
+      setCapacityCallout(t("landing:signup.callouts.capacityFull"));
       return;
     }
 
     const validationErrors = validateRegistrationForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setStatusMessage("Preencha os campos obrigatórios.");
+      setStatusMessage(t("landing:signup.status.validationError"));
       setStatusTone("error");
       return;
     }
@@ -289,9 +321,7 @@ const LandingController: React.FC = () => {
       const data = await registerMutation.mutateAsync(payload);
       setCurrentStatus(data.status ?? null);
       setQrCodeText(data.qrCodeText ?? null);
-      setStatusMessage(
-        data.message ?? "Sua inscrição será finalizada quando você realizar o pagamento do PIX."
-      );
+      setStatusMessage(data.message ?? t("landing:signup.status.waitingPayment"));
       setStatusTone("warn");
       setPhase("status");
     } catch (error) {
@@ -305,28 +335,28 @@ const LandingController: React.FC = () => {
           setQrCodeText(statusData.qrCodeText ?? null);
 
           if (normalizedStatus === "PAID") {
-            setStatusMessage("Sua inscrição já está confirmada.");
+            setStatusMessage(t("landing:signup.status.paid"));
             setStatusTone("success");
           } else if (normalizedStatus === "PENDING") {
-            setStatusMessage("Inscrição pendente. Você pode usar o PIX abaixo.");
+            setStatusMessage(t("landing:signup.status.defaultPending"));
             setStatusTone("warn");
           } else if (normalizedStatus === "CANCELED") {
-            setStatusMessage("Pix expirado. Edite para reenviar.");
+            setStatusMessage(t("landing:signup.status.canceled"));
             setStatusTone("error");
           } else {
-            setStatusMessage("Inscrição existente.");
+            setStatusMessage(t("landing:signup.status.existing"));
             setStatusTone(null);
           }
 
           setPhase("status");
         } catch (statusError) {
-          setStatusMessage("Não foi possível processar. Tente novamente.");
+          setStatusMessage(t("landing:signup.status.processingError"));
           setStatusTone("error");
         }
         return;
       }
 
-      setStatusMessage("Não foi possível processar. Tente novamente.");
+      setStatusMessage(t("landing:signup.status.processingError"));
       setStatusTone("error");
     }
   };
@@ -339,19 +369,19 @@ const LandingController: React.FC = () => {
       const result = await refetchAvailability();
       const data = result.data;
       if (data?.totalFull) {
-        setCapacityCallout("As inscrições estão esgotadas no momento. Volte mais tarde.");
+        setCapacityCallout(t("landing:signup.callouts.capacityFull"));
         return;
       }
       setPhase("form");
     } catch (error) {
-      setStatusMessage("Não foi possível validar vagas agora.");
+      setStatusMessage(t("landing:signup.status.reopenError"));
       setStatusTone("error");
     }
   };
 
   return (
     <LandingView
-      content={defaultLandingContent}
+      content={landingContent}
       availability={availability}
       phase={phase}
       errors={errors}
