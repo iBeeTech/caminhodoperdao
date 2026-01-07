@@ -1,0 +1,10 @@
+/// <reference types="cypress" />
+
+declare namespace Cypress {
+  interface Chainable {
+    login(email: string, password: string): Chainable<void>;
+    fillForm(formData: Record<string, string>): Chainable<void>;
+  }
+}
+
+export {};

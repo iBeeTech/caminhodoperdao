@@ -1,0 +1,23 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "jest",
+            "node"
+        ],
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "node",
+        "jsx": "react-jsx"
+    },
+    "include": [
+        "tests/frontend/units/**/*.test.ts",
+        "tests/frontend/units/**/*.test.tsx",
+        "tests/backend/**/*.test.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "cypress"
+    ]
+}

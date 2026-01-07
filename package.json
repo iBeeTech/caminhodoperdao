@@ -28,7 +28,17 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:unit": "jest --testPathPattern=tests/frontend/units --passWithNoTests",
+    "test:unit:update": "jest --testPathPattern=tests/frontend/units --updateSnapshot --passWithNoTests",
     "test:functions": "vitest run",
+    "test:e2e": "cypress open",
+    "test:e2e:run": "cypress run",
+    "test:e2e:landing": "cypress run --spec 'cypress/e2e/frontend/components/landing/CA001.cy.ts'",
+    "test:e2e:gallery": "cypress run --spec 'cypress/e2e/frontend/components/gallery/CA002.cy.ts'",
+    "test:e2e:error": "cypress run --spec 'cypress/e2e/frontend/components/error/CA003.cy.ts'",
+    "test:e2e:all-pages": "cypress run cypress/e2e/frontend/components/**/*.cy.ts",
+    "cy:open": "npx cypress open",
+    "cy:test-and-open": "bash scripts/test-and-open-cypress.sh",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -52,7 +62,10 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
+    "cypress": "^13.6.6",
     "eslint-plugin-jsx-a11y": "^6.10.0",
+    "identity-obj-proxy": "^3.0.0",
+    "ts-jest": "^29.4.6",
     "vitest": "^1.5.4"
   }
 }

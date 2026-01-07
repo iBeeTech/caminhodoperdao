@@ -1,0 +1,23 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "cypress",
+            "node"
+        ],
+        "strict": false,
+        "target": "es2020",
+        "lib": [
+            "es2020",
+            "dom",
+            "dom.iterable"
+        ]
+    },
+    "include": [
+        "cypress/**/*",
+        "tests/frontend/components/**/*.cy.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

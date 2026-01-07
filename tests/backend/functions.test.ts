@@ -1,8 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 import { describe, it, expect, beforeEach } from "vitest";
-import { handleRegister } from "../functions/api/register";
-import { handleWebhook } from "../functions/api/webhooks/pix";
-import { handleStatus } from "../functions/api/status";
+import { handleRegister } from "../../functions/api/register";
+import { handleWebhook } from "../../functions/api/webhooks/pix";
+import { handleStatus } from "../../functions/api/status";
 
 interface MemoryRegistration {
   id: string;

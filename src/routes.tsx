@@ -7,8 +7,8 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/gallery" element={<Gallery />} />
-      <Route path="/home" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<ErrorPage />} />
+      <Route path="/error" element={<ErrorPage />} />
+      <Route path="*" element={<Navigate to="/error" replace />} />
     </Routes>
   );
 };

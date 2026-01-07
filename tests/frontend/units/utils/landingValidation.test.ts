@@ -2,8 +2,8 @@
  * Testes para validações da Landing
  */
 
-import { validateCheckForm, validateRegistrationForm } from "../validation";
-import type { FieldRefsType } from "../../landing/types";
+import { validateCheckForm, validateRegistrationForm } from "../../../../src/utils/landing/validation";
+import type { FieldRefsType } from "../../../../src/utils/landing/types";
 import React from "react";
 
 // Mock de refs
