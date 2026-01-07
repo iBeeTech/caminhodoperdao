@@ -1,10 +1,6 @@
 import React, { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import peaceIcon from "../../../assets/pombo-white.png";
-import growIcon from "../../../assets/grow.png";
-import heartIcon from "../../../assets/heart.png";
-import starIcon from "../../../assets/star.png";
 import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
 import { useAnalytics } from "../../../hooks/useAnalytics";
@@ -12,58 +8,18 @@ import LandingView from "../View/LandingView";
 import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone, Testimonial } from "../Model";
 import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
 
-const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-
-const featureIconMap: Record<string, string> = {
-  "1": peaceIcon,
-  "2": growIcon,
-  "3": heartIcon,
-  "4": starIcon,
-};
-
-const formatPhoneDigits = (digits: string) => {
-  const sanitized = digits.replace(/\D/g, "").slice(0, 11);
-  if (!sanitized) return "";
-
-  if (sanitized.length <= 2) {
-    return `(${sanitized}${sanitized.length === 2 ? ")" : ""}`;
-  }
-
-  const ddd = sanitized.slice(0, 2);
-  const body = sanitized.slice(2);
-  const first = body.slice(0, 1);
-  const rest = body.slice(1);
-
-  let out = `(${ddd})`;
-  if (first) out += ` ${first}`;
-
-  if (rest.length <= 4) {
-    out += rest;
-  } else {
-    out += `${rest.slice(0, 4)}-${rest.slice(4, 8)}`;
-  }
-
-  return out;
-};
-
-const maskCep = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (!digits) return "";
-  const match = digits.match(/(\d{0,2})(\d{0,3})(\d{0,3})/);
-  if (!match) return "";
-  const [, p1, p2, p3] = match;
-  let out = "";
-  if (p1) out += p1;
-  if (p2) out += `.${p2}`;
-  if (p3) out += `-${p3}`;
-  return out;
-};
-
-const getFieldValue = (input: HTMLInputElement | null) => input?.value.trim() ?? "";
+// Utils imports
+import { formatPhoneBR } from "../../../utils/formatters/phone";
+import { formatCepBR } from "../../../utils/formatters/cep";
+import { getFieldValue, focusFirstError } from "../../../utils/dom/forms";
+import { featureIconMap } from "../../../utils/landing/featureIcons";
+import { validateCheckForm, validateRegistrationForm } from "../../../utils/landing/validation";
+import { syncFormWithStatus } from "../../../utils/landing/syncFormWithStatus";
+import type { FieldRefsType } from "../../../utils/landing/types";
 
 const LandingController: React.FC = () => {
   const { t, i18n } = useTranslation("landing");
-  const { trackPageView, trackSignupSubmitted, trackSignupSuccess, trackSignupError, trackCtaHeroClick } = useAnalytics();
+  const { pageViewed, formSubmitted, formSuccess, formError, ctaClicked } = useAnalytics();
 
   const landingContent: LandingContent = useMemo(() => {
     const featuresWithoutIcon = t("features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
@@ -105,10 +61,10 @@ const LandingController: React.FC = () => {
   // Rastrear page view ao montar (SSR-safe)
   React.useEffect(() => {
     if (!pageViewTrackedRef.current && typeof window !== "undefined") {
-      trackPageView("Landing", "/");
+      pageViewed("landing", "/");
       pageViewTrackedRef.current = true;
     }
-  }, [trackPageView]);
+  }, [pageViewed]);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -121,7 +77,7 @@ const LandingController: React.FC = () => {
   const stateRef = useRef<HTMLInputElement>(null);
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
 
-  const fieldRefs: Record<string, React.RefObject<HTMLElement | null>> = {
+  const fieldRefs: FieldRefsType = {
     name: nameRef,
     email: emailRef,
     phone: phoneRef,
@@ -132,15 +88,6 @@ const LandingController: React.FC = () => {
     city: cityRef,
     state: stateRef,
     sleepAtMonastery: sleepAtMonasteryRef,
-  };
-
-  const focusFirstError = (errorMap: Record<string, string>) => {
-    const firstKey = Object.keys(errorMap).find(key => fieldRefs[key]);
-    if (!firstKey) return;
-    const element = fieldRefs[firstKey]?.current;
-    if (element) {
-      element.focus();
-    }
   };
 
   const {
@@ -174,26 +121,6 @@ const LandingController: React.FC = () => {
     mutationFn: (payload: RegistrationPayload) => landingService.register(payload),
   });
 
-  const syncFormWithStatus = (data: RegistrationStatusResponse) => {
-    const assign = (ref: React.RefObject<HTMLInputElement | null>, value?: string | null) => {
-      if (ref.current) ref.current.value = value ?? "";
-    };
-
-    assign(nameRef, data.name ?? "");
-    assign(emailRef, data.email ?? "");
-    assign(phoneRef, data.phone ? formatPhoneDigits(data.phone) : "");
-    assign(cepRef, data.cep ? maskCep(data.cep) : "");
-    assign(addressRef, data.address ?? "");
-    assign(numberRef, data.number ?? "");
-    assign(complementRef, data.complement ?? "");
-    assign(cityRef, data.city ?? "");
-    assign(stateRef, data.state ?? "");
-
-    if (sleepAtMonasteryRef.current) {
-      sleepAtMonasteryRef.current.value = data.sleep_at_monastery === 1 ? "yes" : data.sleep_at_monastery === 0 ? "no" : "";
-    }
-  };
-
   const resetStatusState = () => {
     setStatusMessage(null);
     setStatusTone(null);
@@ -202,68 +129,13 @@ const LandingController: React.FC = () => {
   };
 
   const onPhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneDigits(event.target.value);
+    const formatted = formatPhoneBR(event.target.value);
     event.target.value = formatted;
   };
 
   const onCepChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const masked = maskCep(event.target.value);
+    const masked = formatCepBR(event.target.value);
     event.target.value = masked;
-  };
-
-  const validateCheckForm = () => {
-    const newErrors: Record<string, string> = {};
-    const name = getFieldValue(nameRef.current);
-    const email = getFieldValue(emailRef.current);
-
-    if (!name) newErrors.name = t("signup.errors.required");
-    if (!email) newErrors.email = t("signup.errors.required");
-    else if (!emailRegex.test(email)) newErrors.email = t("signup.errors.emailInvalid");
-
-    return newErrors;
-  };
-
-  const validateRegistrationForm = () => {
-    const newErrors: Record<string, string> = {};
-    const phoneDigits = getFieldValue(phoneRef.current).replace(/\D/g, "");
-    const cepDigits = getFieldValue(cepRef.current).replace(/\D/g, "");
-
-    const requiredFields: Array<{ key: string; value: string; message: string; validator?: (value: string) => boolean }> = [
-      { key: "name", value: getFieldValue(nameRef.current), message: t("signup.errors.required") },
-      {
-        key: "email",
-        value: getFieldValue(emailRef.current),
-        message: t("signup.errors.emailInvalid"),
-        validator: value => emailRegex.test(value),
-      },
-      { key: "phone", value: phoneDigits, message: t("signup.errors.phoneInvalid"), validator: value => value.length === 11 },
-      { key: "cep", value: cepDigits, message: t("signup.errors.cepInvalid"), validator: value => value.length === 8 },
-      { key: "address", value: getFieldValue(addressRef.current), message: t("signup.errors.required") },
-      { key: "number", value: getFieldValue(numberRef.current), message: t("signup.errors.required") },
-      { key: "city", value: getFieldValue(cityRef.current), message: t("signup.errors.required") },
-      { key: "state", value: getFieldValue(stateRef.current), message: t("signup.errors.required") },
-    ];
-
-    requiredFields.forEach(field => {
-      const isValid = field.validator ? field.validator(field.value) : !!field.value;
-      if (!isValid) newErrors[field.key] = field.message;
-    });
-
-    const sleepSelection = isMonasterySlotUnavailable
-      ? "no"
-      : sleepAtMonasteryRef.current?.value ?? "";
-    if (!sleepSelection) newErrors.sleepAtMonastery = t("signup.errors.sleepRequired");
-
-    const alreadySleeper = existingDataRef.current?.sleep_at_monastery === 1;
-    if (
-      sleepSelection === "yes" &&
-      availability.monasteryFull &&
-      !alreadySleeper
-    ) {
-      newErrors.sleepAtMonastery = t("signup.errors.sleepFull");
-    }
-
-    return newErrors;
   };
 
   const handleCheckStatus = async (event: FormEvent<HTMLFormElement>) => {
@@ -271,18 +143,18 @@ const LandingController: React.FC = () => {
     resetStatusState();
     setErrors({});
 
-    const validationErrors = validateCheckForm();
+    const validationErrors = validateCheckForm(t, { name: nameRef, email: emailRef }).errors;
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      focusFirstError(validationErrors);
+      focusFirstError(validationErrors, fieldRefs);
       Object.entries(validationErrors).forEach(([field, error]) => {
-        trackSignupError(error, field);
+        formError("landing", "signup_check", error, field);
       });
       return;
     }
 
     const email = getFieldValue(emailRef.current);
-    trackSignupSubmitted("check", { email });
+    formSubmitted("landing", "signup_check", "pending");
 
     try {
       const result = await checkStatusMutation.mutateAsync(email);
@@ -293,7 +165,7 @@ const LandingController: React.FC = () => {
         return;
       }
 
-      syncFormWithStatus(result);
+      syncFormWithStatus(result, fieldRefs);
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
       setQrCodeText(result.qrCodeText ?? null);
@@ -319,7 +191,7 @@ const LandingController: React.FC = () => {
     } catch (error) {
       setStatusMessage(t("signup.status.checkError"));
       setStatusTone("error");
-      trackSignupError("check_status_error");
+      formError("landing", "signup_check", "check_status_error");
     }
   };
 
@@ -330,19 +202,25 @@ const LandingController: React.FC = () => {
 
     if (availability.totalFull && !existingDataRef.current?.exists) {
       setCapacityCallout(t("signup.callouts.capacityFull"));
-      trackSignupError("capacity_full");
+      formError("landing", "signup_check", "capacity_full");
       return;
     }
 
-    const validationErrors = validateRegistrationForm();
+    const validationResult = validateRegistrationForm(t, fieldRefs, {
+      isMonasterySlotUnavailable,
+      monasteryFull: availability.monasteryFull,
+      alreadySleeper: existingDataRef.current?.sleep_at_monastery === 1,
+    });
+
+    const validationErrors = validationResult.errors;
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setStatusMessage(t("signup.status.validationError"));
       setStatusTone("error");
       Object.entries(validationErrors).forEach(([field, error]) => {
-        trackSignupError(error, field);
+        formError("landing", "signup_registration", error, field);
       });
-      focusFirstError(validationErrors);
+      focusFirstError(validationErrors, fieldRefs);
       return;
     }
 
@@ -373,7 +251,7 @@ const LandingController: React.FC = () => {
         try {
           const statusData = await landingService.checkStatus(payload.email);
           existingDataRef.current = statusData;
-          syncFormWithStatus(statusData);
+          syncFormWithStatus(statusData, fieldRefs);
           const normalizedStatus = statusData.status ?? (statusData.expired ? "CANCELED" : null);
           setCurrentStatus(normalizedStatus);
           setQrCodeText(statusData.qrCodeText ?? null);
@@ -454,11 +332,11 @@ const LandingController: React.FC = () => {
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
       onPrimaryAction={() => {
-        trackCtaHeroClick("primary");
+        ctaClicked("landing", "hero_primary", "Check Reservation", "signup_check");
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onSecondaryAction={() => {
-        trackCtaHeroClick("secondary");
+        ctaClicked("landing", "hero_secondary", "Learn More", "about");
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
       onCallToAction={() => {

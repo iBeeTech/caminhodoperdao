@@ -24,12 +24,12 @@ import {
 
 const FooterSection: React.FC = () => {
   const { t } = useTranslation("common");
-  const { trackExternalSocialClick } = useAnalytics();
+  const { externalLinkClicked } = useAnalytics();
   const newTabNotice = (t("footer.newTabNotice") as string) || "Abre em nova aba";
   const socialLabel = (name: string) => `${name} (${newTabNotice})`;
 
   const handleSocialClick = (platform: string) => {
-    trackExternalSocialClick(platform);
+    externalLinkClicked(platform);
   };
 
   return (

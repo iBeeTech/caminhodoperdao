@@ -1,248 +1,314 @@
 /**
- * Hook customizado para rastreamento de eventos
+ * Hook customizado para rastreamento de eventos (REFATORADO)
  * 
- * Fornece façade com métodos convenientes para eventos específicos
- * Todos SSR-safe (verificam se window existe)
- * 
- * Usa o novo padrão de eventos do AmplitudeEvents com nomenclatura padronizada
+ * Usa a nova arquitetura de eventos com propriedades padronizadas:
+ * - Nomes de eventos genéricos (page_viewed, section_viewed, cta_clicked, etc)
+ * - Propriedades em snake_case seguindo padrões Amplitude
+ * - Sanitização automática de PII (LGPD)
+ * - Context injection automático (page_name, route, timestamp)
  * 
  * @example
- * const { trackPageView, trackSignupSubmitted } = useAnalytics();
+ * const { trackPageViewed, trackCtaClicked } = useAnalytics();
  * 
- * trackPageView("Landing", "/");
- * trackSignupSubmitted("registration", { form_type: "registration" });
+ * // Em um componente de página
+ * useEffect(() => {
+ *   trackPageViewed("landing");
+ * }, []);
+ * 
+ * // Em um botão CTA
+ * <button onClick={() => trackCtaClicked("landing", "hero_primary")}>
+ *   Get Started
+ * </button>
  */
 
-import { useCallback } from "react";
-import { trackEvent } from "../services/analytics/amplitude";
 import {
-  AmplitudeEvents,
-  buildEventProps,
-  type AmplitudeEventProperties,
-} from "../utils/amplitudeEvents";
+  trackPageViewed,
+  trackSectionViewed,
+  trackNavigationLinkClicked,
+  trackNavigationMenuToggled,
+  trackCtaClicked,
+  trackFormStarted,
+  trackFormSubmitted,
+  trackFormSuccess,
+  trackFormError,
+  trackGalleryViewed,
+  trackGalleryAlbumClicked,
+  trackExternalLinkClicked,
+  trackErrorOccurred,
+} from "../utils/analytics/tracking";
+import type { AmplitudeEventProperties } from "../utils/analytics/amplitudeEvents";
 
 export const useAnalytics = () => {
   // ============ PAGE VIEWS ============
-
-  const trackPageView = useCallback(
-    (pageName: string, route?: string, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["page_viewed"],
-        buildEventProps(pageName, {
-          route: route || (typeof window !== "undefined" ? window.location.pathname : undefined),
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  
+  /**
+   * Rastrear visualização de página
+   * 
+   * Emite: page_viewed
+   * 
+   * @example
+   * trackPageViewed("landing");
+   * trackPageViewed("gallery", "/gallery/2024");
+   */
+  const pageViewed = (
+    pageName: string,
+    route?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackPageViewed(pageName, route, additionalProps);
 
   // ============ CTA EVENTS ============
 
-  const trackCtaHeroClick = useCallback(
-    (actionType: "primary" | "secondary") => {
-      const eventName =
-        actionType === "primary"
-          ? AmplitudeEvents["cta_clicked_hero_primary"]
-          : AmplitudeEvents["cta_clicked_hero_secondary"];
-      trackEvent(
-        eventName,
-        buildEventProps("Landing", { action_type: actionType })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear clique em CTA (Call-To-Action)
+   * 
+   * Emite: cta_clicked
+   * 
+   * @param pageName - Nome da página (ex: "landing")
+   * @param ctaId - ID do CTA (ex: "hero_primary", "hero_secondary")
+   * @param ctaText - Texto do botão (opcional)
+   * @param destination - Para onde leva (ex: "registration")
+   * 
+   * @example
+   * trackCtaClicked("landing", "hero_primary", "Get Started", "registration");
+   */
+  const ctaClicked = (
+    pageName: string,
+    ctaId: string,
+    ctaText?: string,
+    destination?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackCtaClicked(pageName, ctaId, ctaText, destination, additionalProps);
 
   // ============ NAVIGATION ============
 
-  const trackNavigationClick = useCallback(
-    (linkText: string, href: string) => {
-      trackEvent(
-        AmplitudeEvents["navigation_clicked_link"],
-        buildEventProps("Navigation", {
-          link_text: linkText,
-          link_href: href,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear clique em link de navegação
+   * 
+   * Emite: navigation_link_clicked
+   * 
+   * @example
+   * trackNavigationLinkClicked("landing", "About", "/about", "header");
+   */
+  const navigationLinkClicked = (
+    pageName: string,
+    linkText: string,
+    href: string,
+    location?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackNavigationLinkClicked(pageName, linkText, href, location, additionalProps);
 
-  const trackMobileMenuToggle = useCallback((action: "opened" | "closed") => {
-    const eventName =
-      action === "opened"
-        ? AmplitudeEvents["navigation_opened_menu_mobile"]
-        : AmplitudeEvents["navigation_closed_menu_mobile"];
-    trackEvent(
-      eventName,
-      buildEventProps("Navigation", { action_type: action })
-    );
-  }, []);
+  /**
+   * Rastrear abertura/fechamento de menu mobile
+   * 
+   * Emite: navigation_menu_toggled
+   * 
+   * @example
+   * trackNavigationMenuToggled("open", "mobile_menu", "landing");
+   */
+  const navigationMenuToggled = (
+    action: "open" | "close" | "toggle",
+    location?: string,
+    pageName?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackNavigationMenuToggled(action, location, pageName, additionalProps);
 
-  // ============ SIGNUP ============
+  // ============ SIGNUP / FORMS ============
 
-  const trackSignupStarted = useCallback(
-    (formType: "check" | "registration") => {
-      trackEvent(
-        AmplitudeEvents["signup_started"],
-        buildEventProps("Landing", { form_type: formType })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear início de formulário
+   * 
+   * Emite: form_started
+   * 
+   * @example
+   * trackFormStarted("landing", "signup_check");
+   */
+  const formStarted = (
+    pageName: string,
+    formId: string,
+    formStep?: number | string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackFormStarted(pageName, formId, formStep, additionalProps);
 
-  const trackSignupSubmitted = useCallback(
-    (formType: "check" | "registration", additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["signup_submitted"],
-        buildEventProps("Landing", {
-          form_type: formType,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear submissão de formulário
+   * 
+   * Emite: form_submitted
+   * 
+   * LGPD-safe: não inclui email ou dados sensíveis
+   * 
+   * @example
+   * trackFormSubmitted("landing", "signup_check", "pending");
+   */
+  const formSubmitted = (
+    pageName: string,
+    formId: string,
+    status?: string,
+    formStep?: number | string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackFormSubmitted(pageName, formId, status, formStep, additionalProps);
 
-  const trackSignupSuccess = useCallback(
-    (status: string, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["signup_success"],
-        buildEventProps("Landing", {
-          status,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear sucesso de formulário
+   * 
+   * Emite: form_success
+   * 
+   * @example
+   * trackFormSuccess("landing", "signup_registration", "check_confirmed");
+   */
+  const formSuccess = (
+    pageName: string,
+    formId: string,
+    status?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackFormSuccess(pageName, formId, status, additionalProps);
 
-  const trackSignupError = useCallback(
-    (errorCode: string, fieldName?: string, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["signup_error"],
-        buildEventProps("Landing", {
-          error_code: errorCode,
-          field_name: fieldName,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
-
-  const trackFormFieldError = useCallback(
-    (fieldName: string, errorMessage: string) => {
-      trackEvent(
-        AmplitudeEvents["form_field_error"],
-        buildEventProps("Landing", {
-          field_name: fieldName,
-          error_message: errorMessage,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear erro em formulário
+   * 
+   * Emite: form_error
+   * 
+   * LGPD-safe: error_message nunca deve conter dados sensíveis
+   * 
+   * @example
+   * trackFormError("landing", "signup_check", "validation_error", "email");
+   */
+  const formError = (
+    pageName: string,
+    formId: string,
+    errorType: string,
+    fieldName?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackFormError(pageName, formId, errorType, fieldName, additionalProps);
 
   // ============ GALLERY ============
 
-  const trackGalleryView = useCallback((route?: string) => {
-    trackEvent(
-      AmplitudeEvents["gallery_viewed"],
-      buildEventProps("Gallery", {
-        route: route || (typeof window !== "undefined" ? window.location.pathname : undefined),
-      })
-    );
-  }, []);
+  /**
+   * Rastrear visualização de galeria
+   * 
+   * Emite: gallery_viewed
+   * 
+   * @example
+   * trackGalleryViewed();
+   */
+  const galleryViewed = (
+    route?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackGalleryViewed(route, additionalProps);
 
-  const trackGalleryAlbumClick = useCallback(
-    (year: number, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["gallery_clicked_album"],
-        buildEventProps("Gallery", {
-          year,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear clique em álbum
+   * 
+   * Emite: gallery_album_clicked
+   * 
+   * @example
+   * trackGalleryAlbumClicked(2024, "Summer Retreat");
+   */
+  const galleryAlbumClicked = (
+    albumYear: number,
+    albumName?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackGalleryAlbumClicked(albumYear, albumName, additionalProps);
 
   // ============ SECTION ============
 
-  const trackSectionView = useCallback(
-    (sectionName: string, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["section_viewed"],
-        buildEventProps("Page", {
-          section_name: sectionName,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear visualização de seção (ao ficar visível)
+   * 
+   * Emite: section_viewed
+   * 
+   * Normalmente chamado por useSectionView automaticamente
+   * 
+   * @example
+   * trackSectionViewed("landing", "features-section", "features", "middle");
+   */
+  const sectionViewed = (
+    pageName: string,
+    sectionId: string,
+    sectionName: string,
+    position?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackSectionViewed(pageName, sectionId, sectionName, position, additionalProps);
 
   // ============ EXTERNAL / SOCIAL ============
 
-  const trackExternalSocialClick = useCallback(
-    (platform: string, additionalProps?: Partial<AmplitudeEventProperties>) => {
-      trackEvent(
-        AmplitudeEvents["external_clicked_social_link"],
-        buildEventProps("Social", {
-          platform,
-          ...additionalProps,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear clique em link externo ou rede social
+   * 
+   * Emite: external_link_clicked
+   * 
+   * @example
+   * trackExternalLinkClicked("instagram", undefined, "Follow us");
+   * trackExternalLinkClicked("external", "https://example.com", "Read more");
+   */
+  const externalLinkClicked = (
+    platform: string,
+    url?: string,
+    linkText?: string,
+    pageName?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackExternalLinkClicked(platform, url, linkText, pageName, additionalProps);
 
   // ============ ERROR HANDLING ============
 
-  const trackError = useCallback(
-    (errorType: string, errorMessage: string, context?: string) => {
-      trackEvent(
-        AmplitudeEvents["error_occurred"],
-        buildEventProps("Error", {
-          error_type: errorType,
-          error_message: errorMessage,
-          label: context,
-        })
-      );
-    },
-    []
-  );
+  /**
+   * Rastrear erro na aplicação
+   * 
+   * Emite: error_occurred
+   * 
+   * LGPD-safe: error_message nunca deve conter dados sensíveis
+   * 
+   * @example
+   * trackErrorOccurred("form_validation", "Email format invalid", "landing_signup");
+   */
+  const errorOccurred = (
+    errorType: string,
+    errorMessage?: string,
+    context?: string,
+    pageName?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) => trackErrorOccurred(errorType, errorMessage, context, pageName, additionalProps);
 
   return {
     // Page views
-    trackPageView,
+    pageViewed,
+    trackPageViewed: pageViewed, // alias para compatibilidade
     
     // CTA
-    trackCtaHeroClick,
+    ctaClicked,
+    trackCtaClicked: ctaClicked, // alias
     
     // Navigation
-    trackNavigationClick,
-    trackMobileMenuToggle,
+    navigationLinkClicked,
+    trackNavigationLinkClicked: navigationLinkClicked, // alias
+    navigationMenuToggled,
+    trackNavigationMenuToggled: navigationMenuToggled, // alias
     
-    // Signup/Form
-    trackSignupStarted,
-    trackSignupSubmitted,
-    trackSignupSuccess,
-    trackSignupError,
-    trackFormFieldError,
+    // Forms
+    formStarted,
+    trackFormStarted: formStarted, // alias
+    formSubmitted,
+    trackFormSubmitted: formSubmitted, // alias
+    formSuccess,
+    trackFormSuccess: formSuccess, // alias
+    formError,
+    trackFormError: formError, // alias
     
     // Gallery
-    trackGalleryView,
-    trackGalleryAlbumClick,
+    galleryViewed,
+    trackGalleryViewed: galleryViewed, // alias
+    galleryAlbumClicked,
+    trackGalleryAlbumClicked: galleryAlbumClicked, // alias
     
     // Section
-    trackSectionView,
+    sectionViewed,
+    trackSectionViewed: sectionViewed, // alias
     
-    // Social/External
-    trackExternalSocialClick,
+    // External/Social
+    externalLinkClicked,
+    trackExternalLinkClicked: externalLinkClicked, // alias
     
     // Errors
-    trackError,
+    errorOccurred,
+    trackErrorOccurred: errorOccurred, // alias
   };
 };

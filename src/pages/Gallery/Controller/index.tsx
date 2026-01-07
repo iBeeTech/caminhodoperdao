@@ -6,7 +6,7 @@ import { GalleryContent } from "../Model";
 
 const GalleryController: React.FC = () => {
   const { t, i18n } = useTranslation("gallery");
-  const { trackGalleryView, trackGalleryAlbumClick } = useAnalytics();
+  const { galleryViewed, galleryAlbumClicked } = useAnalytics();
 
   const galleryContent: GalleryContent = useMemo(
     () => ({
@@ -23,14 +23,14 @@ const GalleryController: React.FC = () => {
   );
 
   React.useEffect(() => {
-    trackGalleryView("/gallery");
-  }, [trackGalleryView]);
+    galleryViewed("/gallery");
+  }, [galleryViewed]);
 
   return (
     <GalleryView
       content={galleryContent}
       onOpenAlbum={year => {
-        trackGalleryAlbumClick(year, { album_count: galleryContent.albums.length });
+        galleryAlbumClicked(year);
         alert(t("actions.openAlbum", { year }));
       }}
     />
