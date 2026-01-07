@@ -1,2 +1,2 @@
-export { default as Landing } from "./Landing";
-export { default as Gallery } from "./Gallery";
+export { default as Landing } from "./Landing/Controller";
+export { default as Gallery } from "./Gallery/Controller";
