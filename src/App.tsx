@@ -1,11 +1,13 @@
 import React from "react";
-import { Landing } from "./pages";
+import { Landing, Gallery } from "./pages";
 import "./App.css";
 
 function App() {
+  const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
+  const isGalleryPage = path === "/gallery";
   return (
     <div className="App">
-      <Landing />
+      {isGalleryPage ? <Gallery /> : <Landing />}
     </div>
   );
 }

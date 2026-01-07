@@ -1,46 +1,55 @@
-# Getting Started with Create React App
+# Caminho do Perdão — Pages + D1
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Monólito em Cloudflare Pages com frontend React (CRA), Pages Functions e banco D1 para inscrição de peregrinos com pagamento PIX (mock) e webhook.
 
-## Available Scripts
+## Build e deploy
+- Build command: `npm ci && npm run build`
+- Output directory: `build`
+- Cloudflare Pages:
+	- Conecte o repositório ao Pages.
+	- Em "Build settings", configure o comando acima e o output `build`.
+	- Ative Pages Functions (pasta `/functions`).
 
-In the project directory, you can run:
+## Bindings e secrets
+- D1 binding: adicione um binding chamado `DB` apontando para o banco D1 escolhido.
+- Secrets (Pages → Settings → Environment variables):
+	- `GATEWAY_API_KEY` (para futura integração real do gateway PIX; hoje é mock).
+	- `WEBHOOK_SECRET` (usado para validar o webhook stub). Mantenha igual no provedor do webhook ou no simulador.
 
-### `npm start`
+## Banco (D1)
+1. Crie o banco D1 (`wrangler d1 create <DB_NAME>` caso use CLI).
+2. Aplique o schema:
+	 ```bash
+	 wrangler d1 execute <DB_NAME> --file=./schema.sql
+	 ```
+3. Tabela principal: `registrations` (chave por email, status PENDING/PAID/CANCELED, refs de pagamento e timestamps).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Rodar local
+- Instale deps: `npm ci`
+- Dev com Pages + Functions + D1 local:
+	```bash
+	wrangler pages dev --d1=DB=<DB_NAME_OR_PATH>
+	```
+	(use um banco local criado via `wrangler d1 execute`).
+- Apenas frontend (CRA): `npm start` (não expõe as Functions; útil para UI rápida).
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Endpoints (Pages Functions)
+- `POST /api/register` — cria inscrição PENDING e retorna PIX (mock). Trata duplicidade por email (409).
+- `GET /api/status?email=` — retorna `{ exists, status, created_at, paid_at }`.
+- `POST /api/reissue` — reemite cobrança se PENDING.
+- `POST /api/webhooks/pix` — atualiza para PAID quando assinatura (header `x-webhook-signature`) bate com `WEBHOOK_SECRET`.
 
-### `npm test`
+## Frontend
+- Formulário na Landing: nome + email, chama `/api/register`.
+- Se 409: chama `/api/status` e mostra mensagem para PAID ou PENDING, com opção de reemitir (`/api/reissue`).
+- PIX copia-e-cola exibido em tela; botão “Já paguei” reconsulta status.
+- SPA routing: arquivo `public/_redirects` com `/* /index.html 200` para evitar 404 em refresh.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Testes
+- Testes de UI (CRA): `npm test`
+- Testes das Functions (Vitest): `npm run test:functions`
+	- Inclui casos mínimos para fluxo de registro, duplicidade e webhook PAID (com mocks de D1 e PIX adapter).
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Próximos passos
+- Substituir o mock de PIX por gateway real usando `GATEWAY_API_KEY`.
+- Ajustar validação/observabilidade conforme formato de webhook do gateway escolhido.

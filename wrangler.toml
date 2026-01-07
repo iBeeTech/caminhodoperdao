@@ -1,0 +1,8 @@
+name = "caminhodoperdao"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "build"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "caminhodoperdao-db"
+database_id = "784a0aec-8695-48d4-8ede-df680660735e"

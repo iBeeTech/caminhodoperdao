@@ -8,7 +8,7 @@ export class LandingController {
       subtitle: "Encontre paz interior e renovação espiritual",
       description:
         "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual. Descubra o poder libertador de perdoar e seja livre.",
-      primaryButtonText: "Iniciar Jornada",
+      primaryButtonText: "Fazer Inscrição",
       secondaryButtonText: "Saiba Mais",
     },
     features: [
@@ -75,7 +75,7 @@ export class LandingController {
       title: "Pronto para Começar sua Jornada?",
       description:
         "Dê o primeiro passo em direção à sua transformação pessoal e espiritual. Junte-se a milhares de pessoas que já encontraram o caminho do perdão.",
-      buttonText: "Começar Agora",
+      buttonText: "Fazer inscrição",
       buttonAction: "signup",
     },
   };
