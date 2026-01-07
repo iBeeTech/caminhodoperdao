@@ -44,7 +44,7 @@ export const useSectionView = (sectionId: string, sectionName: string) => {
         entries.forEach((entry) => {
           // Se a seção entrou em visibilidade e ainda não foi rastreada
           if (entry.isIntersecting && !hasTrackedRef.current) {
-            trackSectionView(sectionName);
+            trackSectionView(sectionName, { label: sectionId });
             hasTrackedRef.current = true;
             // Desinscrever após rastrear para liberar memória
             observer.unobserve(element);

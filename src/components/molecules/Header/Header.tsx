@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({
   showNavigation = true,
 }) => {
   const { t } = useTranslation("common");
-  const { trackNavigation, trackMobileMenu } = useAnalytics();
+  const { trackNavigationClick, trackMobileMenuToggle } = useAnalytics();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigationId = "primary-navigation";
   const navigationLabel = t("header.navigationLabel", { defaultValue: "Navegação principal" }) as string;
@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({
       ];
 
   const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string, label: string) => {
-    trackNavigation(label, href);
+    trackNavigationClick(label, href);
     if (href.startsWith("#")) {
       event.preventDefault();
       const target = document.querySelector(href);
@@ -82,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => {
                 const newState = !isMenuOpen;
                 setIsMenuOpen(newState);
-                trackMobileMenu(newState ? "opened" : "closed");
+                trackMobileMenuToggle(newState ? "opened" : "closed");
               }}
             >
               <span />

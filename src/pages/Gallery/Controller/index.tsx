@@ -23,14 +23,14 @@ const GalleryController: React.FC = () => {
   );
 
   React.useEffect(() => {
-    trackGalleryView();
+    trackGalleryView("/gallery");
   }, [trackGalleryView]);
 
   return (
     <GalleryView
       content={galleryContent}
       onOpenAlbum={year => {
-        trackGalleryAlbumClick(year);
+        trackGalleryAlbumClick(year, { album_count: galleryContent.albums.length });
         alert(t("actions.openAlbum", { year }));
       }}
     />

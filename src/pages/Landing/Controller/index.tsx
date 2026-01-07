@@ -63,7 +63,7 @@ const getFieldValue = (input: HTMLInputElement | null) => input?.value.trim() ??
 
 const LandingController: React.FC = () => {
   const { t, i18n } = useTranslation("landing");
-  const { trackSignupSubmitted, trackSignupSuccess, trackSignupError, trackHeroAction } = useAnalytics();
+  const { trackPageView, trackSignupSubmitted, trackSignupSuccess, trackSignupError, trackCtaHeroClick } = useAnalytics();
 
   const landingContent: LandingContent = useMemo(() => {
     const featuresWithoutIcon = t("features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
@@ -100,6 +100,15 @@ const LandingController: React.FC = () => {
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
+  const pageViewTrackedRef = useRef(false);
+
+  // Rastrear page view ao montar (SSR-safe)
+  React.useEffect(() => {
+    if (!pageViewTrackedRef.current && typeof window !== "undefined") {
+      trackPageView("Landing", "/");
+      pageViewTrackedRef.current = true;
+    }
+  }, [trackPageView]);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -445,11 +454,11 @@ const LandingController: React.FC = () => {
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
       onPrimaryAction={() => {
-        trackHeroAction("primary");
+        trackCtaHeroClick("primary");
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onSecondaryAction={() => {
-        trackHeroAction("secondary");
+        trackCtaHeroClick("secondary");
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
       onCallToAction={() => {
