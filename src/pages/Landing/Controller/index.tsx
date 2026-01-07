@@ -7,6 +7,7 @@ import heartIcon from "../../../assets/heart.png";
 import starIcon from "../../../assets/star.png";
 import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
+import { useAnalytics } from "../../../hooks/useAnalytics";
 import LandingView from "../View/LandingView";
 import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone, Testimonial } from "../Model";
 import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
@@ -61,19 +62,20 @@ const maskCep = (value: string) => {
 const getFieldValue = (input: HTMLInputElement | null) => input?.value.trim() ?? "";
 
 const LandingController: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("landing");
+  const { trackSignupSubmitted, trackSignupSuccess, trackSignupError, trackHeroAction } = useAnalytics();
 
   const landingContent: LandingContent = useMemo(() => {
-    const featuresWithoutIcon = t("landing:features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
-    const testimonials = t("landing:testimonials.items", { returnObjects: true }) as Testimonial[];
+    const featuresWithoutIcon = t("features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
+    const testimonials = t("testimonials.items", { returnObjects: true }) as Testimonial[];
 
     return {
       hero: {
-        title: t("landing:hero.title"),
-        subtitle: t("landing:hero.subtitle"),
-        description: t("landing:hero.description"),
-        primaryButtonText: t("landing:hero.primaryButton"),
-        secondaryButtonText: t("landing:hero.secondaryButton"),
+        title: t("hero.title"),
+        subtitle: t("hero.subtitle"),
+        description: t("hero.description"),
+        primaryButtonText: t("hero.primaryButton"),
+        secondaryButtonText: t("hero.secondaryButton"),
       },
       features: featuresWithoutIcon.map(feature => ({
         ...feature,
@@ -81,9 +83,9 @@ const LandingController: React.FC = () => {
       })),
       testimonials,
       callToAction: {
-        title: t("landing:cta.title"),
-        description: t("landing:cta.description"),
-        buttonText: t("landing:cta.button"),
+        title: t("cta.title"),
+        description: t("cta.description"),
+        buttonText: t("cta.button"),
         buttonAction: "signup",
       },
     };
@@ -110,6 +112,28 @@ const LandingController: React.FC = () => {
   const stateRef = useRef<HTMLInputElement>(null);
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
 
+  const fieldRefs: Record<string, React.RefObject<HTMLElement | null>> = {
+    name: nameRef,
+    email: emailRef,
+    phone: phoneRef,
+    cep: cepRef,
+    address: addressRef,
+    number: numberRef,
+    complement: complementRef,
+    city: cityRef,
+    state: stateRef,
+    sleepAtMonastery: sleepAtMonasteryRef,
+  };
+
+  const focusFirstError = (errorMap: Record<string, string>) => {
+    const firstKey = Object.keys(errorMap).find(key => fieldRefs[key]);
+    if (!firstKey) return;
+    const element = fieldRefs[firstKey]?.current;
+    if (element) {
+      element.focus();
+    }
+  };
+
   const {
     data: availabilityData,
     isLoading: isAvailabilityLoading,
@@ -124,7 +148,7 @@ const LandingController: React.FC = () => {
   const availability: AvailabilityState = useMemo(
     () => ({
       loading: isAvailabilityLoading,
-      error: availabilityError ? t("landing:availability.error") : "",
+      error: availabilityError ? t("availability.error") : "",
       totalFull: availabilityData?.totalFull ?? false,
       monasteryFull: availabilityData?.monasteryFull ?? false,
     }),
@@ -183,9 +207,9 @@ const LandingController: React.FC = () => {
     const name = getFieldValue(nameRef.current);
     const email = getFieldValue(emailRef.current);
 
-    if (!name) newErrors.name = t("landing:signup.errors.required");
-    if (!email) newErrors.email = t("landing:signup.errors.required");
-    else if (!emailRegex.test(email)) newErrors.email = t("landing:signup.errors.emailInvalid");
+    if (!name) newErrors.name = t("signup.errors.required");
+    if (!email) newErrors.email = t("signup.errors.required");
+    else if (!emailRegex.test(email)) newErrors.email = t("signup.errors.emailInvalid");
 
     return newErrors;
   };
@@ -196,19 +220,19 @@ const LandingController: React.FC = () => {
     const cepDigits = getFieldValue(cepRef.current).replace(/\D/g, "");
 
     const requiredFields: Array<{ key: string; value: string; message: string; validator?: (value: string) => boolean }> = [
-      { key: "name", value: getFieldValue(nameRef.current), message: t("landing:signup.errors.required") },
+      { key: "name", value: getFieldValue(nameRef.current), message: t("signup.errors.required") },
       {
         key: "email",
         value: getFieldValue(emailRef.current),
-        message: t("landing:signup.errors.emailInvalid"),
+        message: t("signup.errors.emailInvalid"),
         validator: value => emailRegex.test(value),
       },
-      { key: "phone", value: phoneDigits, message: t("landing:signup.errors.phoneInvalid"), validator: value => value.length === 11 },
-      { key: "cep", value: cepDigits, message: t("landing:signup.errors.cepInvalid"), validator: value => value.length === 8 },
-      { key: "address", value: getFieldValue(addressRef.current), message: t("landing:signup.errors.required") },
-      { key: "number", value: getFieldValue(numberRef.current), message: t("landing:signup.errors.required") },
-      { key: "city", value: getFieldValue(cityRef.current), message: t("landing:signup.errors.required") },
-      { key: "state", value: getFieldValue(stateRef.current), message: t("landing:signup.errors.required") },
+      { key: "phone", value: phoneDigits, message: t("signup.errors.phoneInvalid"), validator: value => value.length === 11 },
+      { key: "cep", value: cepDigits, message: t("signup.errors.cepInvalid"), validator: value => value.length === 8 },
+      { key: "address", value: getFieldValue(addressRef.current), message: t("signup.errors.required") },
+      { key: "number", value: getFieldValue(numberRef.current), message: t("signup.errors.required") },
+      { key: "city", value: getFieldValue(cityRef.current), message: t("signup.errors.required") },
+      { key: "state", value: getFieldValue(stateRef.current), message: t("signup.errors.required") },
     ];
 
     requiredFields.forEach(field => {
@@ -219,7 +243,7 @@ const LandingController: React.FC = () => {
     const sleepSelection = isMonasterySlotUnavailable
       ? "no"
       : sleepAtMonasteryRef.current?.value ?? "";
-    if (!sleepSelection) newErrors.sleepAtMonastery = t("landing:signup.errors.sleepRequired");
+    if (!sleepSelection) newErrors.sleepAtMonastery = t("signup.errors.sleepRequired");
 
     const alreadySleeper = existingDataRef.current?.sleep_at_monastery === 1;
     if (
@@ -227,7 +251,7 @@ const LandingController: React.FC = () => {
       availability.monasteryFull &&
       !alreadySleeper
     ) {
-      newErrors.sleepAtMonastery = t("landing:signup.errors.sleepFull");
+      newErrors.sleepAtMonastery = t("signup.errors.sleepFull");
     }
 
     return newErrors;
@@ -241,10 +265,15 @@ const LandingController: React.FC = () => {
     const validationErrors = validateCheckForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      focusFirstError(validationErrors);
+      Object.entries(validationErrors).forEach(([field, error]) => {
+        trackSignupError(error, field);
+      });
       return;
     }
 
     const email = getFieldValue(emailRef.current);
+    trackSignupSubmitted("check", { email });
 
     try {
       const result = await checkStatusMutation.mutateAsync(email);
@@ -261,26 +290,27 @@ const LandingController: React.FC = () => {
       setQrCodeText(result.qrCodeText ?? null);
 
       if (normalizedStatus === "PAID") {
-        setStatusMessage(result.message ?? t("landing:signup.status.paid"));
+        setStatusMessage(result.message ?? t("signup.status.paid"));
         setStatusTone("success");
         setPhase("status");
         return;
       }
 
       if (result.expired || normalizedStatus === "CANCELED") {
-        setStatusMessage(t("landing:signup.status.canceled"));
+        setStatusMessage(t("signup.status.canceled"));
         setStatusTone("error");
         setPhase("status");
       } else if (normalizedStatus === "PENDING") {
-        setStatusMessage(t("landing:signup.status.pending"));
+        setStatusMessage(t("signup.status.pending"));
         setStatusTone("warn");
         setPhase("status");
       } else {
         setPhase("form");
       }
     } catch (error) {
-      setStatusMessage(t("landing:signup.status.checkError"));
+      setStatusMessage(t("signup.status.checkError"));
       setStatusTone("error");
+      trackSignupError("check_status_error");
     }
   };
 
@@ -290,15 +320,20 @@ const LandingController: React.FC = () => {
     setErrors({});
 
     if (availability.totalFull && !existingDataRef.current?.exists) {
-      setCapacityCallout(t("landing:signup.callouts.capacityFull"));
+      setCapacityCallout(t("signup.callouts.capacityFull"));
+      trackSignupError("capacity_full");
       return;
     }
 
     const validationErrors = validateRegistrationForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setStatusMessage(t("landing:signup.status.validationError"));
+      setStatusMessage(t("signup.status.validationError"));
       setStatusTone("error");
+      Object.entries(validationErrors).forEach(([field, error]) => {
+        trackSignupError(error, field);
+      });
+      focusFirstError(validationErrors);
       return;
     }
 
@@ -321,7 +356,7 @@ const LandingController: React.FC = () => {
       const data = await registerMutation.mutateAsync(payload);
       setCurrentStatus(data.status ?? null);
       setQrCodeText(data.qrCodeText ?? null);
-      setStatusMessage(data.message ?? t("landing:signup.status.waitingPayment"));
+      setStatusMessage(data.message ?? t("signup.status.waitingPayment"));
       setStatusTone("warn");
       setPhase("status");
     } catch (error) {
@@ -335,28 +370,28 @@ const LandingController: React.FC = () => {
           setQrCodeText(statusData.qrCodeText ?? null);
 
           if (normalizedStatus === "PAID") {
-            setStatusMessage(t("landing:signup.status.paid"));
+            setStatusMessage(t("signup.status.paid"));
             setStatusTone("success");
           } else if (normalizedStatus === "PENDING") {
-            setStatusMessage(t("landing:signup.status.defaultPending"));
+            setStatusMessage(t("signup.status.defaultPending"));
             setStatusTone("warn");
           } else if (normalizedStatus === "CANCELED") {
-            setStatusMessage(t("landing:signup.status.canceled"));
+            setStatusMessage(t("signup.status.canceled"));
             setStatusTone("error");
           } else {
-            setStatusMessage(t("landing:signup.status.existing"));
+            setStatusMessage(t("signup.status.existing"));
             setStatusTone(null);
           }
 
           setPhase("status");
         } catch (statusError) {
-          setStatusMessage(t("landing:signup.status.processingError"));
+          setStatusMessage(t("signup.status.processingError"));
           setStatusTone("error");
         }
         return;
       }
 
-      setStatusMessage(t("landing:signup.status.processingError"));
+      setStatusMessage(t("signup.status.processingError"));
       setStatusTone("error");
     }
   };
@@ -369,12 +404,12 @@ const LandingController: React.FC = () => {
       const result = await refetchAvailability();
       const data = result.data;
       if (data?.totalFull) {
-        setCapacityCallout(t("landing:signup.callouts.capacityFull"));
+        setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
       setPhase("form");
     } catch (error) {
-      setStatusMessage(t("landing:signup.status.reopenError"));
+      setStatusMessage(t("signup.status.reopenError"));
       setStatusTone("error");
     }
   };
@@ -410,9 +445,11 @@ const LandingController: React.FC = () => {
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
       onPrimaryAction={() => {
+        trackHeroAction("primary");
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onSecondaryAction={() => {
+        trackHeroAction("secondary");
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
       onCallToAction={() => {

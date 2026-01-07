@@ -72,7 +72,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onCepChange,
   onReopenRegistration,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("landing");
+  const statusRole = statusTone === "error" ? "alert" : "status";
+  const statusLive = statusTone === "error" ? "assertive" : "polite";
+  const pixTextareaId = "pix-code";
   const hasAvailabilityError = Boolean(availability.error);
   const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull;
@@ -112,22 +115,24 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showCheckForm && (
             <SignupForm noValidate onSubmit={onCheckStatus}>
-              <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
+              <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name} required>
                 <Input
                   id="name"
                   name="name"
                   type="text"
                   placeholder={t("signup.checkForm.namePlaceholder")}
                   ref={nameRef as RefObject<HTMLInputElement>}
+                  autoComplete="name"
                 />
               </FormField>
-              <FormField label={t("signup.checkForm.emailLabel")} htmlFor="email" error={errors.email}>
+              <FormField label={t("signup.checkForm.emailLabel")} htmlFor="email" error={errors.email} required>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder={t("signup.checkForm.emailPlaceholder")}
                   ref={emailRef as RefObject<HTMLInputElement>}
+                  autoComplete="email"
                 />
               </FormField>
               <Button
@@ -144,25 +149,27 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showRegistrationForm && (
             <SignupForm noValidate onSubmit={onSubmitRegistration}>
-              <FormField label={t("signup.registrationForm.nameLabel")} htmlFor="name-full" error={errors.name}>
+              <FormField label={t("signup.registrationForm.nameLabel")} htmlFor="name-full" error={errors.name} required>
                 <Input
                   id="name-full"
                   name="name-full"
                   type="text"
                   placeholder={t("signup.registrationForm.namePlaceholder")}
                   ref={nameRef as RefObject<HTMLInputElement>}
+                  autoComplete="name"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.emailLabel")} htmlFor="email-full" error={errors.email}>
+              <FormField label={t("signup.registrationForm.emailLabel")} htmlFor="email-full" error={errors.email} required>
                 <Input
                   id="email-full"
                   name="email-full"
                   type="email"
                   placeholder={t("signup.registrationForm.emailPlaceholder")}
                   ref={emailRef as RefObject<HTMLInputElement>}
+                  autoComplete="email"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.whatsappLabel")} htmlFor="phone" error={errors.phone}>
+              <FormField label={t("signup.registrationForm.whatsappLabel")} htmlFor="phone" error={errors.phone} required>
                 <Input
                   id="phone"
                   name="phone"
@@ -170,9 +177,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   placeholder={t("signup.registrationForm.whatsappPlaceholder")}
                   ref={phoneRef as RefObject<HTMLInputElement>}
                   onChange={onPhoneChange}
+                  inputMode="tel"
+                  autoComplete="tel"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.cepLabel")} htmlFor="cep" error={errors.cep}>
+              <FormField label={t("signup.registrationForm.cepLabel")} htmlFor="cep" error={errors.cep} required>
                 <Input
                   id="cep"
                   name="cep"
@@ -180,24 +189,29 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   placeholder={t("signup.registrationForm.cepPlaceholder")}
                   ref={cepRef as RefObject<HTMLInputElement>}
                   onChange={onCepChange}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.addressLabel")} htmlFor="address" error={errors.address}>
+              <FormField label={t("signup.registrationForm.addressLabel")} htmlFor="address" error={errors.address} required>
                 <Input
                   id="address"
                   name="address"
                   type="text"
                   placeholder={t("signup.registrationForm.addressPlaceholder")}
                   ref={addressRef as RefObject<HTMLInputElement>}
+                  autoComplete="street-address"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.numberLabel")} htmlFor="number" error={errors.number}>
+              <FormField label={t("signup.registrationForm.numberLabel")} htmlFor="number" error={errors.number} required>
                 <Input
                   id="number"
                   name="number"
                   type="text"
                   placeholder={t("signup.registrationForm.numberPlaceholder")}
                   ref={numberRef as RefObject<HTMLInputElement>}
+                  inputMode="numeric"
+                  autoComplete="off"
                 />
               </FormField>
               <FormField label={t("signup.registrationForm.complementLabel")}
@@ -209,18 +223,20 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.complementPlaceholder")}
                   ref={complementRef as RefObject<HTMLInputElement>}
+                  autoComplete="address-line2"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.cityLabel")} htmlFor="city" error={errors.city}>
+              <FormField label={t("signup.registrationForm.cityLabel")} htmlFor="city" error={errors.city} required>
                 <Input
                   id="city"
                   name="city"
                   type="text"
                   placeholder={t("signup.registrationForm.cityPlaceholder")}
                   ref={cityRef as RefObject<HTMLInputElement>}
+                  autoComplete="address-level2"
                 />
               </FormField>
-              <FormField label={t("signup.registrationForm.stateLabel")} htmlFor="state" error={errors.state}>
+              <FormField label={t("signup.registrationForm.stateLabel")} htmlFor="state" error={errors.state} required>
                 <Input
                   id="state"
                   name="state"
@@ -228,12 +244,14 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   maxLength={2}
                   placeholder={t("signup.registrationForm.statePlaceholder")}
                   ref={stateRef as RefObject<HTMLInputElement>}
+                  autoComplete="address-level1"
                 />
               </FormField>
               <FormField
                 label={t("signup.registrationForm.sleepQuestion")}
                 htmlFor="sleepAtMonastery"
                 error={errors.sleepAtMonastery}
+                required
               >
                 {isSleepLocked ? (
                   <MonasteryNote>
@@ -264,12 +282,25 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showStatus && (
             <>
-              {statusMessage && <StatusMessage $tone={statusTone}>{statusMessage}</StatusMessage>}
+              {statusMessage && (
+                <StatusMessage
+                  $tone={statusTone}
+                  role={statusRole}
+                  aria-live={statusLive}
+                  tabIndex={-1}
+                >
+                  {statusMessage}
+                </StatusMessage>
+              )}
 
               {currentStatus === "PENDING" && (
                 <PixBox>
-                    <PixLabel>{t("signup.status.pixCopyLabel")}</PixLabel>
-                    <PixTextarea readOnly value={qrCodeText ?? (t("signup.status.pixPendingPlaceholder") as string)} />
+                  <PixLabel htmlFor={pixTextareaId}>{t("signup.status.pixCopyLabel")}</PixLabel>
+                  <PixTextarea
+                    id={pixTextareaId}
+                    readOnly
+                    value={qrCodeText ?? (t("signup.status.pixPendingPlaceholder") as string)}
+                  />
                 </PixBox>
               )}
 

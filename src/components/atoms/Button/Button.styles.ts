@@ -67,6 +67,11 @@ export const StyledButton = styled.button<StyledButtonProps>`
   justify-content: center;
   gap: 8px;
 
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.colors.gradientStart};
+    outline-offset: 3px;
+  }
+
   ${({ $size }) => sizeStyles[$size]};
   ${({ $variant }) => variantStyles[$variant]};
 

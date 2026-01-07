@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useAnalytics } from "../../../../../hooks/useAnalytics";
 import instagramIcon from "../../../../../assets/instagram.png";
 import facebookIcon from "../../../../../assets/communication.png";
 import whatsappIcon from "../../../../../assets/whatsapp.png";
@@ -22,7 +23,14 @@ import {
 } from "./FooterSection.styles";
 
 const FooterSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
+  const { trackSocialLink } = useAnalytics();
+  const newTabNotice = (t("footer.newTabNotice") as string) || "Abre em nova aba";
+  const socialLabel = (name: string) => `${name} (${newTabNotice})`;
+
+  const handleSocialClick = (platform: string) => {
+    trackSocialLink(platform);
+  };
 
   return (
     <FooterSectionWrapper id="contact">
@@ -41,21 +49,42 @@ const FooterSection: React.FC = () => {
             <FooterSubheading>{t("footer.socialHeading")}</FooterSubheading>
             <FooterSocial>
               <FooterSocialItem>
-                <SocialIcon href="https://www.instagram.com/caminhadadoperdaodeassis/" target="_blank" rel="noreferrer">
-                  <SocialImage src={instagramIcon} alt={t("social.instagram") as string} loading="lazy" />
+                <SocialIcon
+                  href="https://www.instagram.com/caminhadadoperdaodeassis/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={socialLabel(t("social.instagram") as string)}
+                  onClick={() => handleSocialClick("instagram")}
+                >
+                  <SocialImage src={instagramIcon} alt="" aria-hidden="true" loading="lazy" />
                   <SrOnly>{t("social.instagram")}</SrOnly>
+                  <SrOnly>{newTabNotice}</SrOnly>
                 </SocialIcon>
               </FooterSocialItem>
               <FooterSocialItem>
-                <SocialIcon href="https://www.facebook.com/MosteirodeClaraval" target="_blank" rel="noreferrer">
-                  <SocialImage src={facebookIcon} alt={t("social.facebook") as string} loading="lazy" />
+                <SocialIcon
+                  href="https://www.facebook.com/MosteirodeClaraval"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={socialLabel(t("social.facebook") as string)}
+                  onClick={() => handleSocialClick("facebook")}
+                >
+                  <SocialImage src={facebookIcon} alt="" aria-hidden="true" loading="lazy" />
                   <SrOnly>{t("social.facebook")}</SrOnly>
+                  <SrOnly>{newTabNotice}</SrOnly>
                 </SocialIcon>
               </FooterSocialItem>
               <FooterSocialItem>
-                <SocialIcon href="https://wa.me/5511999999999" target="_blank" rel="noreferrer">
-                  <SocialImage src={whatsappIcon} alt={t("social.whatsapp") as string} loading="lazy" />
+                <SocialIcon
+                  href="https://wa.me/5511999999999"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={socialLabel(t("social.whatsapp") as string)}
+                  onClick={() => handleSocialClick("whatsapp")}
+                >
+                  <SocialImage src={whatsappIcon} alt="" aria-hidden="true" loading="lazy" />
                   <SrOnly>{t("social.whatsapp")}</SrOnly>
+                  <SrOnly>{newTabNotice}</SrOnly>
                 </SocialIcon>
               </FooterSocialItem>
             </FooterSocial>

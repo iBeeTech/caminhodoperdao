@@ -93,7 +93,7 @@ export const PixBox = styled.div`
   gap: 12px;
 `;
 
-export const PixLabel = styled.p`
+export const PixLabel = styled.label`
   font-weight: 700;
   margin: 0;
 `;

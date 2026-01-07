@@ -12,7 +12,7 @@ import {
   SignupSection,
   TestimonialsSection,
 } from "./components";
-import { LandingPage } from "./LandingView.styles";
+import { LandingPage, MainContent } from "./LandingView.styles";
 
 interface LandingViewProps {
   content: LandingContent;
@@ -76,42 +76,44 @@ const LandingView: React.FC<LandingViewProps> = ({
     <LandingPage>
       <Header />
 
-      <HeroSection
-        hero={content.hero}
-        heroImage={assis}
-        onPrimaryAction={onPrimaryAction}
-        onSecondaryAction={onSecondaryAction}
-      />
+      <MainContent id="main-content">
+        <HeroSection
+          hero={content.hero}
+          heroImage={assis}
+          onPrimaryAction={onPrimaryAction}
+          onSecondaryAction={onSecondaryAction}
+        />
 
-      <SignupSection
-        availability={availability}
-        phase={phase}
-        errors={errors}
-        statusMessage={statusMessage}
-        statusTone={statusTone}
-        currentStatus={currentStatus}
-        qrCodeText={qrCodeText}
-        capacityCallout={capacityCallout}
-        isCheckingStatus={isCheckingStatus}
-        isSubmittingRegistration={isSubmittingRegistration}
-        isSleepLocked={isSleepLocked}
-        refs={refs}
-        onCheckStatus={onCheckStatus}
-        onSubmitRegistration={onSubmitRegistration}
-        onPhoneChange={onPhoneChange}
-        onCepChange={onCepChange}
-        onReopenRegistration={onReopenRegistration}
-      />
+        <SignupSection
+          availability={availability}
+          phase={phase}
+          errors={errors}
+          statusMessage={statusMessage}
+          statusTone={statusTone}
+          currentStatus={currentStatus}
+          qrCodeText={qrCodeText}
+          capacityCallout={capacityCallout}
+          isCheckingStatus={isCheckingStatus}
+          isSubmittingRegistration={isSubmittingRegistration}
+          isSleepLocked={isSleepLocked}
+          refs={refs}
+          onCheckStatus={onCheckStatus}
+          onSubmitRegistration={onSubmitRegistration}
+          onPhoneChange={onPhoneChange}
+          onCepChange={onCepChange}
+          onReopenRegistration={onReopenRegistration}
+        />
 
-      <ScheduleSection />
+        <ScheduleSection />
 
-      <HistorySection />
+        <HistorySection />
 
-      <FeaturesSection features={content.features} />
+        <FeaturesSection features={content.features} />
 
-      <TestimonialsSection testimonials={content.testimonials} />
+        <TestimonialsSection testimonials={content.testimonials} />
 
-      <CtaSection callToAction={content.callToAction} onCallToAction={onCallToAction} />
+        <CtaSection callToAction={content.callToAction} onCallToAction={onCallToAction} />
+      </MainContent>
 
       <FooterSection />
     </LandingPage>

@@ -9,8 +9,12 @@ export const StyledInput = styled.input`
   background: #fff;
   color: ${({ theme }) => theme.colors.text};
 
-  &:focus {
+  &[aria-invalid="true"] {
+    border-color: ${({ theme }) => theme.colors.error};
+  }
+
+  &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.gradientStart};
-    outline-offset: 1px;
+    outline-offset: 2px;
   }
 `;

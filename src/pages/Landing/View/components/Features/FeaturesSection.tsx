@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useSectionView } from "../../../../../hooks/useSectionView";
 import { FeatureSection } from "../../../Model";
 import {
   Container,
@@ -17,7 +18,8 @@ interface FeaturesSectionProps {
 }
 
 const FeaturesSection: React.FC<FeaturesSectionProps> = ({ features }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("landing");
+  useSectionView("features", "features");
 
   return (
     <FeaturesSectionWrapper>

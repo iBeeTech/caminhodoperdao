@@ -21,7 +21,7 @@ import {
 } from "./ScheduleSection.styles";
 
 const ScheduleSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("landing");
   const confessionItems = t("schedule.confession.items", { returnObjects: true }) as string[];
   const sleepItems = t("schedule.sleep.items", { returnObjects: true }) as string[];
   const walkItems = t("schedule.walk.items", { returnObjects: true }) as string[];

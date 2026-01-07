@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAnalytics } from "../../../hooks/useAnalytics";
 import {
   HeaderWrapper,
   HeaderContainer,
@@ -22,8 +23,11 @@ const Header: React.FC<HeaderProps> = ({
   title,
   showNavigation = true,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
+  const { trackNavigation, trackMobileMenu } = useAnalytics();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigationId = "primary-navigation";
+  const navigationLabel = t("header.navigationLabel", { defaultValue: "Navegação principal" }) as string;
   const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
   const isGalleryPage = path === "/gallery";
   const appTitle = title ?? (t("app.title") as string);
@@ -45,20 +49,27 @@ const Header: React.FC<HeaderProps> = ({
         { label: t("nav.gallery"), href: "/gallery", isCta: true },
       ];
 
-  const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string, label: string) => {
+    trackNavigation(label, href);
     if (href.startsWith("#")) {
       event.preventDefault();
       const target = document.querySelector(href);
       target?.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape" && isMenuOpen) {
       setIsMenuOpen(false);
     }
   };
 
   return (
-    <HeaderWrapper>
+    <HeaderWrapper onKeyDown={handleKeyDown}>
       <HeaderContainer>
         <HeaderLogo>
-          <HeaderTitle>{appTitle}</HeaderTitle>
+          <HeaderTitle aria-label={appTitle}>{appTitle}</HeaderTitle>
         </HeaderLogo>
 
         {showNavigation && (
@@ -67,19 +78,24 @@ const Header: React.FC<HeaderProps> = ({
               $open={isMenuOpen}
               aria-label={t("header.menuToggle") as string}
               aria-expanded={isMenuOpen}
-              onClick={() => setIsMenuOpen(prev => !prev)}
+              aria-controls={navigationId}
+              onClick={() => {
+                const newState = !isMenuOpen;
+                setIsMenuOpen(newState);
+                trackMobileMenu(newState ? "opened" : "closed");
+              }}
             >
               <span />
               <span />
               <span />
             </MenuToggle>
-            <Navigation $open={isMenuOpen}>
+            <Navigation $open={isMenuOpen} aria-label={navigationLabel} id={navigationId}>
               <NavList>
                 {navigationItems.map((item, index) => {
                   const LinkComponent = item.isCta ? NavLinkCta : NavLink;
                   return (
                     <NavItem key={index}>
-                      <LinkComponent href={item.href} onClick={(event) => handleNavClick(event, item.href)}>
+                      <LinkComponent href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
                         {item.label}
                       </LinkComponent>
                     </NavItem>

@@ -3,17 +3,19 @@ import { useTranslation } from "react-i18next";
 import { BackLink, ErrorCard, ErrorContainer, ErrorMessage, ErrorPageWrapper, ErrorTitle } from "./ErrorPage.styles";
 
 const ErrorPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
 
   return (
     <ErrorPageWrapper>
-      <ErrorContainer>
-        <ErrorCard>
-          <ErrorTitle>{t("errorPage.title")}</ErrorTitle>
-          <ErrorMessage>{t("errorPage.message")}</ErrorMessage>
-          <BackLink href="/">{t("errorPage.back")}</BackLink>
-        </ErrorCard>
-      </ErrorContainer>
+      <main id="main-content">
+        <ErrorContainer>
+          <ErrorCard>
+            <ErrorTitle>{t("errorPage.title")}</ErrorTitle>
+            <ErrorMessage>{t("errorPage.message")}</ErrorMessage>
+            <BackLink href="/">{t("errorPage.back")}</BackLink>
+          </ErrorCard>
+        </ErrorContainer>
+      </main>
     </ErrorPageWrapper>
   );
 };

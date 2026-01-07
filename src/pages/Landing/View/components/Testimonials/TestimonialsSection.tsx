@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useSectionView } from "../../../../../hooks/useSectionView";
 import { Testimonial } from "../../../Model";
 import {
   AuthorAvatar,
@@ -31,10 +32,11 @@ const renderStars = (rating: number) =>
     ));
 
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("landing");
+  useSectionView("testimonials", "testimonials");
 
   return (
-    <TestimonialsSectionWrapper>
+    <TestimonialsSectionWrapper id="testimonials">
       <Container>
         <Title>{t("testimonials.title")}</Title>
         <TestimonialsGrid>

@@ -14,6 +14,7 @@ import {
   GalleryHero,
   GalleryListSection,
   GalleryPage,
+  GalleryMain,
 } from "./GalleryView.styles";
 
 interface GalleryViewProps {
@@ -22,35 +23,39 @@ interface GalleryViewProps {
 }
 
 const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("gallery");
 
   return (
     <GalleryPage>
       <Header />
 
-      <GalleryHero>
-        <Container>
-          <h1>{content.heroTitle}</h1>
-          <p>{content.heroDescription}</p>
-        </Container>
-      </GalleryHero>
+      <GalleryMain id="main-content">
+        <GalleryHero>
+          <Container>
+            <h1>{content.heroTitle}</h1>
+            <p>{content.heroDescription}</p>
+          </Container>
+        </GalleryHero>
 
-      <GalleryListSection>
-        <Container>
-          <AlbumGrid>
-            {content.albums.map(album => (
-              <AlbumCard key={album.year}>
-                <AlbumHeader>
-                  <AlbumYear>{album.year}</AlbumYear>
-                  <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
-                </AlbumHeader>
-                <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
-                <AlbumButton onClick={() => onOpenAlbum(album.year)}>{t("actions.viewAlbum")}</AlbumButton>
-              </AlbumCard>
-            ))}
-          </AlbumGrid>
-        </Container>
-      </GalleryListSection>
+        <GalleryListSection>
+          <Container>
+            <AlbumGrid>
+              {content.albums.map(album => (
+                <AlbumCard key={album.year}>
+                  <AlbumHeader>
+                    <AlbumYear as="h2">{album.year}</AlbumYear>
+                    <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
+                  </AlbumHeader>
+                  <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
+                  <AlbumButton type="button" onClick={() => onOpenAlbum(album.year)}>
+                    {t("actions.viewAlbum")}
+                  </AlbumButton>
+                </AlbumCard>
+              ))}
+            </AlbumGrid>
+          </Container>
+        </GalleryListSection>
+      </GalleryMain>
     </GalleryPage>
   );
 };

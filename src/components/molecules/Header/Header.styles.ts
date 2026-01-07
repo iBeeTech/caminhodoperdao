@@ -28,7 +28,7 @@ export const HeaderLogo = styled.div`
   flex-shrink: 0;
 `;
 
-export const HeaderTitle = styled.h1`
+export const HeaderTitle = styled.p`
   font-size: 1.8rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text};

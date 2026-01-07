@@ -1,10 +1,12 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useAnalytics } from "../../../hooks/useAnalytics";
 import GalleryView from "../View/GalleryView";
 import { GalleryContent } from "../Model";
 
 const GalleryController: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("gallery");
+  const { trackGalleryView, trackGalleryAlbumClick } = useAnalytics();
 
   const galleryContent: GalleryContent = useMemo(
     () => ({
@@ -20,10 +22,15 @@ const GalleryController: React.FC = () => {
     [i18n.language, t]
   );
 
+  React.useEffect(() => {
+    trackGalleryView();
+  }, [trackGalleryView]);
+
   return (
     <GalleryView
       content={galleryContent}
       onOpenAlbum={year => {
+        trackGalleryAlbumClick(year);
         alert(t("actions.openAlbum", { year }));
       }}
     />

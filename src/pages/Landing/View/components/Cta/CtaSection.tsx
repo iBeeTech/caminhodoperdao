@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "../../../../../components";
+import { useSectionView } from "../../../../../hooks/useSectionView";
 import { CallToActionSection } from "../../../Model";
 import { Container, CtaContent, CtaDescription, CtaSectionWrapper, CtaTitle } from "./CtaSection.styles";
 
@@ -9,8 +10,10 @@ interface CtaSectionProps {
 }
 
 const CtaSection: React.FC<CtaSectionProps> = ({ callToAction, onCallToAction }) => {
+  useSectionView("cta", "call_to_action");
+
   return (
-    <CtaSectionWrapper>
+    <CtaSectionWrapper id="cta">
       <Container>
         <CtaContent>
           <CtaTitle>{callToAction.title}</CtaTitle>

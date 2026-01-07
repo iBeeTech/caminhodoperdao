@@ -5,6 +5,10 @@ export const GalleryPage = styled.div`
   background: #f5f7fb;
 `;
 
+export const GalleryMain = styled.main`
+  display: block;
+`;
+
 export const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;

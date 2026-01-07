@@ -3,11 +3,13 @@ import { BrowserRouter } from "react-router-dom";
 import styled from "styled-components";
 import Routes from "./routes";
 import "./i18n";
+import SkipLink from "./components/a11y/SkipLink";
 
 function App() {
   return (
     <BrowserRouter>
       <AppShell>
+        <SkipLink />
         <Routes />
       </AppShell>
     </BrowserRouter>
