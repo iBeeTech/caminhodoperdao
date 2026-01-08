@@ -5,7 +5,7 @@ import GalleryView from "../View/GalleryView";
 import { GalleryContent } from "../Model";
 
 const GalleryController: React.FC = () => {
-  const { t, i18n } = useTranslation("gallery");
+  const { t } = useTranslation("gallery");
   const { galleryViewed, galleryAlbumClicked } = useAnalytics();
 
   const galleryContent: GalleryContent = useMemo(
@@ -19,7 +19,7 @@ const GalleryController: React.FC = () => {
         thumbnailText: t("albums.placeholderThumb"),
       })),
     }),
-    [i18n.language, t]
+    [t]
   );
 
   React.useEffect(() => {

@@ -7,7 +7,6 @@ export type LandingTone = "success" | "warn" | "error" | null;
 export interface LandingContent {
   hero: HeroSection;
   features: FeatureSection[];
-  testimonials: Testimonial[];
   callToAction: CallToActionSection;
 }
 
@@ -26,15 +25,6 @@ export interface FeatureSection {
   title: string;
   description: string;
   highlighted?: boolean;
-}
-
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  comment: string;
-  avatar?: string;
-  rating: number;
 }
 
 export interface CallToActionSection {

@@ -2,6 +2,11 @@
   "name": "caminhodoperdao",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8788",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "dependencies": {
     "@amplitude/analytics-browser": "^2.33.1",
     "@tanstack/react-query": "^5.64.0",

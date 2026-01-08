@@ -74,29 +74,15 @@
     },
     "testimonials": {
         "title": "O que dizem os participantes",
-        "items": [
-            {
-                "id": "1",
-                "name": "Maria Silva",
-                "role": "Participante do Programa",
-                "comment": "O Caminho do Perdão transformou completamente minha vida. Consegui me libertar de mágoas antigas e encontrar paz interior.",
-                "rating": 5
-            },
-            {
-                "id": "2",
-                "name": "João Santos",
-                "role": "Facilitador Voluntário",
-                "comment": "Ser parte desta comunidade me trouxe muito crescimento. Ajudar outros a encontrarem o perdão também me cura.",
-                "rating": 5
-            },
-            {
-                "id": "3",
-                "name": "Ana Costa",
-                "role": "Coordenadora Local",
-                "comment": "Um programa que realmente funciona. Vi pessoas se transformarem de forma incrível através destes ensinamentos.",
-                "rating": 5
-            }
-        ]
+        "empty": "Nenhum depoimento disponível no momento.",
+        "error": "Algo deu errado por aqui! Volte mais tarde para ver os depoimentos",
+        "callout": {
+            "title": "Deixe seu depoimento",
+            "message": "Sua história de transformação é importante para nós! Entre em contato via WhatsApp e compartilhe como o Caminho do Perdão impactou sua vida.",
+            "buttonText": "Falar no WhatsApp",
+            "whatsappUrl": "https://wa.me/5511999999999?text=Olá%21%20Gostaria%20de%20deixar%20meu%20depoimento%20sobre%20o%20Caminho%20do%20Perdão"
+        },
+        "items": []
     },
     "cta": {
         "title": "Pronto para Começar sua Jornada?",

@@ -141,7 +141,8 @@ export function validateRegistrationForm(
   };
 }
 
-export default {
+const validationUtils = {
   validateCheckForm,
   validateRegistrationForm,
 };
+export default validationUtils;

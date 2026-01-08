@@ -110,7 +110,7 @@ const LandingView: React.FC<LandingViewProps> = ({
 
         <FeaturesSection features={content.features} />
 
-        <TestimonialsSection testimonials={content.testimonials} />
+        <TestimonialsSection />
 
         <CtaSection callToAction={content.callToAction} onCallToAction={onCallToAction} />
       </MainContent>

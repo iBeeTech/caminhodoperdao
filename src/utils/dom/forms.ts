@@ -27,4 +27,5 @@ export function focusFirstError(errorMap: Record<string, string>, fieldRefs: Par
   }
 }
 
-export default { getFieldValue, focusFirstError };
+const formUtils = { getFieldValue, focusFirstError };
+export default formUtils;

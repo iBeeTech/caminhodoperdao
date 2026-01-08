@@ -5,7 +5,7 @@ import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
 import { useAnalytics } from "../../../hooks/useAnalytics";
 import LandingView from "../View/LandingView";
-import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone, Testimonial } from "../Model";
+import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone } from "../Model";
 import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
 
 // Utils imports
@@ -15,15 +15,16 @@ import { getFieldValue, focusFirstError } from "../../../utils/dom/forms";
 import { featureIconMap } from "../../../utils/landing/featureIcons";
 import { validateCheckForm, validateRegistrationForm } from "../../../utils/landing/validation";
 import { syncFormWithStatus } from "../../../utils/landing/syncFormWithStatus";
+import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 
 const LandingController: React.FC = () => {
-  const { t, i18n } = useTranslation("landing");
-  const { pageViewed, formSubmitted, formSuccess, formError, ctaClicked } = useAnalytics();
+  const { t } = useTranslation("landing");
+  const { pageViewed, formSubmitted, formError, ctaClicked } = useAnalytics();
+  const { fetchAddress } = useAddressByCep();
 
   const landingContent: LandingContent = useMemo(() => {
     const featuresWithoutIcon = t("features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
-    const testimonials = t("testimonials.items", { returnObjects: true }) as Testimonial[];
 
     return {
       hero: {
@@ -37,7 +38,6 @@ const LandingController: React.FC = () => {
         ...feature,
         icon: featureIconMap[feature.id] ?? "",
       })),
-      testimonials,
       callToAction: {
         title: t("cta.title"),
         description: t("cta.description"),
@@ -45,7 +45,7 @@ const LandingController: React.FC = () => {
         buttonAction: "signup",
       },
     };
-  }, [i18n.language, t]);
+  }, [t]);
 
   const [phase, setPhase] = useState<LandingPhase>("check");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -65,6 +65,25 @@ const LandingController: React.FC = () => {
       pageViewTrackedRef.current = true;
     }
   }, [pageViewed]);
+
+  // Restaurar dados persistidos quando transicionar para form
+  React.useEffect(() => {
+    if (phase === "form" && typeof window !== "undefined") {
+      const savedName = localStorage.getItem("landing_form_name");
+      const savedEmail = localStorage.getItem("landing_form_email");
+
+      if (savedName && nameRef.current) {
+        nameRef.current.value = savedName;
+      }
+      if (savedEmail && emailRef.current) {
+        emailRef.current.value = savedEmail;
+      }
+
+      // Limpar localStorage após usar
+      localStorage.removeItem("landing_form_name");
+      localStorage.removeItem("landing_form_email");
+    }
+  }, [phase]);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -133,9 +152,25 @@ const LandingController: React.FC = () => {
     event.target.value = formatted;
   };
 
-  const onCepChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onCepChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const masked = formatCepBR(event.target.value);
     event.target.value = masked;
+
+    // Se tem 8 dígitos, buscar endereço
+    if (masked.replace(/\D/g, "").length === 8) {
+      const address = await fetchAddress(masked);
+      if (address) {
+        // Preencher campos automaticamente
+        // Concatenar endereço + bairro
+        const fullAddress = address.neighborhood 
+          ? `${address.street}, ${address.neighborhood}`
+          : address.street;
+        
+        if (addressRef.current) addressRef.current.value = fullAddress;
+        if (cityRef.current) cityRef.current.value = address.city;
+        if (stateRef.current) stateRef.current.value = address.state;
+      }
+    }
   };
 
   const handleCheckStatus = async (event: FormEvent<HTMLFormElement>) => {
@@ -161,6 +196,10 @@ const LandingController: React.FC = () => {
       existingDataRef.current = result;
 
       if (!result.exists) {
+        // Persistir nome e email para pré-preenchimento
+        const name = getFieldValue(nameRef.current);
+        localStorage.setItem("landing_form_name", name);
+        localStorage.setItem("landing_form_email", email);
         setPhase("form");
         return;
       }

@@ -80,3 +80,86 @@ export const AuthorRole = styled.p`
   color: #6c757d;
   margin: 0;
 `;
+
+export const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1.125rem;
+`;
+
+export const ErrorContainer = styled.div`
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 20px;
+  color: #dc2626;
+  text-align: center;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 500;
+`;
+
+export const EmptyContainer = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: ${({ theme }) => theme.colors.text};
+
+  p {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+`;
+
+export const CalloutContainer = styled.div`
+  margin-top: 4rem;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart}20 0%, ${({ theme }) => theme.colors.gradientEnd}20 100%);
+  border-left: 4px solid ${({ theme }) => theme.colors.gradientStart};
+  border-radius: 12px;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 2rem;
+    margin-top: 3rem;
+  }
+`;
+
+export const CalloutTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text};
+  margin: 0 0 1rem 0;
+`;
+
+export const CalloutText = styled.p`
+  font-size: 1.1rem;
+  color: ${({ theme }) => theme.colors.text};
+  margin: 0 0 1.5rem 0;
+  line-height: 1.6;
+`;
+
+export const WhatsAppLink = styled.a`
+  display: inline-block;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart} 0%, ${({ theme }) => theme.colors.gradientEnd} 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
