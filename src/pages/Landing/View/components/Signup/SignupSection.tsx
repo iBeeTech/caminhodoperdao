@@ -431,7 +431,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     </QRCodeContainer>
                   )}
                   <PixActions style={{ marginTop: "1.5rem", justifyContent: "center" }}>
-                    <a 
+                    <button
                       onClick={onReopenRegistration}
                       style={{
                         cursor: "pointer",
@@ -439,13 +439,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         textDecoration: "underline",
                         fontSize: "0.95rem",
                         fontWeight: "500",
-                        transition: "color 0.2s"
+                        transition: "color 0.2s",
+                        background: "none",
+                        border: "none",
+                        padding: "0",
+                        font: "inherit"
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
                     >
                       Fazer nova inscrição
-                    </a>
+                    </button>
                   </PixActions>
                 </PixBox>
               )}
@@ -553,7 +557,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     </TrackedButton>
                   </div>
                   <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                    <a 
+                    <button
                       onClick={onReopenRegistration}
                       style={{
                         cursor: "pointer",
@@ -561,13 +565,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         textDecoration: "underline",
                         fontSize: "0.95rem",
                         fontWeight: "500",
-                        transition: "color 0.2s"
+                        transition: "color 0.2s",
+                        background: "none",
+                        border: "none",
+                        padding: "0",
+                        font: "inherit"
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
                     >
                       Fazer nova inscrição
-                    </a>
+                    </button>
                   </div>
                   <WarningNote style={{ marginTop: "1.5rem" }}>
                     <SignupWarningIcon>⚠️</SignupWarningIcon>

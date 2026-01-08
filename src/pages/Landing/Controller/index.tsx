@@ -428,7 +428,7 @@ const LandingController: React.FC = () => {
         setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
-      setPhase("form");
+      setPhase("check");
     } catch (error) {
       setStatusMessage(t("signup.status.reopenError"));
       setStatusTone("error");
