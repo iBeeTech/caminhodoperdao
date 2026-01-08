@@ -430,6 +430,23 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       />
                     </QRCodeContainer>
                   )}
+                  <PixActions style={{ marginTop: "1.5rem", justifyContent: "center" }}>
+                    <a 
+                      onClick={onReopenRegistration}
+                      style={{
+                        cursor: "pointer",
+                        color: "#2563eb",
+                        textDecoration: "underline",
+                        fontSize: "0.95rem",
+                        fontWeight: "500",
+                        transition: "color 0.2s"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
+                    >
+                      Fazer nova inscrição
+                    </a>
+                  </PixActions>
                 </PixBox>
               )}
 
@@ -534,6 +551,23 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       />
                       {t("signup.status.whatsappGroupButtonText")}
                     </TrackedButton>
+                  </div>
+                  <div style={{ marginTop: "1rem", textAlign: "center" }}>
+                    <a 
+                      onClick={onReopenRegistration}
+                      style={{
+                        cursor: "pointer",
+                        color: "#2563eb",
+                        textDecoration: "underline",
+                        fontSize: "0.95rem",
+                        fontWeight: "500",
+                        transition: "color 0.2s"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
+                    >
+                      Fazer nova inscrição
+                    </a>
                   </div>
                   <WarningNote style={{ marginTop: "1.5rem" }}>
                     <SignupWarningIcon>⚠️</SignupWarningIcon>
