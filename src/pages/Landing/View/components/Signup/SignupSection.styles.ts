@@ -65,6 +65,21 @@ export const StatusMessage = styled.div<{ $tone?: string | null }>`
   border: 1px solid #fed7aa;
   background: #fff7ed;
   color: #92400e;
+  animation: slideInAndBounce 0.6s ease-out;
+
+  @keyframes slideInAndBounce {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    70% {
+      transform: translateY(5px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
   ${({ $tone }) =>
     $tone === "error" &&

@@ -136,15 +136,25 @@ export async function expirePending(DB: D1Database): Promise<void> {
 }
 
 export async function countActive(DB: D1Database): Promise<number> {
-  const row = await DB.prepare(
-    "SELECT COUNT(1) as total FROM registrations WHERE status IN ('PENDING','PAID')"
-  ).first<{ total: number }>();
-  return row?.total ?? 0;
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID')"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting active registrations:", error);
+    return 0;
+  }
 }
 
 export async function countActiveSleep(DB: D1Database): Promise<number> {
-  const row = await DB.prepare(
-    "SELECT COUNT(1) as total FROM registrations WHERE status IN ('PENDING','PAID') AND sleep_at_monastery = 1"
-  ).first<{ total: number }>();
-  return row?.total ?? 0;
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID') AND sleep_at_monastery = 1"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting active sleep registrations:", error);
+    return 0;
+  }
 }

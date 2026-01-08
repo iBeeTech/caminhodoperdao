@@ -290,6 +290,11 @@ const LandingController: React.FC = () => {
       if (data.registration_id) {
         identifyRegisteredUser(data.registration_id);
       }
+
+      // Manter usuário na seção de inscrição após submissão bem-sucedida
+      setTimeout(() => {
+        document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
     } catch (error) {
       if (error instanceof HttpError && error.status === 409) {
         try {
@@ -315,6 +320,11 @@ const LandingController: React.FC = () => {
           }
 
           setPhase("status");
+
+          // Manter usuário na seção de inscrição após verificação
+          setTimeout(() => {
+            document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
         } catch (statusError) {
           setStatusMessage(t("signup.status.processingError"));
           setStatusTone("error");

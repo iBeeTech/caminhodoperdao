@@ -154,7 +154,7 @@
             "pixPendingPlaceholder": "Aguardando",
             "paidBox": "Pagamento confirmado. Nos vemos no evento!",
             "paidWarning": "Se você quiser cancelar sua inscrição ou alterá-la, entre em contato conosco via WhatsApp.",
-            "waitingPayment": "Sua inscrição será finalizada quando você realizar o pagamento do PIX.",
+            "waitingPayment": "Para finaliza-la realize o pagamento do PIX, o qual irá se expirar em 24h.",
             "reopen": "Refazer inscrição"
         },
         "errors": {

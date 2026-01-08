@@ -5,6 +5,8 @@ import { Callout, FormField, Input, Select } from "../../../../../components";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
 import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
+import checkAmarelo from "../../../../../assets/check-amarelo.png";
+import check from "../../../../../assets/check.png";
 import {
   Container,
   MonasteryNote,
@@ -301,13 +303,53 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showStatus && (
             <>
-              {statusMessage && (
+              {statusMessage && currentStatus !== "PAID" && currentStatus !== "CANCELED" && (
                 <StatusMessage
                   $tone={statusTone}
                   role={statusRole}
                   aria-live={statusLive}
                   tabIndex={-1}
+                  style={{ fontSize: "1.05rem", textAlign: "center" }}
                 >
+                  {currentStatus === "PENDING" && (
+                    <div style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      textTransform: "uppercase",
+                      marginBottom: "1rem",
+                      fontSize: "1.1rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.5rem"
+                    }}>
+                      <img 
+                        src={checkAmarelo} 
+                        alt="Sucesso" 
+                        style={{
+                          width: "1.5rem",
+                          height: "1.5rem",
+                          animation: "scaleAndSpin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                        }}
+                      />
+                      Sua inscrição foi reservada!
+                    </div>
+                  )}
+                  <style>{`
+                    @keyframes scaleAndSpin {
+                      0% {
+                        transform: scale(0) rotate(-180deg);
+                        opacity: 0;
+                      }
+                      50% {
+                        transform: scale(1.1);
+                      }
+                      100% {
+                        transform: scale(1) rotate(0deg);
+                        opacity: 1;
+                      }
+                    }
+                  `}</style>
                   {statusMessage}
                 </StatusMessage>
               )}
@@ -324,8 +366,15 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               )}
 
               {currentStatus === "CANCELED" && (
-                <PixBox>
-                    <PixLabel>{t("signup.status.pixExpiredLabel")}</PixLabel>
+                <PixBox style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem", padding: "1.5rem", backgroundColor: "#fef2f2", borderColor: "#fecdd3" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "1.5rem", fontWeight: "bold", textTransform: "uppercase", color: "#991b1b" }}>
+                      Inscrição cancelada
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "0.95rem", color: "#991b1b", textAlign: "center" }}>
+                    Devido ao PIX ter expirado. Refaça a inscrição e pague o PIX dentro de 24h para confirmá-la.
+                  </span>
                   <PixActions>
                     <TrackedButton
                       pageName="landing"
@@ -345,7 +394,40 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
               {currentStatus === "PAID" && (
                 <>
-                    <PaidBox>{t("signup.status.paidBox")}</PaidBox>
+                    <PaidBox style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem", padding: "1.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                        <img 
+                          src={check} 
+                          alt="Confirmado" 
+                          style={{
+                            width: "1.5rem",
+                            height: "1.5rem",
+                            animation: "scaleAndSpin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                          }}
+                        />
+                        <span style={{ fontSize: "1.1rem", fontWeight: "bold", textTransform: "uppercase" }}>
+                          Inscrição confirmada
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "1rem" }}>
+                        {t("signup.status.paidBox")}
+                      </span>
+                    </PaidBox>
+                    <style>{`
+                      @keyframes scaleAndSpin {
+                        0% {
+                          transform: scale(0) rotate(-180deg);
+                          opacity: 0;
+                        }
+                        50% {
+                          transform: scale(1.1);
+                        }
+                        100% {
+                          transform: scale(1) rotate(0deg);
+                          opacity: 1;
+                        }
+                      }
+                    `}</style>
                   <WarningNote>
                     <SignupWarningIcon>⚠️</SignupWarningIcon>
                       <span>{t("signup.status.paidWarning")}</span>

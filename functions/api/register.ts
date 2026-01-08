@@ -140,17 +140,22 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 }
 
 async function handleAvailability(env: Env): Promise<Response> {
-  await expirePending(env.DB);
-  const total = await countActive(env.DB);
-  const sleepers = await countActiveSleep(env.DB);
-  return json(200, {
-    totalFull: total >= MAX_TOTAL,
-    monasteryFull: sleepers >= MAX_SLEEP,
-    total,
-    sleepers,
-    totalLimit: MAX_TOTAL,
-    monasteryLimit: MAX_SLEEP,
-  });
+  try {
+    await expirePending(env.DB);
+    const total = await countActive(env.DB);
+    const sleepers = await countActiveSleep(env.DB);
+    return json(200, {
+      totalFull: total >= MAX_TOTAL,
+      monasteryFull: sleepers >= MAX_SLEEP,
+      total,
+      sleepers,
+      totalLimit: MAX_TOTAL,
+      monasteryLimit: MAX_SLEEP,
+    });
+  } catch (error) {
+    console.error("Error in handleAvailability:", error);
+    return serverError("availability_error");
+  }
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
