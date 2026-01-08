@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useSectionView } from "../../../../../hooks/useSectionView";
 import { useTestimonials } from "../../../../../hooks/useTestimonials";
 import {
   AuthorAvatar,
@@ -37,7 +36,6 @@ const renderStars = (rating?: number) =>
 const TestimonialsSection: React.FC = () => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
-  useSectionView("testimonials", "testimonials");
 
   if (isLoading) {
     return (

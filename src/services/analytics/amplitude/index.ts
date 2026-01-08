@@ -7,6 +7,7 @@
 
 import { amplitudeClient } from "./client";
 import { amplitudeConfig, amplitudeInitConfig } from "./config";
+import { initAnonymousIdentity } from "../../../utils/analytics/identity";
 import type { EventProperties, UserProperties } from "./types";
 
 /**
@@ -34,6 +35,7 @@ export async function initAmplitude(): Promise<void> {
 
   try {
     await amplitudeClient.init(amplitudeConfig.apiKey, amplitudeInitConfig);
+    initAnonymousIdentity();
     if (amplitudeConfig.debug) {
       console.debug("[Amplitude] Successfully initialized");
     }

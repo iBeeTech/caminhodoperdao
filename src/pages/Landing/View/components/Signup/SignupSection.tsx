@@ -1,7 +1,10 @@
 import React, { ChangeEvent, FormEvent, RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
-import { Button, Callout, FormField, Input, Select } from "../../../../../components";
+import { Callout, FormField, Input, Select } from "../../../../../components";
+import TrackedButton from "../../../../../components/analytics/TrackedButton";
+import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
+import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import {
   Container,
   MonasteryNote,
@@ -135,7 +138,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   autoComplete="email"
                 />
               </FormField>
-              <Button
+              <TrackedButton
+                pageName="landing"
+                ctaId={LANDING_CTAS.FORM_CHECK_STATUS}
+                sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                position={LANDING_SECTIONS.REGISTRATION_FORM.position}
                 variant="primary"
                 size="md"
                 type="submit"
@@ -143,7 +151,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 loading={isCheckingStatus}
               >
                 {isCheckingStatus ? t("signup.checkForm.loading") : t("signup.checkForm.submit")}
-              </Button>
+              </TrackedButton>
             </SignupForm>
           )}
 
@@ -274,9 +282,20 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   </Select>
                 )}
               </FormField>
-              <Button variant="primary" size="md" type="submit" disabled={isSubmittingRegistration} loading={isSubmittingRegistration}>
+              <TrackedButton
+                pageName="landing"
+                ctaId={LANDING_CTAS.FORM_SUBMIT}
+                sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                variant="primary"
+                size="md"
+                type="submit"
+                disabled={isSubmittingRegistration}
+                loading={isSubmittingRegistration}
+              >
                 {isSubmittingRegistration ? t("signup.registrationForm.loading") : t("signup.registrationForm.submit")}
-              </Button>
+              </TrackedButton>
             </SignupForm>
           )}
 
@@ -308,9 +327,18 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 <PixBox>
                     <PixLabel>{t("signup.status.pixExpiredLabel")}</PixLabel>
                   <PixActions>
-                    <Button variant="primary" size="sm" onClick={onReopenRegistration}>
-                        {t("signup.status.reopen")}
-                    </Button>
+                    <TrackedButton
+                      pageName="landing"
+                      ctaId={LANDING_CTAS.REOPEN_REGISTRATION}
+                      sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                      sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                      position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                      variant="primary"
+                      size="sm"
+                      onClick={onReopenRegistration}
+                    >
+                      {t("signup.status.reopen")}
+                    </TrackedButton>
                   </PixActions>
                 </PixBox>
               )}

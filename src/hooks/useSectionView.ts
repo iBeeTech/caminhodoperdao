@@ -1,124 +1,117 @@
 import { useEffect, useRef } from "react";
+import type { AmplitudeEventProperties } from "../utils/analytics/amplitudeEvents";
 import { useAnalytics } from "./useAnalytics";
 
-/**
- * Hook para rastrear quando uma seção entra em visibilidade na tela
- * 
- * ⚠️ CLIENT-ONLY: Só executa no cliente (usa window e IntersectionObserver)
- * 
- * Dispara o evento de section_viewed apenas uma vez por página load
- * 
- * Usa a nova API padronizada que injeta automaticamente:
- * - page_name (inferido da rota)
- * - section_id (obrigatório)
- * - section_name (obrigatório)
- * - timestamp
- * 
- * Emite: section_viewed com propriedades completas
- * 
- * @param sectionId - ID da seção a ser rastreada (deve corresponder ao id do DOM)
- * @param sectionName - Nome legível da seção para o evento analytics
- * @param pageName - Nome da página (inferido automaticamente se não fornecido)
- * @param position - Posição da seção ("top", "middle", "bottom") - opcional
- * 
- * @example
- * const MySection: React.FC = () => {
- *   useSectionView("features-section", "features");
- *   return <section id="features-section">...</section>;
- * };
- * 
- * @example Com página customizada
- * useSectionView("about-section", "about", "landing", "middle");
- */
-export const useSectionView = (
-  sectionId: string,
-  sectionName: string,
-  pageName?: string,
-  position?: string
-) => {
-  const { sectionViewed } = useAnalytics();
-  const hasTrackedRef = useRef(false);
+type UseSectionViewOptions = {
+  pageName?: string;
+  sectionId: string;
+  sectionName: string;
+  position?: string;
+  threshold?: number;
+  enableSessionDedup?: boolean;
+  eventType?: "section" | "form_section";
+  additionalProps?: Partial<AmplitudeEventProperties>;
+};
+
+const seenInMemory = new Set<string>();
+const SESSION_KEY = "section_viewed_once";
+
+const loadSessionSet = (): Set<string> => {
+  if (typeof window === "undefined" || !window.sessionStorage) return new Set<string>();
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return new Set<string>();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return new Set<string>(parsed as string[]);
+  } catch (error) {
+    console.warn("[useSectionView] Failed to read sessionStorage", error);
+  }
+  return new Set<string>();
+};
+
+const persistSessionSet = (set: Set<string>): void => {
+  if (typeof window === "undefined" || !window.sessionStorage) return;
+  try {
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(Array.from(set)));
+  } catch (error) {
+    console.warn("[useSectionView] Failed to write sessionStorage", error);
+  }
+};
+
+const getDedupKey = (pageName: string, sectionId: string): string => `${pageName}::${sectionId}`;
+
+export const useSectionView = ({
+  pageName,
+  sectionId,
+  sectionName,
+  position,
+  threshold = 0.25,
+  enableSessionDedup = true,
+  eventType = "section",
+  additionalProps,
+}: UseSectionViewOptions) => {
+  const { sectionViewed, formSectionViewed } = useAnalytics();
+  const elementRef = useRef<HTMLElement | null>(null);
+  const sessionSetRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
-    // Safety: só executar no cliente
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    // Safety: verificar se IntersectionObserver existe (older browsers)
+    if (typeof window === "undefined") return;
     if (!("IntersectionObserver" in window)) {
       console.warn("[useSectionView] IntersectionObserver not supported");
       return;
     }
 
-    const element = document.getElementById(sectionId);
-    if (!element) {
-      console.warn(`[useSectionView] Element with id "${sectionId}" not found`);
-      return;
+    const target = elementRef.current;
+    if (!target) return;
+
+    const resolvedPageName = pageName || inferPageNameFromRoute();
+    if (!sessionSetRef.current) {
+      sessionSetRef.current = loadSessionSet();
     }
+
+    const dedupKey = getDedupKey(resolvedPageName, sectionId);
+    const alreadyTracked = seenInMemory.has(dedupKey) || (enableSessionDedup && sessionSetRef.current.has(dedupKey));
+    if (alreadyTracked) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // Se a seção entrou em visibilidade e ainda não foi rastreada
-          if (entry.isIntersecting && !hasTrackedRef.current) {
-            // Inferir pageName da rota se não fornecido
-            const inferredPageName = pageName || inferPageNameFromRoute();
-            
-            // Emitir evento com todas as propriedades
-            sectionViewed(
-              inferredPageName,
-              sectionId,
-              sectionName,
-              position
-            );
-            
-            hasTrackedRef.current = true;
-            // Desinscrever após rastrear para liberar memória
-            observer.unobserve(element);
+          if (!entry.isIntersecting) return;
+          if (seenInMemory.has(dedupKey)) return;
+
+          const route = typeof window !== "undefined" ? window.location.pathname : undefined;
+          const track = eventType === "form_section" ? formSectionViewed : sectionViewed;
+
+          track(resolvedPageName, sectionId, sectionName, position, { route, ...additionalProps });
+
+          seenInMemory.add(dedupKey);
+          if (enableSessionDedup && sessionSetRef.current) {
+            sessionSetRef.current.add(dedupKey);
+            persistSessionSet(sessionSetRef.current);
           }
+
+          observer.unobserve(entry.target);
         });
       },
-      {
-        threshold: 0.25, // Quando 25% da seção está visível
-      }
+      { threshold }
     );
 
-    observer.observe(element);
-
+    observer.observe(target);
     return () => {
-      observer.unobserve(element);
+      observer.unobserve(target);
       observer.disconnect();
     };
-  }, [sectionId, sectionName, pageName, position, sectionViewed]);
+  }, [pageName, position, sectionId, sectionName, threshold, enableSessionDedup, sectionViewed, formSectionViewed, eventType, additionalProps]);
+
+  return elementRef;
 };
 
-/**
- * Inferir nome da página baseado na rota atual
- * 
- * Mapeamento simples de rotas para nomes de página
- * Extensível conforme novos tipos de página forem adicionados
- */
-function inferPageNameFromRoute(): string {
-  if (typeof window === "undefined") {
-    return "unknown";
-  }
-
+const inferPageNameFromRoute = (): string => {
+  if (typeof window === "undefined") return "unknown";
   const pathname = window.location.pathname;
-
-  if (pathname === "/" || pathname === "") {
-    return "landing";
-  }
-
-  if (pathname.startsWith("/gallery")) {
-    return "gallery";
-  }
-
-  if (pathname.startsWith("/about")) {
-    return "about";
-  }
-
-  // Fallback: usar primeira parte do pathname
-  const parts = pathname.split("/").filter((p) => p);
+  if (pathname === "/" || pathname === "") return "landing";
+  if (pathname.startsWith("/gallery")) return "gallery";
+  if (pathname.startsWith("/about")) return "about";
+  const parts = pathname.split("/").filter(Boolean);
   return parts[0] || "unknown";
-}
+};

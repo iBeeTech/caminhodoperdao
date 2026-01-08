@@ -1,0 +1,15 @@
+Event Name,Description,Category,Is Active,Visibility
+page_viewed,Visualização de página,PAGE,true,Visible
+section_viewed,Seção se tornou visível,SECTION,true,Visible
+form_section_viewed,Seção de formulário ficou visível,FORMS,true,Visible
+navigation_link_clicked,Clique em link de navegação,NAVIGATION,true,Visible
+navigation_menu_toggled,Menu aberto/fechado,NAVIGATION,true,Visible
+cta_clicked,Clique em CTA,CTA,true,Visible
+form_started,Formulário começou a ser preenchido,FORMS,true,Visible
+form_submitted,Formulário foi enviado,FORMS,true,Visible
+form_success,Formulário processado com sucesso,FORMS,true,Visible
+form_error,Erro ao processar formulário,FORMS,true,Visible
+gallery_viewed,Visualização de galeria,GALLERY,true,Visible
+gallery_album_clicked,Clique em álbum da galeria,GALLERY,true,Visible
+external_link_clicked,Clique em link externo,EXTERNAL,true,Visible
+error_occurred,Erro na aplicação,ERRORS,true,Visible

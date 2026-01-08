@@ -29,6 +29,8 @@ export const AMPLITUDE_EVENTS = {
   // ============ SECTION VIEWS ============
   /** Quando uma seção se torna visível na tela */
   SECTION_VIEWED: "section_viewed",
+  /** Quando uma seção de formulário é vista */
+  FORM_SECTION_VIEWED: "form_section_viewed",
 
   // ============ NAVIGATION ============
   /** Clique em um link de navegação */
@@ -84,6 +86,13 @@ export const EVENT_PROPERTIES_SCHEMA = {
     description: "Seção se tornou visível",
   },
 
+  // FORM_SECTION_VIEWED: { page_name*, section_id*, section_name*, position?, message_camel_case? }
+  form_section_viewed: {
+    required: ["page_name", "section_id", "section_name"],
+    optional: ["position", "message_camel_case"],
+    description: "Seção de formulário ficou visível",
+  },
+
   // NAVIGATION_LINK_CLICKED: { page_name*, link_text*, href*, location? }
   navigation_link_clicked: {
     required: ["page_name", "link_text", "href"],
@@ -101,7 +110,7 @@ export const EVENT_PROPERTIES_SCHEMA = {
   // CTA_CLICKED: { page_name*, cta_id*, cta_text?, destination? }
   cta_clicked: {
     required: ["page_name", "cta_id"],
-    optional: ["cta_text", "destination"],
+    optional: ["cta_text", "destination", "section_id", "section_name", "position", "component_name"],
     description: "Clique em CTA",
   },
 
@@ -186,11 +195,13 @@ export interface AmplitudeEventProperties {
   section_id?: string;
   section_name?: string;
   position?: "top" | "middle" | "bottom" | string;
+  message_camel_case?: string;
   
   // CTA
   cta_id?: string;
   cta_text?: string;
   destination?: string;
+  component_name?: string;
   
   // Formulários
   form_id?: string;

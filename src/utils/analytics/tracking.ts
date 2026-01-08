@@ -73,6 +73,29 @@ export function trackSectionViewed(
 }
 
 /**
+ * Rastrear visualização de seção de formulário
+ */
+export function trackFormSectionViewed(
+  pageName: string,
+  sectionId: string,
+  sectionName: string,
+  position?: string,
+  additionalProps?: Partial<AmplitudeEventProperties>
+): void {
+  const props = prepareEventProperties(
+    AMPLITUDE_EVENTS.FORM_SECTION_VIEWED,
+    pageName,
+    {
+      section_id: sectionId,
+      section_name: sectionName,
+      position,
+      ...additionalProps,
+    }
+  );
+  trackEvent(AMPLITUDE_EVENTS.FORM_SECTION_VIEWED, props);
+}
+
+/**
  * Rastrear clique em link de navegação
  * 
  * @param pageName - Nome da página (ex: "landing")

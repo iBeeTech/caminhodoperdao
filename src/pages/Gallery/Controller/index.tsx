@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useAnalytics } from "../../../hooks/useAnalytics";
 import GalleryView from "../View/GalleryView";
 import { GalleryContent } from "../Model";
+import { GALLERY_CTAS } from "../../../utils/analytics/catalog/ctas";
+import { GALLERY_SECTIONS } from "../../../utils/analytics/catalog/sections";
 
 const GalleryController: React.FC = () => {
   const { t } = useTranslation("gallery");
@@ -30,7 +32,12 @@ const GalleryController: React.FC = () => {
     <GalleryView
       content={galleryContent}
       onOpenAlbum={year => {
-        galleryAlbumClicked(year);
+        galleryAlbumClicked(year, year.toString(), {
+          section_id: GALLERY_SECTIONS.ALBUM_LIST.id,
+          section_name: GALLERY_SECTIONS.ALBUM_LIST.name,
+          position: GALLERY_SECTIONS.ALBUM_LIST.position,
+          cta_id: GALLERY_CTAS.VIEW_ALBUM,
+        });
         alert(t("actions.openAlbum", { year }));
       }}
     />

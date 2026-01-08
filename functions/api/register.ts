@@ -131,6 +131,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   return json(200, {
     status: "PENDING",
+    registration_id: existing?.id ?? id,
     payment_ref: charge.payment_ref,
     qrCodeText: charge.qrCodeText,
     qrCodeImageUrl: charge.qrCodeImageUrl ?? null,

@@ -2,6 +2,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Header } from "../../../components";
 import { GalleryContent } from "../Model";
+import TrackSection from "../../../components/analytics/TrackSection";
+import { GALLERY_SECTIONS } from "../../../utils/analytics/catalog/sections";
 import {
   AlbumButton,
   AlbumCard,
@@ -30,31 +32,45 @@ const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
       <Header />
 
       <GalleryMain id="main-content">
-        <GalleryHero>
-          <Container>
-            <h1>{content.heroTitle}</h1>
-            <p>{content.heroDescription}</p>
-          </Container>
-        </GalleryHero>
+        <TrackSection
+          pageName="gallery"
+          sectionId={GALLERY_SECTIONS.HERO.id}
+          sectionName={GALLERY_SECTIONS.HERO.name}
+          position={GALLERY_SECTIONS.HERO.position}
+        >
+          <GalleryHero>
+            <Container>
+              <h1>{content.heroTitle}</h1>
+              <p>{content.heroDescription}</p>
+            </Container>
+          </GalleryHero>
+        </TrackSection>
 
-        <GalleryListSection>
-          <Container>
-            <AlbumGrid>
-              {content.albums.map(album => (
-                <AlbumCard key={album.year}>
-                  <AlbumHeader>
-                    <AlbumYear as="h2">{album.year}</AlbumYear>
-                    <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
-                  </AlbumHeader>
-                  <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
-                  <AlbumButton type="button" onClick={() => onOpenAlbum(album.year)}>
-                    {t("actions.viewAlbum")}
-                  </AlbumButton>
-                </AlbumCard>
-              ))}
-            </AlbumGrid>
-          </Container>
-        </GalleryListSection>
+        <TrackSection
+          pageName="gallery"
+          sectionId={GALLERY_SECTIONS.ALBUM_LIST.id}
+          sectionName={GALLERY_SECTIONS.ALBUM_LIST.name}
+          position={GALLERY_SECTIONS.ALBUM_LIST.position}
+        >
+          <GalleryListSection>
+            <Container>
+              <AlbumGrid>
+                {content.albums.map(album => (
+                  <AlbumCard key={album.year}>
+                    <AlbumHeader>
+                      <AlbumYear as="h2">{album.year}</AlbumYear>
+                      <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
+                    </AlbumHeader>
+                    <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
+                    <AlbumButton type="button" onClick={() => onOpenAlbum(album.year)}>
+                      {t("actions.viewAlbum")}
+                    </AlbumButton>
+                  </AlbumCard>
+                ))}
+              </AlbumGrid>
+            </Container>
+          </GalleryListSection>
+        </TrackSection>
       </GalleryMain>
     </GalleryPage>
   );

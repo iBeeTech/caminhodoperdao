@@ -2,6 +2,8 @@ import React, { ChangeEvent, FormEvent, RefObject } from "react";
 import { Header } from "../../../components";
 import assis from "../../../assets/assis.png";
 import { AvailabilityState, LandingContent, LandingPhase, LandingTone } from "../Model";
+import TrackSection from "../../../components/analytics/TrackSection";
+import { LANDING_SECTIONS } from "../../../utils/analytics/catalog/sections";
 import {
   CtaSection,
   FeaturesSection,
@@ -13,6 +15,15 @@ import {
   TestimonialsSection,
 } from "./components";
 import { LandingPage, MainContent } from "./LandingView.styles";
+
+const toCamelCase = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+(.)/g, (_, chr: string) => chr.toUpperCase())
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/^[A-Z]/, (first) => first.toLowerCase());
 
 interface LandingViewProps {
   content: LandingContent;
@@ -72,50 +83,110 @@ const LandingView: React.FC<LandingViewProps> = ({
   onCallToAction,
   onReopenRegistration,
 }) => {
+  const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
   return (
     <LandingPage>
       <Header />
 
       <MainContent id="main-content">
-        <HeroSection
-          hero={content.hero}
-          heroImage={assis}
-          onPrimaryAction={onPrimaryAction}
-          onSecondaryAction={onSecondaryAction}
-        />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.HERO.id}
+          sectionName={LANDING_SECTIONS.HERO.name}
+          position={LANDING_SECTIONS.HERO.position}
+        >
+          <HeroSection
+            hero={content.hero}
+            heroImage={assis}
+            onPrimaryAction={onPrimaryAction}
+            onSecondaryAction={onSecondaryAction}
+          />
+        </TrackSection>
 
-        <SignupSection
-          availability={availability}
-          phase={phase}
-          errors={errors}
-          statusMessage={statusMessage}
-          statusTone={statusTone}
-          currentStatus={currentStatus}
-          qrCodeText={qrCodeText}
-          capacityCallout={capacityCallout}
-          isCheckingStatus={isCheckingStatus}
-          isSubmittingRegistration={isSubmittingRegistration}
-          isSleepLocked={isSleepLocked}
-          refs={refs}
-          onCheckStatus={onCheckStatus}
-          onSubmitRegistration={onSubmitRegistration}
-          onPhoneChange={onPhoneChange}
-          onCepChange={onCepChange}
-          onReopenRegistration={onReopenRegistration}
-        />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+          sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+          position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+          eventType="form_section"
+          additionalProps={formSectionProps}
+        >
+          <SignupSection
+            availability={availability}
+            phase={phase}
+            errors={errors}
+            statusMessage={statusMessage}
+            statusTone={statusTone}
+            currentStatus={currentStatus}
+            qrCodeText={qrCodeText}
+            capacityCallout={capacityCallout}
+            isCheckingStatus={isCheckingStatus}
+            isSubmittingRegistration={isSubmittingRegistration}
+            isSleepLocked={isSleepLocked}
+            refs={refs}
+            onCheckStatus={onCheckStatus}
+            onSubmitRegistration={onSubmitRegistration}
+            onPhoneChange={onPhoneChange}
+            onCepChange={onCepChange}
+            onReopenRegistration={onReopenRegistration}
+          />
+        </TrackSection>
 
-        <ScheduleSection />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.SCHEDULE.id}
+          sectionName={LANDING_SECTIONS.SCHEDULE.name}
+          position={LANDING_SECTIONS.SCHEDULE.position}
+        >
+          <ScheduleSection />
+        </TrackSection>
 
-        <HistorySection />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.HISTORY.id}
+          sectionName={LANDING_SECTIONS.HISTORY.name}
+          position={LANDING_SECTIONS.HISTORY.position}
+        >
+          <HistorySection />
+        </TrackSection>
 
-        <FeaturesSection features={content.features} />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.FEATURES.id}
+          sectionName={LANDING_SECTIONS.FEATURES.name}
+          position={LANDING_SECTIONS.FEATURES.position}
+        >
+          <FeaturesSection features={content.features} />
+        </TrackSection>
 
-        <TestimonialsSection />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.TESTIMONIALS.id}
+          sectionName={LANDING_SECTIONS.TESTIMONIALS.name}
+          position={LANDING_SECTIONS.TESTIMONIALS.position}
+        >
+          <TestimonialsSection />
+        </TrackSection>
 
-        <CtaSection callToAction={content.callToAction} onCallToAction={onCallToAction} />
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.CTA.id}
+          sectionName={LANDING_SECTIONS.CTA.name}
+          position={LANDING_SECTIONS.CTA.position}
+        >
+          <CtaSection callToAction={content.callToAction} onCallToAction={onCallToAction} />
+        </TrackSection>
       </MainContent>
 
-      <FooterSection />
+      <TrackSection
+        pageName="landing"
+        sectionId={LANDING_SECTIONS.FOOTER.id}
+        sectionName={LANDING_SECTIONS.FOOTER.name}
+        position={LANDING_SECTIONS.FOOTER.position}
+        as="footer"
+      >
+        <FooterSection />
+      </TrackSection>
     </LandingPage>
   );
 };

@@ -44,6 +44,7 @@
     "test:e2e:all-pages": "cypress run cypress/e2e/frontend/components/**/*.cy.ts",
     "cy:open": "npx cypress open",
     "cy:test-and-open": "bash scripts/test-and-open-cypress.sh",
+    "tracking:amplitude": "node scripts/generate-amplitude-tracking-plan.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

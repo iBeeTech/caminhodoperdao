@@ -37,6 +37,7 @@ export interface RegistrationPayload {
 
 export interface RegistrationResponse {
   status?: string;
+  registration_id?: string;
   qrCodeText?: string | null;
   message?: string;
 }

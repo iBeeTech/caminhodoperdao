@@ -1,8 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../../../components";
-import { useSectionView } from "../../../../../hooks/useSectionView";
+import TrackedButton from "../../../../../components/analytics/TrackedButton";
 import { HeroSection as HeroContent } from "../../../Model";
+import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
+import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import {
   HeroActions,
   HeroContainer,
@@ -25,7 +26,6 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ hero, heroImage, onPrimaryAction, onSecondaryAction }) => {
   const { t } = useTranslation("landing");
-  useSectionView("home", "hero");
 
   return (
     <HeroSectionWrapper id="home">
@@ -35,12 +35,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hero, heroImage, onPrimaryAct
           <HeroSubtitle>{hero.subtitle}</HeroSubtitle>
           <HeroDescription>{hero.description}</HeroDescription>
           <HeroActions>
-            <Button variant="ghost" size="lg" onClick={onPrimaryAction}>
+            <TrackedButton
+              pageName="landing"
+              ctaId={LANDING_CTAS.HERO_PRIMARY}
+              sectionId={LANDING_SECTIONS.HERO.id}
+              sectionName={LANDING_SECTIONS.HERO.name}
+              position={LANDING_SECTIONS.HERO.position}
+              variant="ghost"
+              size="lg"
+              onClick={onPrimaryAction}
+            >
               {hero.primaryButtonText}
-            </Button>
-            <Button variant="secondary" size="lg" onClick={onSecondaryAction}>
+            </TrackedButton>
+            <TrackedButton
+              pageName="landing"
+              ctaId={LANDING_CTAS.HERO_SECONDARY}
+              sectionId={LANDING_SECTIONS.HERO.id}
+              sectionName={LANDING_SECTIONS.HERO.name}
+              position={LANDING_SECTIONS.HERO.position}
+              variant="secondary"
+              size="lg"
+              onClick={onSecondaryAction}
+            >
               {hero.secondaryButtonText}
-            </Button>
+            </TrackedButton>
           </HeroActions>
         </HeroContentWrapper>
         <HeroVisual>

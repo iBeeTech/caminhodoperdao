@@ -17,10 +17,11 @@ import { validateCheckForm, validateRegistrationForm } from "../../../utils/land
 import { syncFormWithStatus } from "../../../utils/landing/syncFormWithStatus";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
+import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
 const LandingController: React.FC = () => {
   const { t } = useTranslation("landing");
-  const { pageViewed, formSubmitted, formError, ctaClicked } = useAnalytics();
+  const { pageViewed, formSubmitted, formError } = useAnalytics();
   const { fetchAddress } = useAddressByCep();
 
   const landingContent: LandingContent = useMemo(() => {
@@ -285,6 +286,10 @@ const LandingController: React.FC = () => {
       setStatusMessage(data.message ?? t("signup.status.waitingPayment"));
       setStatusTone("warn");
       setPhase("status");
+
+      if (data.registration_id) {
+        identifyRegisteredUser(data.registration_id);
+      }
     } catch (error) {
       if (error instanceof HttpError && error.status === 409) {
         try {
@@ -371,11 +376,9 @@ const LandingController: React.FC = () => {
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
       onPrimaryAction={() => {
-        ctaClicked("landing", "hero_primary", "Check Reservation", "signup_check");
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onSecondaryAction={() => {
-        ctaClicked("landing", "hero_secondary", "Learn More", "about");
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
       onCallToAction={() => {

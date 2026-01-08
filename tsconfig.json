@@ -28,6 +28,8 @@
     "node_modules",
     "tests",
     "cypress",
-    "types"
+    "types",
+    "**/__tests__/**",
+    "**/TRACKING_GUIDE.ts"
   ]
 }
