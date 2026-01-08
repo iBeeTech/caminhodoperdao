@@ -185,28 +185,53 @@ const LandingController: React.FC = () => {
     // Detectar se é backspace
     const isBackspace = previousValue.length > newValue.length;
     
-    const formatted = formatPhoneBR(newValue);
-    input.value = formatted;
+    // Extrair apenas dígitos do valor anterior e novo
+    const previousDigits = previousValue.replace(/\D/g, "");
+    const newDigits = newValue.replace(/\D/g, "");
     
-    // Calcular nova posição do cursor
+    // Se é backspace, remover um dígito
+    let cleanDigits = newDigits;
     let newCursorPos = cursorPos;
     
     if (isBackspace) {
-      // Se deletou um caractere especial, mover cursor uma posição pra trás
-      const deletedChar = previousValue[cursorPos - 1];
-      if (deletedChar && /[^\d]/.test(deletedChar)) {
-        newCursorPos = Math.max(0, cursorPos - 1);
-      } else {
-        newCursorPos = cursorPos;
+      // Detectar qual dígito foi removido
+      const deletedDigitCount = previousDigits.length - newDigits.length;
+      if (deletedDigitCount > 0) {
+        // Encontrar a posição do dígito deletado e remover os caracteres especiais ao redor
+        const charBeforeCursor = previousValue[cursorPos - 1];
+        if (charBeforeCursor && /[^\d]/.test(charBeforeCursor)) {
+          // Se há caractere especial, mover cursor pra trás dele também
+          newCursorPos = Math.max(0, cursorPos - 1);
+        }
       }
     } else {
-      // Se está digitando, encontrar a próxima posição de dígito
-      const digitsAdded = formatted.replace(/\D/g, "").length - previousValue.replace(/\D/g, "").length;
-      newCursorPos = cursorPos + digitsAdded + (formatted.length - previousValue.length);
+      // Se está digitando (inserindo um dígito)
+      const digitsAdded = newDigits.length - previousDigits.length;
+      if (digitsAdded > 0) {
+        cleanDigits = newDigits.slice(0, 11); // Máximo 11 dígitos
+      }
+      newCursorPos = cursorPos + (newValue.length - previousValue.length);
     }
     
-    // Limitar a posição do cursor ao tamanho do text
-    newCursorPos = Math.min(newCursorPos, formatted.length);
+    // Formatar os dígitos
+    const formatted = formatPhoneBR(cleanDigits);
+    input.value = formatted;
+    
+    // Posicionar o cursor logo após o último dígito inserido
+    if (!isBackspace && formatted.length > 0) {
+      // Encontrar a posição do último dígito + 1
+      newCursorPos = formatted.length;
+      // Voltar até encontrar o último dígito e posicionar após ele
+      for (let i = formatted.length - 1; i >= 0; i--) {
+        if (/\d/.test(formatted[i])) {
+          newCursorPos = i + 1;
+          break;
+        }
+      }
+    }
+    
+    // Limitar a posição do cursor
+    newCursorPos = Math.max(0, Math.min(newCursorPos, formatted.length));
     
     // Usar setTimeout para garantir que o cursor seja posicionado após o render
     setTimeout(() => {

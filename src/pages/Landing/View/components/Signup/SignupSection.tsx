@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
 import { Callout, FormField, Input, Select } from "../../../../../components";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
+import EnrollmentCallout from "../../../../../components/molecules/EnrollmentCallout/EnrollmentCallout";
+import { useFeatureFlags } from "../../../../../hooks/useFeatureFlags";
 import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import checkAmarelo from "../../../../../assets/check-amarelo.png";
@@ -89,13 +91,14 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const [sleepSelected, setSleepSelected] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
   const { t } = useTranslation("landing");
+  const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
   const statusRole = statusTone === "error" ? "alert" : "status";
   const statusLive = statusTone === "error" ? "assertive" : "polite";
   const pixTextareaId = "pix-code";
   const hasAvailabilityError = Boolean(availability.error);
-  const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull;
-  const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull;
-  const showStatus = !hasAvailabilityError && phase === "status";
+  const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull && enrollmentEnabled;
+  const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull && enrollmentEnabled;
+  const showStatus = !hasAvailabilityError && phase === "status" && enrollmentEnabled;
 
   const handleCopyBrcode = async () => {
     if (!qrCodeText) return;
@@ -136,6 +139,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
             </SignupBullets>
           </SignupHeader>
 
+          <EnrollmentCallout />
           {capacityCallout && <Callout variant="warning">{capacityCallout}</Callout>}
           {hasAvailabilityError && <Callout variant="warning">{t("signup.callouts.availabilityError")}</Callout>}
           {availability.totalFull && phase !== "status" && !capacityCallout && (
