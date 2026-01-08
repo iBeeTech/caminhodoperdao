@@ -7,6 +7,7 @@ export interface Registration {
   payment_provider: string | null;
   payment_ref: string | null;
   sleep_at_monastery: number;
+  companion_name: string | null;
   phone: string;
   cep: string;
   address: string;
@@ -20,14 +21,14 @@ export interface Registration {
 
 export async function getByEmail(DB: D1Database, email: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE email = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE email = ?"
   ).bind(email.toLowerCase());
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByPaymentRef(DB: D1Database, paymentRef: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE payment_ref = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE payment_ref = ?"
   ).bind(paymentRef);
   return (await stmt.first<Registration>()) ?? null;
 }
@@ -42,6 +43,7 @@ export async function insertRegistration(
     payment_provider: string;
     payment_ref: string;
     sleep_at_monastery: number;
+    companion_name: string | null;
     phone: string;
     cep: string;
     address: string;
@@ -52,7 +54,7 @@ export async function insertRegistration(
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, phone, cep, address, number, complement, city, state, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, datetime('now'))"
+    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, datetime('now'))"
   ).bind(
     input.id,
     input.email.toLowerCase(),
@@ -61,6 +63,7 @@ export async function insertRegistration(
     input.payment_provider,
     input.payment_ref,
     input.sleep_at_monastery,
+    input.companion_name,
     input.phone,
     input.cep,
     input.address,
@@ -81,6 +84,7 @@ export async function updateRegistration(
     payment_provider: string;
     payment_ref: string;
     sleep_at_monastery: number;
+    companion_name: string | null;
     phone: string;
     cep: string;
     address: string;
@@ -91,13 +95,14 @@ export async function updateRegistration(
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, phone = ?6, cep = ?7, address = ?8, number = ?9, complement = ?10, city = ?11, state = ?12, created_at = datetime('now'), paid_at = NULL WHERE email = ?13"
+    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, created_at = datetime('now'), paid_at = NULL WHERE email = ?14"
   ).bind(
     input.name,
     input.status,
     input.payment_provider,
     input.payment_ref,
     input.sleep_at_monastery,
+    input.companion_name,
     input.phone,
     input.cep,
     input.address,

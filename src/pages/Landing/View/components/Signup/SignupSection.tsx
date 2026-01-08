@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, RefObject } from "react";
+import React, { ChangeEvent, FormEvent, RefObject, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
 import { Callout, FormField, Input, Select } from "../../../../../components";
@@ -8,6 +8,7 @@ import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/section
 import checkAmarelo from "../../../../../assets/check-amarelo.png";
 import check from "../../../../../assets/check.png";
 import whatsappIcon from "../../../../../assets/whatsapp.png";
+import starIcon from "../../../../../assets/star.png";
 import {
   Container,
   MonasteryNote,
@@ -37,6 +38,7 @@ interface SignupRefs {
   cityRef: RefObject<HTMLInputElement | null>;
   stateRef: RefObject<HTMLInputElement | null>;
   sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
+  companionRef: RefObject<HTMLInputElement | null>;
 }
 
 interface SignupSectionProps {
@@ -78,6 +80,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onCepChange,
   onReopenRegistration,
 }) => {
+  const [sleepSelected, setSleepSelected] = useState<string>("");
   const { t } = useTranslation("landing");
   const statusRole = statusTone === "error" ? "alert" : "status";
   const statusLive = statusTone === "error" ? "assertive" : "polite";
@@ -98,6 +101,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     cityRef,
     stateRef,
     sleepAtMonasteryRef,
+    companionRef,
   } = refs;
 
   return (
@@ -274,6 +278,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     name="sleepAtMonastery"
                     ref={sleepAtMonasteryRef as RefObject<HTMLSelectElement>}
                     defaultValue=""
+                    onChange={(e) => setSleepSelected(e.target.value)}
                   >
                     <option value="" disabled>
                       {t("signup.registrationForm.sleepPlaceholder")}
@@ -285,6 +290,31 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   </Select>
                 )}
               </FormField>
+              {showRegistrationForm && sleepSelected === "yes" && (
+                <FormField 
+                  label={
+                    <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <img 
+                        src={starIcon}
+                        alt=""
+                        style={{ width: "1rem", height: "1rem" }}
+                      />
+                      <span style={{ display: "inline" }}>Coloque</span>
+                      abaixo o nome do <strong>Grupo</strong> OU <strong>Sobrenome</strong> da Família OU <strong>Nome Completo</strong> da pessoa que irá com você:
+                    </span>
+                  }
+                  htmlFor="companion"
+                >
+                  <Input
+                    id="companion"
+                    name="companion"
+                    type="text"
+                    placeholder="Família Silva ou Grupo Peregrinos do Amor ou Fulano de Tal"
+                    ref={companionRef as RefObject<HTMLInputElement>}
+                    autoComplete="off"
+                  />
+                </FormField>
+              )}
               <TrackedButton
                 pageName="landing"
                 ctaId={LANDING_CTAS.FORM_SUBMIT}

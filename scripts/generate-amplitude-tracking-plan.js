@@ -271,13 +271,13 @@ function generateAmplitudeImportCSV() {
 // ============ MAIN ============
 function main() {
     try {
-        const trackingDir = path.resolve(__dirname, "../tracking");
-        if (!fs.existsSync(trackingDir)) {
-            fs.mkdirSync(trackingDir, { recursive: true });
+        const reportsDir = path.resolve(__dirname, "./reports");
+        if (!fs.existsSync(reportsDir)) {
+            fs.mkdirSync(reportsDir, { recursive: true });
         }
 
         const csv = generateAmplitudeImportCSV();
-        const csvPath = path.join(trackingDir, "amplitude-import.csv");
+        const csvPath = path.join(reportsDir, "amplitude-import.csv");
 
         fs.writeFileSync(csvPath, csv, "utf-8");
 

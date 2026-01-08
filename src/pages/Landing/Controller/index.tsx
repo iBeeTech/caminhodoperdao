@@ -277,6 +277,7 @@ const LandingController: React.FC = () => {
       sleepAtMonastery: isMonasterySlotUnavailable
         ? false
         : (sleepAtMonasteryRef.current?.value ?? "") === "yes",
+      companionName: getFieldValue(fieldRefs.companionRef),
     };
 
     try {

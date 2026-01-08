@@ -45,6 +45,7 @@
     "cy:open": "npx cypress open",
     "cy:test-and-open": "bash scripts/test-and-open-cypress.sh",
     "tracking:amplitude": "node scripts/generate-amplitude-tracking-plan.js",
+    "monastery:organize": "node scripts/organize-monastery-rooms.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

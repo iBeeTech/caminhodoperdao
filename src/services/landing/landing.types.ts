@@ -33,6 +33,7 @@ export interface RegistrationPayload {
   city: string;
   state: string;
   sleepAtMonastery: boolean;
+  companionName?: string;
 }
 
 export interface RegistrationResponse {

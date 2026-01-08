@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   payment_provider TEXT,
   payment_ref TEXT,
   sleep_at_monastery INTEGER NOT NULL DEFAULT 0,
+  companion_name TEXT,
   phone TEXT NOT NULL DEFAULT '',
   cep TEXT NOT NULL DEFAULT '',
   address TEXT NOT NULL DEFAULT '',

@@ -35,6 +35,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     city,
     state,
     sleepAtMonastery,
+    companionName,
   } = body as {
     name?: string;
     email?: string;
@@ -46,6 +47,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     city?: string;
     state?: string;
     sleepAtMonastery?: boolean;
+    companionName?: string;
   };
 
   if (!email || !isValidEmail(email)) {
@@ -92,6 +94,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         payment_provider: "mock_pix",
         payment_ref: charge.payment_ref,
         sleep_at_monastery: sleepFlag,
+        companion_name: companionName?.trim() || null,
         phone: phone?.trim() ?? "",
         cep: cep?.trim() ?? "",
         address: address?.trim() ?? "",
@@ -111,6 +114,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         payment_provider: "mock_pix",
         payment_ref: charge.payment_ref,
         sleep_at_monastery: sleepFlag,
+        companion_name: companionName?.trim() || null,
         phone: phone?.trim() ?? "",
         cep: cep?.trim() ?? "",
         address: address?.trim() ?? "",
