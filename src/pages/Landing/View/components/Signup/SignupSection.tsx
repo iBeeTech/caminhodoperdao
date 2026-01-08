@@ -7,6 +7,7 @@ import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import checkAmarelo from "../../../../../assets/check-amarelo.png";
 import check from "../../../../../assets/check.png";
+import whatsappIcon from "../../../../../assets/whatsapp.png";
 import {
   Container,
   MonasteryNote,
@@ -428,7 +429,46 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         }
                       }
                     `}</style>
-                  <WarningNote>
+                  <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                    <style>{`
+                      @keyframes floating {
+                        0%, 100% {
+                          transform: translateY(0px);
+                        }
+                        50% {
+                          transform: translateY(-8px);
+                        }
+                      }
+                      .whatsapp-button {
+                        animation: floating 3s ease-in-out infinite;
+                      }
+                    `}</style>
+                    <TrackedButton
+                      pageName="landing"
+                      ctaId={LANDING_CTAS.FORM_SUBMIT}
+                      sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                      sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                      position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                      variant="primary"
+                      size="md"
+                      onClick={() => window.open("https://chat.whatsapp.com/seu-grupo-aqui", "_blank")}
+                      className="whatsapp-button"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.5rem"
+                      }}
+                    >
+                      <img
+                        src={whatsappIcon}
+                        alt=""
+                        style={{ width: "1.5rem", height: "1.5rem" }}
+                      />
+                      {t("signup.status.whatsappGroupButtonText")}
+                    </TrackedButton>
+                  </div>
+                  <WarningNote style={{ marginTop: "1.5rem" }}>
                     <SignupWarningIcon>⚠️</SignupWarningIcon>
                       <span>{t("signup.status.paidWarning")}</span>
                   </WarningNote>
