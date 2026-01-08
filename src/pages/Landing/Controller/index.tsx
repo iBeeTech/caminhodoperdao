@@ -177,8 +177,41 @@ const LandingController: React.FC = () => {
   };
 
   const onPhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneBR(event.target.value);
-    event.target.value = formatted;
+    const input = event.target;
+    const cursorPos = input.selectionStart ?? 0;
+    const previousValue = input.value;
+    const newValue = event.target.value;
+    
+    // Detectar se é backspace
+    const isBackspace = previousValue.length > newValue.length;
+    
+    const formatted = formatPhoneBR(newValue);
+    input.value = formatted;
+    
+    // Calcular nova posição do cursor
+    let newCursorPos = cursorPos;
+    
+    if (isBackspace) {
+      // Se deletou um caractere especial, mover cursor uma posição pra trás
+      const deletedChar = previousValue[cursorPos - 1];
+      if (deletedChar && /[^\d]/.test(deletedChar)) {
+        newCursorPos = Math.max(0, cursorPos - 1);
+      } else {
+        newCursorPos = cursorPos;
+      }
+    } else {
+      // Se está digitando, encontrar a próxima posição de dígito
+      const digitsAdded = formatted.replace(/\D/g, "").length - previousValue.replace(/\D/g, "").length;
+      newCursorPos = cursorPos + digitsAdded + (formatted.length - previousValue.length);
+    }
+    
+    // Limitar a posição do cursor ao tamanho do text
+    newCursorPos = Math.min(newCursorPos, formatted.length);
+    
+    // Usar setTimeout para garantir que o cursor seja posicionado após o render
+    setTimeout(() => {
+      input.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
   };
 
   const onCepChange = async (event: ChangeEvent<HTMLInputElement>) => {

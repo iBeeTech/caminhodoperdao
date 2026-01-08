@@ -1,19 +1,23 @@
 /**
- * Formatação de telefone brasileiro
+ * Formatação de telefone brasileiro com suporte a backspace
  * 
  * Converte "11999999999" para "(11)9 9999-9999"
+ * Permite deletar caracteres especiais com backspace
  */
 
-export function formatPhoneBR(digits: string): string {
-  const sanitized = digits.replace(/\D/g, "").slice(0, 11);
-  if (!sanitized) return "";
+export function formatPhoneBR(input: string): string {
+  // Extrair apenas dígitos
+  const digits = input.replace(/\D/g, "").slice(0, 11);
+  
+  if (!digits) return "";
 
-  if (sanitized.length <= 2) {
-    return `(${sanitized}${sanitized.length === 2 ? ")" : ""}`;
+  // Formatar baseado no número de dígitos
+  if (digits.length <= 2) {
+    return `(${digits}${digits.length === 2 ? ")" : ""}`;
   }
 
-  const ddd = sanitized.slice(0, 2);
-  const body = sanitized.slice(2);
+  const ddd = digits.slice(0, 2);
+  const body = digits.slice(2);
   const first = body.slice(0, 1);
   const rest = body.slice(1);
 
