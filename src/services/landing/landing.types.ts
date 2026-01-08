@@ -10,6 +10,7 @@ export interface RegistrationStatusResponse {
   status?: string;
   expired?: boolean;
   qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
   payment_ref?: string | null;
   sleep_at_monastery?: number;
   phone?: string;
@@ -40,5 +41,6 @@ export interface RegistrationResponse {
   status?: string;
   registration_id?: string;
   qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
   message?: string;
 }

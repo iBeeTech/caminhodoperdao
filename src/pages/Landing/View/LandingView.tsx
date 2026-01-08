@@ -34,6 +34,7 @@ interface LandingViewProps {
   statusTone: LandingTone;
   currentStatus: string | null;
   qrCodeText: string | null;
+  qrCodeImageUrl: string | null;
   capacityCallout: string | null;
   isCheckingStatus: boolean;
   isSubmittingRegistration: boolean;
@@ -69,6 +70,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   statusTone,
   currentStatus,
   qrCodeText,
+  qrCodeImageUrl,
   capacityCallout,
   isCheckingStatus,
   isSubmittingRegistration,
@@ -119,6 +121,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             statusTone={statusTone}
             currentStatus={currentStatus}
             qrCodeText={qrCodeText}
+            qrCodeImageUrl={qrCodeImageUrl}
             capacityCallout={capacityCallout}
             isCheckingStatus={isCheckingStatus}
             isSubmittingRegistration={isSubmittingRegistration}

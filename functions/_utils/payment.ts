@@ -31,7 +31,7 @@ class WooviPixProvider implements PaymentProvider {
   async createCharge({ name, email }: { name: string; email: string }): Promise<PaymentCharge> {
     const correlationId = crypto.randomUUID();
     const expiresIn = 86400; // 24 horas em segundos
-    const REGISTRATION_VALUE = 29900; // R$ 299,00 em centavos
+    const REGISTRATION_VALUE = 1000; // R$ 10,00 em centavos
 
     const payload: WooviChargePayload = {
       correlationID: correlationId,

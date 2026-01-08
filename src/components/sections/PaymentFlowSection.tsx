@@ -30,7 +30,7 @@ const PaymentFlowSectionComponent = (
   const {
     userEmail,
     userName,
-    amountCents = 29900,
+    amountCents = 1000,
     onPaymentSuccess,
   } = props;
   

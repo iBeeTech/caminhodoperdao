@@ -42,6 +42,7 @@ export type RegistrationStatusResponse = {
   status?: string;
   message?: string;
   qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
   expired?: boolean;
   name?: string;
   email?: string;

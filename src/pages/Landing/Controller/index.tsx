@@ -53,6 +53,7 @@ const LandingController: React.FC = () => {
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [qrCodeText, setQrCodeText] = useState<string | null>(null);
+  const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
 
@@ -145,6 +146,7 @@ const LandingController: React.FC = () => {
     setStatusMessage(null);
     setStatusTone(null);
     setQrCodeText(null);
+    setQrCodeImageUrl(null);
     setCurrentStatus(null);
   };
 
@@ -209,6 +211,7 @@ const LandingController: React.FC = () => {
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
       setQrCodeText(result.qrCodeText ?? null);
+      setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
 
       if (normalizedStatus === "PAID") {
         setStatusMessage(result.message ?? t("signup.status.paid"));
@@ -284,6 +287,7 @@ const LandingController: React.FC = () => {
       const data = await registerMutation.mutateAsync(payload);
       setCurrentStatus(data.status ?? null);
       setQrCodeText(data.qrCodeText ?? null);
+      setQrCodeImageUrl(data.qrCodeImageUrl ?? null);
       setStatusMessage(data.message ?? t("signup.status.waitingPayment"));
       setStatusTone("warn");
       setPhase("status");
@@ -305,6 +309,7 @@ const LandingController: React.FC = () => {
           const normalizedStatus = statusData.status ?? (statusData.expired ? "CANCELED" : null);
           setCurrentStatus(normalizedStatus);
           setQrCodeText(statusData.qrCodeText ?? null);
+          setQrCodeImageUrl(statusData.qrCodeImageUrl ?? null);
 
           if (normalizedStatus === "PAID") {
             setStatusMessage(t("signup.status.paid"));
@@ -376,6 +381,7 @@ const LandingController: React.FC = () => {
       statusTone={statusTone}
       currentStatus={currentStatus}
       qrCodeText={qrCodeText}
+      qrCodeImageUrl={qrCodeImageUrl}
       capacityCallout={capacityCallout}
       isCheckingStatus={checkStatusMutation.isPending}
       isSubmittingRegistration={registerMutation.isPending}

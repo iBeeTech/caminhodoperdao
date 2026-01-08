@@ -16,7 +16,11 @@ import {
   PixActions,
   PixBox,
   PixLabel,
+  PixLabelContainer,
+  CopyButton,
   PixTextarea,
+  QRCodeContainer,
+  QRCodeImage,
   SignupBullets,
   SignupCard,
   SignupHeader,
@@ -49,6 +53,7 @@ interface SignupSectionProps {
   statusTone: LandingTone;
   currentStatus: string | null;
   qrCodeText: string | null;
+  qrCodeImageUrl: string | null;
   capacityCallout: string | null;
   isCheckingStatus: boolean;
   isSubmittingRegistration: boolean;
@@ -69,6 +74,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   statusTone,
   currentStatus,
   qrCodeText,
+  qrCodeImageUrl,
   capacityCallout,
   isCheckingStatus,
   isSubmittingRegistration,
@@ -81,6 +87,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onReopenRegistration,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
+  const [copiedBrcode, setCopiedBrcode] = useState(false);
   const { t } = useTranslation("landing");
   const statusRole = statusTone === "error" ? "alert" : "status";
   const statusLive = statusTone === "error" ? "assertive" : "polite";
@@ -89,6 +96,18 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull;
   const showStatus = !hasAvailabilityError && phase === "status";
+
+  const handleCopyBrcode = async () => {
+    if (!qrCodeText) return;
+
+    try {
+      await navigator.clipboard.writeText(qrCodeText);
+      setCopiedBrcode(true);
+      setTimeout(() => setCopiedBrcode(false), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar PIX:', err);
+    }
+  };
 
   const {
     nameRef,
@@ -387,12 +406,30 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
               {currentStatus === "PENDING" && (
                 <PixBox>
-                  <PixLabel htmlFor={pixTextareaId}>{t("signup.status.pixCopyLabel")}</PixLabel>
+                  <PixLabelContainer>
+                    <PixLabel htmlFor={pixTextareaId}>{t("signup.status.pixCopyLabel")}</PixLabel>
+                    <CopyButton 
+                      onClick={handleCopyBrcode}
+                      title="Copiar código PIX"
+                      aria-label="Copiar código PIX"
+                    >
+                      <span>{copiedBrcode ? '✓' : '📋'}</span>
+                      <span>{copiedBrcode ? 'Copiado!' : 'Copiar'}</span>
+                    </CopyButton>
+                  </PixLabelContainer>
                   <PixTextarea
                     id={pixTextareaId}
                     readOnly
                     value={qrCodeText ?? (t("signup.status.pixPendingPlaceholder") as string)}
                   />
+                  {qrCodeImageUrl && (
+                    <QRCodeContainer>
+                      <QRCodeImage 
+                        src={qrCodeImageUrl} 
+                        alt="QR Code PIX" 
+                      />
+                    </QRCodeContainer>
+                  )}
                 </PixBox>
               )}
 

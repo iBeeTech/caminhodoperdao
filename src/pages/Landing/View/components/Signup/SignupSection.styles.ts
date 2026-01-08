@@ -108,9 +108,47 @@ export const PixBox = styled.div`
   gap: 12px;
 `;
 
+export const PixLabelContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+`;
+
 export const PixLabel = styled.label`
   font-weight: 700;
   margin: 0;
+  flex: 1;
+`;
+
+export const CopyButton = styled.button`
+  padding: 6px 12px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  
+  &:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
 `;
 
 export const PixTextarea = styled.textarea`
@@ -121,6 +159,27 @@ export const PixTextarea = styled.textarea`
   padding: 12px;
   resize: vertical;
   font-family: monospace;
+`;
+
+export const QRCodeContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+export const QRCodeImage = styled.img`
+  max-width: 200px;
+  height: auto;
+  border-radius: 6px;
+  
+  @media (max-width: 640px) {
+    max-width: 150px;
+  }
 `;
 
 export const PixActions = styled.div`
