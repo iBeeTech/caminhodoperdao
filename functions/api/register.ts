@@ -89,7 +89,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     charge = await provider.createCharge({ name, email });
   } catch (error: any) {
     console.error(`Erro ao criar cobrança PIX: ${error.message}`);
-    return serverError("pix_creation_failed");
+    const message = error.message.includes('not configured') 
+      ? 'payment_provider_not_configured'
+      : 'pix_creation_failed';
+    return serverError(message);
   }
   
   const id = crypto.randomUUID();

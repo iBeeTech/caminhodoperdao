@@ -12,15 +12,6 @@ export interface PaymentProvider {
   createCharge(input: { name: string; email: string }): Promise<PaymentCharge>;
 }
 
-class MockPixProvider implements PaymentProvider {
-  async createCharge({ name, email }: { name: string; email: string }): Promise<PaymentCharge> {
-    const ref = `PIX-${crypto.randomUUID()}`;
-    const qrCodeText = `PIX|REF=${ref}|EMAIL=${email}|NAME=${encodeURIComponent(name)}`;
-    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    return { payment_ref: ref, qrCodeText, expires_at };
-  }
-}
-
 class WooviPixProvider implements PaymentProvider {
   private appId: string;
 
@@ -64,11 +55,10 @@ export function getPaymentProvider(env?: any): PaymentProvider {
   // Check if WOOVI_APP_ID is available
   const appId = env?.WOOVI_APP_ID || process.env.WOOVI_APP_ID;
   
-  if (appId) {
-    console.log('Using WooviPixProvider');
-    return new WooviPixProvider(appId);
+  if (!appId) {
+    throw new Error('WOOVI_APP_ID not configured. Please set the WOOVI_APP_ID secret in Cloudflare.');
   }
 
-  console.warn('WOOVI_APP_ID not configured, falling back to MockPixProvider');
-  return new MockPixProvider();
+  console.log('Using WooviPixProvider');
+  return new WooviPixProvider(appId);
 }

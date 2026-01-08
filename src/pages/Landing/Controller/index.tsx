@@ -341,6 +341,11 @@ const LandingController: React.FC = () => {
       // Erro específico de criação de PIX
       if (error instanceof HttpError && error.status === 500) {
         const errorData = error.response?.body as any;
+        if (errorData?.error === "payment_provider_not_configured") {
+          setStatusMessage(t("signup.status.paymentConfigError") || "Erro de configuração de pagamento. Por favor, contate o administrador.");
+          setStatusTone("error");
+          return;
+        }
         if (errorData?.error === "pix_creation_failed") {
           setStatusMessage(t("signup.status.pixError"));
           setStatusTone("error");
