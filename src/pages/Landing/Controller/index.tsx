@@ -333,6 +333,16 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      // Erro específico de criação de PIX
+      if (error instanceof HttpError && error.status === 500) {
+        const errorData = error.response?.body as any;
+        if (errorData?.error === "pix_creation_failed") {
+          setStatusMessage(t("signup.status.pixError"));
+          setStatusTone("error");
+          return;
+        }
+      }
+
       setStatusMessage(t("signup.status.processingError"));
       setStatusTone("error");
     }

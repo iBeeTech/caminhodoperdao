@@ -146,6 +146,7 @@
             "defaultPending": "Inscrição pendente. Você pode usar o PIX abaixo.",
             "existing": "Inscrição existente.",
             "processingError": "Não foi possível processar. Tente novamente.",
+            "pixError": "Algo deu errado por aqui. Volte mais tarde para gerar o seu Pix novamente",
             "checkError": "Não foi possível verificar agora. Tente novamente.",
             "validationError": "Preencha os campos obrigatórios.",
             "reopenError": "Não foi possível validar vagas agora.",

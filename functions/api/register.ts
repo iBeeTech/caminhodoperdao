@@ -82,8 +82,16 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     }
   }
 
-  const provider = getPaymentProvider();
-  const charge = await provider.createCharge({ name, email });
+  const provider = getPaymentProvider(env);
+  let charge;
+  
+  try {
+    charge = await provider.createCharge({ name, email });
+  } catch (error: any) {
+    console.error(`Erro ao criar cobrança PIX: ${error.message}`);
+    return serverError("pix_creation_failed");
+  }
+  
   const id = crypto.randomUUID();
 
   try {
