@@ -1,31 +1,30 @@
 /**
- * Helpers de alto nível para rastreamento padronizado (GA4-like)
+ * Helpers de alto nível para rastreamento (GA4-like)
+ * Mapeia eventos genéricos para os event names definidos no tracking plan
  */
 
-import { sanitizeText } from "./sanitizer";
-import { EventName, type InteractionProps, type NonInteractionProps, type ScreenViewProps } from "./events";
 import { track } from "./track";
+import { amplitudeEventNames } from "./amplitudeClient";
+import type { BaseEventProps } from "./events";
 
 export const trackScreenView = async ({
   pageName,
   screenName,
   category,
-  action = "screen_view",
+  action = "page_viewed",
 }: {
   pageName: string;
   screenName?: string;
   category?: string;
-  action?: "screen_view";
+  action?: string;
 }): Promise<void> => {
-  const props: ScreenViewProps = {
-    event_category: category || pageName,
-    event_action: action,
-    event_label: screenName || pageName,
+  console.log("[Analytics] trackScreenView called with:", { pageName, screenName, category });
+  const props: BaseEventProps = {
     page_name: pageName,
-    screen_name: screenName,
   };
 
-  await track(EventName.SCREEN_VIEW, props);
+  console.log("[Analytics] trackScreenView sending props:", props);
+  await track(amplitudeEventNames.PAGE_VIEWED, props);
 };
 
 export const trackNonInteraction = async ({
@@ -47,18 +46,21 @@ export const trackNonInteraction = async ({
   sectionName?: string;
   extra?: Record<string, any>;
 }): Promise<void> => {
-  const props: NonInteractionProps = {
-    event_category: category,
-    event_action: action,
-    event_label: label,
+  // Map to appropriate event based on category/action
+  let eventName: string = amplitudeEventNames.SECTION_VIEWED;
+
+  if (action === "section_view" && sectionId && sectionName) {
+    eventName = amplitudeEventNames.SECTION_VIEWED;
+  }
+
+  const props: BaseEventProps = {
     page_name: pageName,
-    screen_name: screenName,
     section_id: sectionId,
     section_name: sectionName,
     ...extra,
   };
 
-  await track(EventName.NONINTERACTION, props);
+  await track(eventName, props);
 };
 
 export const trackInteraction = async ({
@@ -80,16 +82,31 @@ export const trackInteraction = async ({
   href?: string;
   extra?: Record<string, any>;
 }): Promise<void> => {
-  const props: InteractionProps = {
-    event_category: category,
-    event_action: action,
-    event_label: label,
+  let eventName = amplitudeEventNames.CTA_CLICKED;
+  const props: BaseEventProps = {
     page_name: pageName,
-    screen_name: screenName,
-    element_text: sanitizeText(elementText),
-    href,
-    ...extra,
   };
 
-  await track(EventName.INTERACTION, props);
+  // Map generic action names to specific event names
+  if (action === "click_link") {
+    eventName = amplitudeEventNames.NAVIGATION_LINK_CLICKED;
+    props.link_text = label;
+    props.href = href;
+  } else if (action === "click_button") {
+    eventName = amplitudeEventNames.CTA_CLICKED;
+    props.cta_id = label;
+    if (extra?.cta_text) props.cta_text = extra.cta_text;
+    if (extra?.destination) props.destination = extra.destination;
+  }
+
+  // Add any additional properties from extra
+  if (extra) {
+    Object.entries(extra).forEach(([key, value]) => {
+      if (key !== "cta_text" && key !== "destination" && !props[key]) {
+        props[key] = value;
+      }
+    });
+  }
+
+  await track(eventName, props);
 };

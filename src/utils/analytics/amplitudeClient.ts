@@ -8,13 +8,33 @@
 import { sanitizeProps } from "./sanitizer";
 
 const AMPLITUDE_EVENT_NAMES = {
-  SCREEN_VIEW: "screen_view",
-  NONINTERACTION: "noninteraction",
-  INTERACTION: "interaction",
+  PAGE_VIEWED: "page_viewed",
+  SECTION_VIEWED: "section_viewed",
+  FORM_SECTION_VIEWED: "form_section_viewed",
+  NAVIGATION_LINK_CLICKED: "navigation_link_clicked",
+  NAVIGATION_MENU_TOGGLED: "navigation_menu_toggled",
+  CTA_CLICKED: "cta_clicked",
+  FORM_STARTED: "form_started",
+  FORM_SUBMITTED: "form_submitted",
+  FORM_SUCCESS: "form_success",
+  FORM_ERROR: "form_error",
+  GALLERY_VIEWED: "gallery_viewed",
+  GALLERY_ALBUM_CLICKED: "gallery_album_clicked",
+  EXTERNAL_LINK_CLICKED: "external_link_clicked",
+  ERROR_OCCURRED: "error_occurred",
 } as const;
 
 const AMPLITUDE_ENABLED = typeof window !== "undefined" && (process.env.REACT_APP_AMPLITUDE_ENABLED || "false").toLowerCase() === "true";
 const AMPLITUDE_API_KEY = typeof window !== "undefined" ? (process.env.REACT_APP_AMPLITUDE_KEY || "") : "";
+const AMPLITUDE_DEBUG = typeof window !== "undefined" && (process.env.REACT_APP_AMPLITUDE_DEBUG || "false").toLowerCase() === "true";
+
+if (typeof window !== "undefined") {
+  console.log("[Amplitude] Config:", {
+    enabled: AMPLITUDE_ENABLED,
+    apiKey: AMPLITUDE_API_KEY ? `${AMPLITUDE_API_KEY.substring(0, 8)}...` : "NOT_SET",
+    debug: AMPLITUDE_DEBUG,
+  });
+}
 
 let amplitudeSDK: typeof import("@amplitude/analytics-browser") | null = null;
 let initPromise: Promise<void> | null = null;
@@ -46,7 +66,12 @@ const ensureInit = async () => {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) return;
+    if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) {
+      if (AMPLITUDE_DEBUG) {
+        console.log("[Amplitude] Skipping init - enabled:", AMPLITUDE_ENABLED, "apiKey:", !!AMPLITUDE_API_KEY);
+      }
+      return;
+    }
     const amplitude = await ensureSDK();
     amplitude.init(AMPLITUDE_API_KEY, undefined, {
       defaultTracking: {
@@ -57,6 +82,9 @@ const ensureInit = async () => {
       autocapture: false,
     });
     amplitude.setUserId(getOrCreateAnonymousUserId());
+    if (AMPLITUDE_DEBUG) {
+      console.log("[Amplitude] Initialized successfully");
+    }
   })();
 
   return initPromise;
@@ -67,14 +95,28 @@ export const trackWithClient = async (
   props?: Record<string, any>
 ): Promise<void> => {
   if (typeof window === "undefined") return;
-  if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) return;
+  if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) {
+    if (AMPLITUDE_DEBUG) {
+      console.log("[Amplitude] Track skipped - enabled:", AMPLITUDE_ENABLED, "apiKey:", !!AMPLITUDE_API_KEY);
+    }
+    return;
+  }
 
   await ensureInit();
-  if (!amplitudeSDK) return;
+  if (!amplitudeSDK) {
+    if (AMPLITUDE_DEBUG) {
+      console.log("[Amplitude] SDK not loaded");
+    }
+    return;
+  }
 
   const safeProps = sanitizeProps({ ...props, timestamp_ms: Date.now() });
   try {
+    console.log("[Amplitude] Sending event:", eventName, "props:", safeProps);
     amplitudeSDK.track(eventName, safeProps);
+    if (AMPLITUDE_DEBUG) {
+      console.log("[Amplitude] Event tracked:", eventName, safeProps);
+    }
   } catch (error) {
     console.error("[Amplitude] track error", error);
   }
