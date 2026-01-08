@@ -1,59 +1,94 @@
-/// <reference types="@cloudflare/workers-types" />
-import { badRequest, json, notFound, unauthorized, serverError } from "../../_utils/responses";
-import { getByPaymentRef, markAsPaid } from "../../_utils/registrations";
+import { WooviWebhookPayload } from '../../../types/woovi';
 
-interface Env {
-  DB: D1Database;
-  WEBHOOK_SECRET?: string;
-}
-
-function validateSignature(request: Request, secret: string | undefined): boolean {
-  if (!secret) return false;
-  const received = request.headers.get("x-webhook-signature");
-  // Stub validation: compare shared secret. Replace with HMAC when real gateway is known.
-  return received === secret;
-}
-
-export async function handleWebhook(env: Env, request: Request, body: unknown): Promise<Response> {
-  if (!validateSignature(request, env.WEBHOOK_SECRET)) {
-    return unauthorized("invalid_signature");
-  }
-
-  if (!body || typeof body !== "object") {
-    return badRequest("invalid_body");
-  }
-
-  const { payment_ref, status } = body as { payment_ref?: string; status?: string };
-  if (!payment_ref) return badRequest("payment_ref_required");
-  if (!status) return badRequest("status_required");
-
-  const registration = await getByPaymentRef(env.DB, payment_ref);
-  if (!registration) return notFound("registration_not_found");
-
-  if (registration.status === "PAID") {
-    return json(200, { status: registration.status, paid_at: registration.paid_at });
-  }
-
-  if (status !== "PAID") {
-    return badRequest("unsupported_status");
+/**
+ * Webhook para receber confirmações de pagamento PIX da Woovi
+ * Evento: OPENPIX:TRANSACTION_RECEIVED
+ */
+export default async function handler(request: Request, context: any) {
+  // Apenas POST
+  if (request.method !== 'POST') {
+    return new Response('Not allowed', { status: 405 });
   }
 
   try {
-    await markAsPaid(env.DB, registration.email, payment_ref);
-  } catch (error) {
-    return serverError();
-  }
+    // ========== VALIDAR WEBHOOK ==========
+    // Opcional: validar token se configurado
+    const webhookToken = request.headers.get('authorization');
+    const configuredToken = context.env.WOOVI_WEBHOOK_SECRET;
 
-  return json(200, { status: "PAID" });
+    if (configuredToken && webhookToken !== configuredToken) {
+      console.warn('Webhook token inválido');
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    // ========== PARSE PAYLOAD ==========
+    const payload = (await request.json()) as WooviWebhookPayload;
+
+    if (!payload.charge || !payload.pix) {
+      console.warn('Payload de webhook inválido:', payload);
+      return new Response('Invalid payload', { status: 400 });
+    }
+
+    const { charge, pix } = payload;
+    const correlationId = charge.correlationID;
+
+    console.log(
+      `Webhook recebido - correlationID: ${correlationId}, status: ${charge.status}`
+    );
+
+    // ========== ATUALIZAR STATUS NO D1 ==========
+    try {
+      // Buscar pagamento por correlation_id
+      const payment = await context.env.DB
+        .prepare('SELECT id FROM payments WHERE correlation_id = ?')
+        .bind(correlationId)
+        .first();
+
+      if (!payment) {
+        console.warn(`Pagamento não encontrado: ${correlationId}`);
+        // Retornar 200 mesmo assim para Woovi não reenviar
+        return new Response('OK', { status: 200 });
+      }
+
+      // Mapear status Woovi
+      let newStatus = payment.status;
+      if (charge.status === 'COMPLETED') {
+        newStatus = 'paid';
+      } else if (charge.status === 'EXPIRED') {
+        newStatus = 'expired';
+      }
+
+      // Atualizar registro
+      await context.env.DB
+        .prepare(
+          `UPDATE payments 
+           SET status = ?, updated_at = ? 
+           WHERE id = ?`
+        )
+        .bind(newStatus, Date.now(), payment.id)
+        .run();
+
+      console.log(
+        `Pagamento atualizado: ${correlationId} -> ${newStatus}`
+      );
+
+      // Opcional: registrar informações da transação
+      if (pix) {
+        console.log(
+          `PIX recebido: ${pix.value} centavos, endToEndId: ${pix.endToEndId}`
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar pagamento:', error);
+      // Retornar 200 mesmo com erro para não reenviar webhook infinitamente
+      return new Response('OK', { status: 200 });
+    }
+
+    // ========== RESPUESTA ==========
+    return new Response('OK', { status: 200 });
+  } catch (error) {
+    console.error('Erro no webhook:', error);
+    // Retornar 200 para Woovi não reenviar
+    return new Response('OK', { status: 200 });
+  }
 }
-
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  let body: unknown;
-  try {
-    body = await context.request.json();
-  } catch (error) {
-    return badRequest("invalid_json");
-  }
-
-  return handleWebhook(context.env, context.request, body);
-};
