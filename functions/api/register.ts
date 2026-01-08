@@ -102,7 +102,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       await updateRegistration(env.DB, email, {
         name: name?.trim() ?? "",
         status: "PENDING",
-        payment_provider: "mock_pix",
+        payment_provider: "woovi",
         payment_ref: charge.payment_ref,
         sleep_at_monastery: sleepFlag,
         companion_name: companionName?.trim() || null,
@@ -122,7 +122,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         email,
         name: name?.trim() ?? "",
         status: "PENDING",
-        payment_provider: "mock_pix",
+        payment_provider: "woovi",
         payment_ref: charge.payment_ref,
         sleep_at_monastery: sleepFlag,
         companion_name: companionName?.trim() || null,

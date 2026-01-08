@@ -38,45 +38,52 @@ export default async function handler(request: Request, context: any) {
 
     // ========== ATUALIZAR STATUS NO D1 ==========
     try {
-      // Buscar pagamento por correlation_id
-      const payment = await context.env.DB
-        .prepare('SELECT id FROM payments WHERE correlation_id = ?')
-        .bind(correlationId)
-        .first();
-
-      if (!payment) {
-        console.warn(`Pagamento não encontrado: ${correlationId}`);
-        // Retornar 200 mesmo assim para Woovi não reenviar
-        return new Response('OK', { status: 200 });
-      }
-
-      // Mapear status Woovi
-      let newStatus = payment.status;
+      // Se o status é COMPLETED, marcar como PAID
       if (charge.status === 'COMPLETED') {
-        newStatus = 'paid';
+        // Buscar registro na tabela registrations pelo payment_ref (que é o transactionID)
+        const registration = await context.env.DB
+          .prepare('SELECT email FROM registrations WHERE payment_ref = ?')
+          .bind(charge.transactionID)
+          .first<{ email: string }>();
+
+        if (registration) {
+          // Atualizar o registro como PAID
+          await context.env.DB
+            .prepare(
+              "UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?"
+            )
+            .bind(Date.now(), registration.email)
+            .run();
+
+          console.log(
+            `Registro marcado como PAID: ${registration.email} (transactionID: ${charge.transactionID})`
+          );
+
+          // Opcional: registrar informações da transação
+          if (pix) {
+            console.log(
+              `PIX recebido: ${pix.value} centavos, endToEndId: ${pix.endToEndId}`
+            );
+          }
+        } else {
+          console.warn(`Registro não encontrado para transactionID: ${charge.transactionID}`);
+        }
       } else if (charge.status === 'EXPIRED') {
-        newStatus = 'expired';
-      }
+        const registration = await context.env.DB
+          .prepare('SELECT email FROM registrations WHERE payment_ref = ?')
+          .bind(charge.transactionID)
+          .first<{ email: string }>();
 
-      // Atualizar registro
-      await context.env.DB
-        .prepare(
-          `UPDATE payments 
-           SET status = ?, updated_at = ? 
-           WHERE id = ?`
-        )
-        .bind(newStatus, Date.now(), payment.id)
-        .run();
+        if (registration) {
+          await context.env.DB
+            .prepare("UPDATE registrations SET status = 'CANCELED' WHERE email = ?")
+            .bind(registration.email)
+            .run();
 
-      console.log(
-        `Pagamento atualizado: ${correlationId} -> ${newStatus}`
-      );
-
-      // Opcional: registrar informações da transação
-      if (pix) {
-        console.log(
-          `PIX recebido: ${pix.value} centavos, endToEndId: ${pix.endToEndId}`
-        );
+          console.log(
+            `Registro marcado como CANCELED (expirado): ${registration.email}`
+          );
+        }
       }
     } catch (error) {
       console.error('Erro ao atualizar pagamento:', error);

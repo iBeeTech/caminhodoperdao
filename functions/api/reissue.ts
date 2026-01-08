@@ -31,7 +31,7 @@ export async function handleReissue(env: Env, body: unknown): Promise<Response> 
   });
 
   try {
-    await updatePaymentRef(env.DB, email, "mock_pix", charge.payment_ref);
+    await updatePaymentRef(env.DB, email, "woovi", charge.payment_ref);
   } catch (error) {
     return serverError();
   }
