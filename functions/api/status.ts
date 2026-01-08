@@ -2,9 +2,11 @@
 import { badRequest, json } from "../_utils/responses";
 import { isValidEmail } from "../_utils/validation";
 import { expirePending, getByEmail } from "../_utils/registrations";
+import { getWooviChargeStatus } from "../_utils/woovi";
 
 interface Env {
   DB: D1Database;
+  WOOVI_APP_ID?: string;
 }
 
 export async function handleStatus(env: Env, email: string | null): Promise<Response> {
@@ -15,6 +17,33 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
   const registration = await getByEmail(env.DB, email);
   if (!registration) {
     return json(200, { exists: false });
+  }
+
+  // Se o status já é PAID, não precisa consultar Woovi
+  if (registration.status !== "PAID" && registration.payment_ref) {
+    // Tentar consultar status na Woovi
+    try {
+      const appId = env.WOOVI_APP_ID;
+      if (appId) {
+        const wooviResponse = await getWooviChargeStatus(appId, registration.payment_ref);
+        
+        // Se a Woovi diz que foi pago, atualizar o D1
+        if (wooviResponse.charge?.status === 'COMPLETED' || wooviResponse.charge?.status === 'RECEIVED') {
+          await env.DB
+            .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?")
+            .bind(Date.now(), email.toLowerCase())
+            .run();
+          
+          registration.status = "PAID";
+          registration.paid_at = new Date(Date.now()).toISOString();
+          
+          console.log(`Status atualizado via Woovi: ${email} -> PAID`);
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao consultar status na Woovi: ${error}`);
+      // Continuar com o status do D1 mesmo com erro
+    }
   }
 
   const expired = registration.status === "CANCELED" && !registration.paid_at;

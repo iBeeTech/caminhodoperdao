@@ -87,6 +87,32 @@ const LandingController: React.FC = () => {
     }
   }, [phase]);
 
+  // Polling de status quando em modo "status" e status é PENDING
+  React.useEffect(() => {
+    if (phase !== "status" || currentStatus !== "PENDING" || !existingDataRef.current?.email) {
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusData = await landingService.checkStatus(existingDataRef.current!.email);
+        
+        // Se o status mudou para PAID, atualizar
+        if (statusData.status === "PAID") {
+          setCurrentStatus("PAID");
+          setStatusMessage(t("signup.status.paid") || "Pagamento confirmado!");
+          setStatusTone("success");
+          clearInterval(pollInterval);
+        }
+      } catch (error) {
+        // Continuar tentando mesmo com erro
+        console.debug("Erro ao fazer polling de status:", error);
+      }
+    }, 5000); // Verificar a cada 5 segundos
+
+    return () => clearInterval(pollInterval);
+  }, [phase, currentStatus, t]);
+
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
