@@ -6,3 +6,9 @@ pages_build_output_dir = "build"
 binding = "DB"
 database_name = "caminhodoperdao-db"
 database_id = "784a0aec-8695-48d4-8ede-df680660735e"
+
+[env.production]
+vars = { SITE_URL = "https://caminhodoperdao.pages.dev/" }
+
+[env.development]
+vars = { SITE_URL = "http://localhost:3000" }
