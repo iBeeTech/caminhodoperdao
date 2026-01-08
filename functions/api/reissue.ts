@@ -6,6 +6,7 @@ import { expirePending, getByEmail, updatePaymentRef } from "../_utils/registrat
 
 interface Env {
   DB: D1Database;
+  WOOVI_APP_ID?: string;
 }
 
 export async function handleReissue(env: Env, body: unknown): Promise<Response> {
@@ -24,7 +25,7 @@ export async function handleReissue(env: Env, body: unknown): Promise<Response> 
     return badRequest("registration_not_pending");
   }
 
-  const provider = getPaymentProvider();
+  const provider = getPaymentProvider(env);
   const charge = await provider.createCharge({
     email,
     name: name || registration.name,
