@@ -17,6 +17,7 @@ export const HeaderContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   height: 70px;
+  gap: 1rem;
 
   @media (max-width: 768px) {
     padding: 0 15px;
@@ -26,6 +27,7 @@ export const HeaderContainer = styled.div`
 
 export const HeaderLogo = styled.div`
   flex-shrink: 0;
+  margin-right: auto;
 `;
 
 export const HeaderTitle = styled.p`
@@ -48,7 +50,6 @@ export const HeaderTitle = styled.p`
 `;
 
 export const Navigation = styled.nav<{ $open: boolean }>`
-  flex: 1;
   display: flex;
   justify-content: flex-end;
 
