@@ -30,7 +30,7 @@ const VerseMoment = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch("/api/verse/daily");
+      const response = await fetch("/api/verse/random");
       
       if (!response.ok) {
         throw new Error("Erro ao buscar versículo");
