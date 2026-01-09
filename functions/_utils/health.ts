@@ -2,9 +2,6 @@
  * Health check utilities for monitoring endpoints
  * Provides rate limiting, token validation, response helpers
  */
-
-import type { Request } from '@cloudflare/workers-types';
-
 // Simple in-memory rate limiter (best-effort, resets when worker restarts)
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -92,7 +89,7 @@ export interface HealthResponse {
 }
 
 export function createHealthResponse(
-  data: Partial<HealthResponse>,
+  data: Partial<HealthResponse> & { status: 'ok' | 'error' },
   durationMs: number
 ): HealthResponse {
   return {
@@ -195,7 +192,7 @@ export async function measureHandler(
   // Try to inject duration into response if it's JSON
   if (response.headers.get('Content-Type')?.includes('application/json')) {
     try {
-      const json = await response.clone().json();
+      const json = await response.clone().json() as any;
       if (json && typeof json === 'object') {
         json.duration_ms = durationMs;
         return createJsonResponse(json, response.status);
