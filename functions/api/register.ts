@@ -82,9 +82,15 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     }
   }
 
-  const provider = getPaymentProvider(env);
+  let provider;
+  try {
+    provider = getPaymentProvider(env);
+  } catch (error: any) {
+    console.error(`Erro ao obter provider: ${error.message}`);
+    return serverError('payment_provider_not_configured');
+  }
+
   let charge;
-  
   try {
     charge = await provider.createCharge({ name, email });
   } catch (error: any) {
