@@ -4,7 +4,6 @@
  * Validates configuration and optionally tests connectivity
  */
 
-import type { PagesFunction } from '@cloudflare/workers-types';
 import {
   validateHealthRequest,
   createHealthResponse,
@@ -12,12 +11,7 @@ import {
   getRegion,
 } from '../../_utils/health';
 
-interface HealthEnv {
-  WOOVI_APP_ID?: string;
-  MONITOR_TOKEN?: string;
-}
-
-const handler: PagesFunction<HealthEnv> = async (context) => {
+const handler = async (context: any) => {
   const startTime = Date.now();
 
   // Validate request (rate limit + token)

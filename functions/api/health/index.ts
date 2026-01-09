@@ -4,7 +4,6 @@
  * Returns basic status and metadata about the service
  */
 
-import type { PagesFunction } from '@cloudflare/workers-types';
 import {
   validateHealthRequest,
   createHealthResponse,
@@ -12,11 +11,7 @@ import {
   getRegion,
 } from '../../_utils/health';
 
-interface HealthEnv {
-  MONITOR_TOKEN?: string;
-}
-
-const handler: PagesFunction<HealthEnv> = async (context) => {
+const handler = async (context: any) => {
   const startTime = Date.now();
   
   // Validate request (rate limit + token)

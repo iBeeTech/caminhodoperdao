@@ -11,7 +11,7 @@ import {
   validateMonitorToken,
   getRegion,
   validateHealthRequest,
-} from '../functions/_utils/health';
+} from '../../functions/_utils/health';
 
 describe('Health Check Utilities', () => {
   describe('getClientIp', () => {
