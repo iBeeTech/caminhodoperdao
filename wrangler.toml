@@ -3,7 +3,7 @@ compatibility_date = "2024-11-01"
 pages_build_output_dir = "build"
 
 [env.production]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhodoperdao.pages.dev/", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhadadoperdaodeassis.pages.dev/", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false" }
 
 [[env.production.d1_databases]]
 binding = "DB"
