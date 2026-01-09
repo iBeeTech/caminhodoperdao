@@ -117,7 +117,7 @@ const LandingController: React.FC = () => {
     }, 5000); // Verificar a cada 5 segundos
 
     return () => clearInterval(pollInterval);
-  }, [phase, currentStatus, t]);
+  }, [phase, currentStatus, t, paymentConfirmed]);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
