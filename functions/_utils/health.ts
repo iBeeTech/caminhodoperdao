@@ -13,7 +13,7 @@ const RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute
 /**
  * Extract client IP from request
  */
-export function getClientIp(request: Request): string {
+export function getClientIp(request: any): string {
   const cfIp = request.headers.get('CF-Connecting-IP');
   const xForwardedFor = request.headers.get('X-Forwarded-For');
   return cfIp || xForwardedFor || 'unknown';
@@ -45,7 +45,7 @@ export function isRateLimited(clientIp: string): boolean {
 /**
  * Extract monitor token from request (header or query param)
  */
-export function getMonitorToken(request: Request): string | null {
+export function getMonitorToken(request: any): string | null {
   const url = new URL(request.url);
   return request.headers.get('x-monitor-token') || url.searchParams.get('token');
 }
@@ -73,7 +73,7 @@ export function validateMonitorToken(
 /**
  * Get Cloudflare colo/region from request
  */
-export function getRegion(request: Request): string {
+export function getRegion(request: any): string {
   const cf = request.cf as any;
   return cf?.colo || 'unknown';
 }
@@ -145,7 +145,7 @@ export function createErrorResponse(
  * Returns Response if validation fails, null if OK
  */
 export function validateHealthRequest(
-  request: Request,
+  request: any,
   monitorToken?: string
 ): Response | null {
   const clientIp = getClientIp(request);
