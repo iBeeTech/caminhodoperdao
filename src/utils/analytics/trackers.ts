@@ -97,6 +97,17 @@ export const trackInteraction = async ({
     props.cta_id = label;
     if (extra?.cta_text) props.cta_text = extra.cta_text;
     if (extra?.destination) props.destination = extra.destination;
+  } else if (action === "enrollment_reserved") {
+    // Evento: Inscrição Reservada
+    eventName = amplitudeEventNames.SIGNUP_RESERVED;
+    props.status = extra?.status || "pending";
+    props.payment_provider = extra?.payment_provider;
+  } else if (action === "payment_confirmed") {
+    // Evento: Pagamento Confirmado
+    eventName = amplitudeEventNames.PAYMENT_CONFIRMED;
+    props.status = extra?.status || "paid";
+    props.payment_provider = extra?.payment_provider;
+    props.payment_method = extra?.payment_method || "pix";
   }
 
   // Add any additional properties from extra

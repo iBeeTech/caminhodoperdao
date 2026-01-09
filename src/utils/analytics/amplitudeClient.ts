@@ -22,6 +22,8 @@ const AMPLITUDE_EVENT_NAMES = {
   GALLERY_ALBUM_CLICKED: "gallery_album_clicked",
   EXTERNAL_LINK_CLICKED: "external_link_clicked",
   ERROR_OCCURRED: "error_occurred",
+  SIGNUP_RESERVED: "signup_reserved",
+  PAYMENT_CONFIRMED: "payment_confirmed",
 } as const;
 
 const AMPLITUDE_ENABLED = typeof window !== "undefined" && (process.env.REACT_APP_AMPLITUDE_ENABLED || "false").toLowerCase() === "true";

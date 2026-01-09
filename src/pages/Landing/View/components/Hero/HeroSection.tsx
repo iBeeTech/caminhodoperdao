@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
+import VerseMoment from "./VerseMoment";
 import { HeroSection as HeroContent } from "../../../Model";
 import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
@@ -30,6 +31,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hero, heroImage, onPrimaryAct
   return (
     <HeroSectionWrapper id="home">
       <HeroContainer>
+        <VerseMoment />
         <HeroContentWrapper>
           <HeroTitle>{hero.title}</HeroTitle>
           <HeroSubtitle>{hero.subtitle}</HeroSubtitle>

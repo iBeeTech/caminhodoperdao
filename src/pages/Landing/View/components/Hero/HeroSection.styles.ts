@@ -3,10 +3,10 @@ import styled from "styled-components";
 export const HeroSectionWrapper = styled.section`
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart} 0%, ${({ theme }) => theme.colors.gradientEnd} 100%);
   color: white;
-  padding: 100px 0;
+  padding: 40px 0;
   position: relative;
   overflow: hidden;
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   align-items: center;
 
@@ -29,11 +29,13 @@ export const HeroContainer = styled.div`
   align-items: center;
   position: relative;
   z-index: 1;
+  grid-template-rows: auto 1fr;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 48px;
     text-align: center;
+    grid-template-rows: auto 1fr;
   }
 `;
 

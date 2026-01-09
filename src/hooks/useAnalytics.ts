@@ -1,16 +1,17 @@
 import { trackInteraction, trackNonInteraction, trackScreenView } from "../utils/analytics/trackers";
 import type { AmplitudeEventProperties } from "../utils/analytics/amplitudeEvents";
+import { useCallback } from "react";
 
 const screenNameFromWindow = (fallback?: string) =>
   typeof window !== "undefined" ? window.location.pathname : fallback;
 
 export const useAnalytics = () => {
-  const screenView = (
+  const screenView = useCallback((
     pageName: string,
     screenName?: string
-  ) => trackScreenView({ pageName, screenName: screenName || screenNameFromWindow(pageName), category: pageName });
+  ) => trackScreenView({ pageName, screenName: screenName || screenNameFromWindow(pageName), category: pageName }), []);
 
-  const nonInteraction = (
+  const nonInteraction = useCallback((
     pageName: string,
     action: string,
     label?: string,
@@ -25,9 +26,9 @@ export const useAnalytics = () => {
       sectionId: extra?.section_id,
       sectionName: extra?.section_name,
       extra,
-    });
+    }), []);
 
-  const interaction = (
+  const interaction = useCallback((
     pageName: string,
     action: string,
     label: string,
@@ -44,12 +45,12 @@ export const useAnalytics = () => {
       elementText,
       href,
       extra,
-    });
+    }), []);
 
   // ------- Specific helpers (compat layer) ---------
   const pageViewed = (pageName: string, route?: string) => screenView(pageName, route);
 
-  const sectionViewed = (
+  const sectionViewed = useCallback((
     pageName: string,
     sectionId: string,
     sectionName: string,
@@ -59,9 +60,9 @@ export const useAnalytics = () => {
       section_id: sectionId,
       section_name: sectionName,
       position,
-    });
+    }), [nonInteraction]);
 
-  const formSectionViewed = (
+  const formSectionViewed = useCallback((
     pageName: string,
     sectionId: string,
     sectionName: string,
@@ -73,7 +74,7 @@ export const useAnalytics = () => {
       section_name: sectionName,
       position,
       ...additionalProps,
-    });
+    }), [nonInteraction]);
 
   const ctaClicked = (
     pageName: string,

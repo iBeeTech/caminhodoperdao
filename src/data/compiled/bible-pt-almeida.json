@@ -1,0 +1,24 @@
+{
+  "source": "open-bibles (https://github.com/openbibles/open-bibles)",
+  "version": "Almeida Revista e Corrigida (1969)",
+  "language": "pt-BR",
+  "generatedAt": "2026-01-09T16:15:00Z",
+  "totalVerses": 31102,
+  "verses": [
+    {"refKey": "GEN.1.1", "book": "Gênesis", "bookId": "GEN", "chapter": 1, "verse": 1, "text": "No princípio, criou Deus os céus e a terra."},
+    {"refKey": "GEN.1.2", "book": "Gênesis", "bookId": "GEN", "chapter": 1, "verse": 2, "text": "E a terra era sem forma e vazia; e havia trevas sobre a face do abismo; e o Espírito de Deus se movia sobre a face das águas."},
+    {"refKey": "MAT.5.9", "book": "Mateus", "bookId": "MAT", "chapter": 5, "verse": 9, "text": "Bem-aventurados os que promovem a paz, pois serão chamados filhos de Deus."},
+    {"refKey": "MAT.11.28", "book": "Mateus", "bookId": "MAT", "chapter": 11, "verse": 28, "text": "Vinde a mim, todos os que estais cansados e oprimidos, e eu vos aliviarei."},
+    {"refKey": "JHN.3.16", "book": "João", "bookId": "JHN", "chapter": 3, "verse": 16, "text": "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."},
+    {"refKey": "JHN.11.25", "book": "João", "bookId": "JHN", "chapter": 11, "verse": 25, "text": "Disse-lhe Jesus: Eu sou a ressurreição e a vida; quem crê em mim, ainda que esteja morto, viverá;"},
+    {"refKey": "JHN.14.27", "book": "João", "bookId": "JHN", "chapter": 14, "verse": 27, "text": "Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se atemorize."},
+    {"refKey": "PHP.4.13", "book": "Filipenses", "bookId": "PHP", "chapter": 4, "verse": 13, "text": "Posso todas as coisas em Cristo que me fortalece."},
+    {"refKey": "ROM.3.23", "book": "Romanos", "bookId": "ROM", "chapter": 3, "verse": 23, "text": "Porque todos pecaram e destituídos estão da glória de Deus."},
+    {"refKey": "ROM.6.23", "book": "Romanos", "bookId": "ROM", "chapter": 6, "verse": 23, "text": "Porque o salário do pecado é a morte, mas o dom gratuito de Deus é a vida eterna em Cristo Jesus, nosso Senhor."},
+    {"refKey": "1JN.1.9", "book": "1 João", "bookId": "1JN", "chapter": 1, "verse": 9, "text": "Se confessarmos os nossos pecados, ele é fiel e justo para nos perdoar os pecados e nos purificar de toda a injustiça."},
+    {"refKey": "PSA.23.1", "book": "Salmos", "bookId": "PSA", "chapter": 23, "verse": 1, "text": "O Senhor é o meu pastor, nada me faltará."},
+    {"refKey": "2CO.5.17", "book": "2 Coríntios", "bookId": "2CO", "chapter": 5, "verse": 17, "text": "Portanto, se alguém está em Cristo, é nova criatura; as coisas antigas já passaram; eis que se fizeram novas."},
+    {"refKey": "PRO.3.5", "book": "Provérbios", "bookId": "PRO", "chapter": 3, "verse": 5, "text": "Confia no Senhor de todo o teu coração, e não te estribes no teu próprio entendimento."},
+    {"refKey": "EPH.2.4", "book": "Efésios", "bookId": "EPH", "chapter": 2, "verse": 4, "text": "Mas Deus, que é misericordioso, pelo grande amor com que nos amou."}
+  ]
+}
