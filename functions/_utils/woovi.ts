@@ -16,9 +16,16 @@ export async function createWooviCharge(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    let errorDetail = '';
+    try {
+      const error = await response.json();
+      errorDetail = JSON.stringify(error);
+    } catch {
+      errorDetail = await response.text();
+    }
+    console.error(`Woovi createCharge error: ${response.status} - ${errorDetail}`);
     throw new Error(
-      `Woovi API error: ${response.status} - ${JSON.stringify(error)}`
+      `Woovi API error: ${response.status} - ${errorDetail}`
     );
   }
 
@@ -41,9 +48,16 @@ export async function getWooviChargeStatus(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
+    let errorDetail = '';
+    try {
+      const error = await response.json();
+      errorDetail = JSON.stringify(error);
+    } catch {
+      errorDetail = await response.text();
+    }
+    console.error(`Woovi getChargeStatus error: ${response.status} - ${errorDetail}`);
     throw new Error(
-      `Woovi API error: ${response.status} - ${JSON.stringify(error)}`
+      `Woovi API error: ${response.status} - ${errorDetail}`
     );
   }
 
