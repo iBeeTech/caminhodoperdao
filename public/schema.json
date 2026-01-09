@@ -3,7 +3,7 @@
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Caminho do Perdão",
+  "name": "Caminhada do Perdão de Assis",
   "url": "https://caminhodoperdao.com",
   "logo": "https://caminhodoperdao.com/logo.png",
   "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual.",
@@ -52,7 +52,7 @@
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "Caminho do Perdão",
+  "name": "Caminhada do Perdão de Assis",
   "description": "Organização focada em transformação pessoal e espiritual",
   "image": "https://caminhodoperdao.com/logo.png",
   "priceRange": "R$ 100 - R$ 500",

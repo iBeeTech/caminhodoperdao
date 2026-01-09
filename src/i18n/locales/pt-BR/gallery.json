@@ -1,7 +1,7 @@
 {
     "hero": {
         "title": "Galeria de Fotos",
-        "description": "Reviva cada edição do Caminho do Perdão. Escolha o ano para abrir o álbum correspondente."
+        "description": "Reviva cada edição da Caminhada do Perdão de Assis. Escolha o ano para abrir o álbum correspondente."
     },
     "albums": {
         "defaultStatus": "Disponível",

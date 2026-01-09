@@ -61,7 +61,7 @@ const PaymentFlowSectionComponent = (
           email: userEmail,
           name: userName,
           amountCents: amountCents,
-          description: 'Inscrição - Caminho do Perdão',
+          description: 'Inscrição - Caminhada do Perdão de Assis',
           onPaymentSuccess: handlePaymentSuccess,
         })
   );

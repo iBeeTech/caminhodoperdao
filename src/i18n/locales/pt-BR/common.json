@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Caminho do Perdão"
+        "title": "Caminhada do Perdão de Assis"
     },
     "nav": {
         "home": "Início",
@@ -14,13 +14,13 @@
         "menuToggle": "Abrir menu"
     },
     "footer": {
-        "heading": "Caminho do Perdão",
+        "heading": "Caminhada do Perdão de Assis",
         "description": "Transformando vidas através do perdão e autoconhecimento.",
         "contactHeading": "Contato",
         "email": "Email: contato@caminhodoperdao.com",
         "phone": "Telefone: (11) 99999-9999",
         "socialHeading": "Redes sociais",
-        "copyright": "© {{year}} Caminho do Perdão. Todos os direitos reservados."
+        "copyright": "© {{year}} Caminhada do Perdão de Assis. Todos os direitos reservados."
     },
     "social": {
         "instagram": "Instagram",

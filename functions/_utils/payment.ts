@@ -27,7 +27,7 @@ class WooviPixProvider implements PaymentProvider {
     const payload: WooviChargePayload = {
       correlationID: correlationId,
       value: REGISTRATION_VALUE,
-      comment: 'Inscrição - Caminho do Perdão',
+      comment: 'Inscrição - Caminhada do Perdão de Assis',
       expiresIn,
       customer: {
         name: name || email.split('@')[0],

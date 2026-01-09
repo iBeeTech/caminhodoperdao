@@ -374,7 +374,7 @@ function generateCSV(registrations) {
 
 // ============ MAIN ============
 async function main() {
-    console.log('🏛️  Organizador de Quartos - Mosteiro do Caminho do Perdão\n');
+    console.log('🏛️  Organizador de Quartos - Mosteiro do Caminhada do Perdão de Assis\n');
 
     try {
         console.log('📋 Gerando relatório de organização de quartos...\n');
