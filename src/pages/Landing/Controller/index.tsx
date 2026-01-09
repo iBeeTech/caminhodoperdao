@@ -21,7 +21,7 @@ import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
 const LandingController: React.FC = () => {
   const { t } = useTranslation("landing");
-  const { pageViewed, formSubmitted, formError } = useAnalytics();
+  const { pageViewed, formSubmitted, formError, enrollmentReserved, paymentConfirmed } = useAnalytics();
   const { fetchAddress } = useAddressByCep();
 
   const landingContent: LandingContent = useMemo(() => {
@@ -102,6 +102,12 @@ const LandingController: React.FC = () => {
           setCurrentStatus("PAID");
           setStatusMessage(t("signup.status.paid") || "Pagamento confirmado!");
           setStatusTone("success");
+          
+          // Disparar evento de pagamento confirmado
+          paymentConfirmed("landing", "woovi", "pix", {
+            status: "PAID",
+          });
+          
           clearInterval(pollInterval);
         }
       } catch (error) {
@@ -300,6 +306,12 @@ const LandingController: React.FC = () => {
       if (normalizedStatus === "PAID") {
         setStatusMessage(result.message ?? t("signup.status.paid"));
         setStatusTone("success");
+        
+        // Disparar evento de pagamento confirmado
+        paymentConfirmed("landing", "woovi", "pix", {
+          status: "PAID",
+        });
+        
         setPhase("status");
         return;
       }
@@ -376,6 +388,11 @@ const LandingController: React.FC = () => {
       setStatusTone("warn");
       setPhase("status");
 
+      // Disparar evento de inscrição reservada
+      enrollmentReserved("landing", "woovi", {
+        status: data.status,
+      });
+
       if (data.registration_id) {
         identifyRegisteredUser(data.registration_id);
       }
@@ -398,6 +415,10 @@ const LandingController: React.FC = () => {
           if (normalizedStatus === "PAID") {
             setStatusMessage(t("signup.status.paid"));
             setStatusTone("success");
+            // Disparar evento de pagamento confirmado
+            paymentConfirmed("landing", "woovi", "pix", {
+              status: "PAID",
+            });
           } else if (normalizedStatus === "PENDING") {
             setStatusMessage(t("signup.status.defaultPending"));
             setStatusTone("warn");

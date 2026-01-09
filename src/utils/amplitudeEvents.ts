@@ -64,8 +64,15 @@ export const AmplitudeEvents = {
   "signup_started":                     "signup_started",
   "signup_submitted":                   "signup_submitted",
   "signup_success":                     "signup_success",
+  "signup_reserved":                    "signup_reserved",
   "signup_error":                       "signup_error",
   "signup_field_error":                 "signup_field_error",
+
+  // ============ PAYMENT ============
+  "payment_initiated":                  "payment_initiated",
+  "payment_confirmed":                  "payment_confirmed",
+  "payment_expired":                    "payment_expired",
+  "payment_error":                      "payment_error",
 
   // ============ FORM ============
   "form_started":                       "form_started",

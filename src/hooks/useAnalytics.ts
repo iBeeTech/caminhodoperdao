@@ -158,6 +158,28 @@ export const useAnalytics = () => {
     pageName = "app"
   ) => nonInteraction(pageName, "error", errorType, { error_type: errorType, error_message: errorMessage, context });
 
+  const enrollmentReserved = (
+    pageName = "landing",
+    paymentProvider?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) =>
+    interaction(pageName, "enrollment_reserved", "registration_created", undefined, undefined, {
+      payment_provider: paymentProvider,
+      ...additionalProps,
+    });
+
+  const paymentConfirmed = (
+    pageName = "landing",
+    paymentProvider?: string,
+    paymentMethod?: string,
+    additionalProps?: Partial<AmplitudeEventProperties>
+  ) =>
+    interaction(pageName, "payment_confirmed", "pix_paid", undefined, undefined, {
+      payment_provider: paymentProvider,
+      payment_method: paymentMethod,
+      ...additionalProps,
+    });
+
   return {
     screenView,
     nonInteraction,
@@ -192,5 +214,7 @@ export const useAnalytics = () => {
     trackExternalLinkClicked: externalLinkClicked,
     errorOccurred,
     trackErrorOccurred: errorOccurred,
+    enrollmentReserved,
+    paymentConfirmed,
   };
 };
