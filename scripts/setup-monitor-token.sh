@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Script para adicionar MONITOR_TOKEN via Cloudflare API
+# Use este script após fazer login com wrangler
+
+TOKEN_VALUE="5eec2373ce7f304b8fe3ed7d2e8cef0d"
+PROJECT_NAME="caminhodoperdao"
+
+echo "⚠️  Nota: Este script requer Node.js v20+"
+echo "Sua versão atual: $(node --version)"
+echo ""
+echo "Para adicionar o token via wrangler, use:"
+echo ""
+echo "1. Atualize Node.js para v20+ usando:"
+echo "   nvm install 20"
+echo "   nvm use 20"
+echo ""
+echo "2. Então rode:"
+echo "   wrangler secret put MONITOR_TOKEN --env production"
+echo "   # Digite o valor quando solicitado: $TOKEN_VALUE"
+echo ""
+echo "   wrangler secret put MONITOR_TOKEN --env preview"
+echo "   # Digite o valor quando solicitado: $TOKEN_VALUE"
+echo ""
+echo "=== OU ==="
+echo ""
+echo "Adicione manualmente via Cloudflare Dashboard:"
+echo "1. Vá para: https://dash.cloudflare.com/"
+echo "2. Workers & Pages → caminhodoperdao"
+echo "3. Settings → Environment variables"
+echo "4. Add variable"
+echo "5. Name: MONITOR_TOKEN"
+echo "6. Type: Secret"
+echo "7. Value: $TOKEN_VALUE"
+echo "8. Clique em Save"
+echo ""
+echo "9. Repita para o environment 'preview'"
