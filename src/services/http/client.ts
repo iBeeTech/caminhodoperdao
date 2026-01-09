@@ -38,18 +38,9 @@ async function request<T>(input: RequestInfo | URL, init: RequestInit): Promise<
   return data as T;
 }
 
-const API_BASE_URL = "https://caminhodoperdao.pages.dev";
-
-const getFullUrl = (url: string): string => {
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  }
-  return `${API_BASE_URL}${url}`;
-};
-
 export const httpClient = {
   get<T>(url: string, init?: RequestInit) {
-    return request<T>(getFullUrl(url), { method: "GET", ...init });
+    return request<T>(url, { method: "GET", ...init });
   },
   post<T>(url: string, body?: unknown, init?: RequestInit) {
     const headers = {
@@ -57,7 +48,7 @@ export const httpClient = {
       ...(init?.headers ?? {}),
     };
 
-    return request<T>(getFullUrl(url), {
+    return request<T>(url, {
       method: "POST",
       headers,
       body: body ? JSON.stringify(body) : undefined,
