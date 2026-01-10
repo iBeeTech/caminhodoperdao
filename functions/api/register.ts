@@ -92,7 +92,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   let charge;
   try {
-    charge = await provider.createCharge({ name, email });
+    charge = await provider.createCharge({ 
+      name: name?.trim() || email.split('@')[0], 
+      email 
+    });
   } catch (error: any) {
     console.error(`Erro ao criar cobrança PIX: ${error.message}`);
     const message = error.message.includes('not configured') 
