@@ -216,6 +216,58 @@ const LandingController: React.FC = () => {
     setCurrentStatus(null);
   };
 
+  const onEmailBlur = async () => {
+    // Apenas executar se estamos no formulário de inscrição completa
+    if (phase !== "form") return;
+
+    const email = getFieldValue(emailRef.current);
+    
+    // Se o email está vazio, não fazer nada
+    if (!email || !email.includes("@")) return;
+
+    try {
+      // Verificar se esse email já tem uma inscrição
+      const result = await checkStatusMutation.mutateAsync(email);
+      
+      // Se a inscrição existe
+      if (result.exists) {
+        existingDataRef.current = result;
+        syncFormWithStatus(result, fieldRefs);
+        
+        // Persistir nome e email no sessionStorage para exibição na tela de status
+        if (result.name) {
+          sessionStorage.setItem("landing_registration_name", result.name);
+        }
+        if (result.email) {
+          sessionStorage.setItem("landing_registration_email", result.email);
+        }
+        
+        const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
+        setCurrentStatus(normalizedStatus);
+        setQrCodeText(result.qrCodeText ?? null);
+        setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+
+        if (normalizedStatus === "PAID") {
+          setStatusMessage(result.message ?? t("signup.status.paid"));
+          setStatusTone("success");
+          setPhase("status");
+        } else if (normalizedStatus === "PENDING") {
+          setStatusMessage(t("signup.status.pending"));
+          setStatusTone("warn");
+          setPhase("status");
+        } else if (result.expired || normalizedStatus === "CANCELED") {
+          setStatusMessage(t("signup.status.canceled"));
+          setStatusTone("error");
+          setPhase("status");
+        }
+      }
+    } catch (error) {
+      // Silenciosamente falhar se a verificação não funcionar
+      // Permitir que o usuário continue preenchendo o formulário
+      console.debug("Email verification on blur failed, allowing user to continue", error);
+    }
+  };
+
   const onPhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
     const cursorPos = input.selectionStart ?? 0;
@@ -575,6 +627,7 @@ const LandingController: React.FC = () => {
       onSubmitRegistration={handleRegister}
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
+      onEmailBlur={onEmailBlur}
       onPrimaryAction={() => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}

@@ -65,6 +65,7 @@ interface SignupSectionProps {
   onSubmitRegistration: (event: FormEvent<HTMLFormElement>) => void;
   onPhoneChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onEmailBlur: () => void;
   onReopenRegistration: () => void;
 }
 
@@ -86,6 +87,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onSubmitRegistration,
   onPhoneChange,
   onCepChange,
+  onEmailBlur,
   onReopenRegistration,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
@@ -204,6 +206,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="email"
                   placeholder={t("signup.registrationForm.emailPlaceholder")}
                   ref={emailRef as RefObject<HTMLInputElement>}
+                  onBlur={onEmailBlur}
                   autoComplete="email"
                 />
               </FormField>

@@ -55,6 +55,7 @@ interface LandingViewProps {
   onSubmitRegistration: (event: FormEvent<HTMLFormElement>) => void;
   onPhoneChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onEmailBlur: () => void;
   onPrimaryAction: () => void;
   onSecondaryAction: () => void;
   onCallToAction: () => void;
@@ -80,6 +81,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onSubmitRegistration,
   onPhoneChange,
   onCepChange,
+  onEmailBlur,
   onPrimaryAction,
   onSecondaryAction,
   onCallToAction,
@@ -131,6 +133,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             onSubmitRegistration={onSubmitRegistration}
             onPhoneChange={onPhoneChange}
             onCepChange={onCepChange}
+            onEmailBlur={onEmailBlur}
             onReopenRegistration={onReopenRegistration}
           />
         </TrackSection>
