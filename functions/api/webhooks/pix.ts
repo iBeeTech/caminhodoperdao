@@ -1,4 +1,23 @@
 import { WooviWebhookPayload } from '../../../types/woovi';
+import { sendRegistrationConfirmationEmail } from '../../_utils/email';
+
+/**
+ * Função para gerar número de inscrição sequencial
+ */
+async function generateRegistrationNumber(db: D1Database): Promise<string> {
+  const year = new Date().getFullYear();
+  
+  // Contar registros pagos deste ano
+  const result = await db
+    .prepare(
+      "SELECT COUNT(*) as count FROM registrations WHERE registration_number LIKE ? AND status = 'PAID'"
+    )
+    .bind(`%-${year}`)
+    .first<{ count: number }>();
+  
+  const nextNumber = (result?.count || 0) + 1;
+  return `${String(nextNumber).padStart(3, '0')}-${year}`;
+}
 
 /**
  * Webhook para receber confirmações de pagamento PIX da Woovi
@@ -42,24 +61,47 @@ export default async function handler(request: Request, context: any) {
       if (charge.status === 'COMPLETED') {
         // Buscar registro na tabela registrations pelo payment_ref (que é o transactionID)
         const registration = await context.env.DB
-          .prepare('SELECT email FROM registrations WHERE payment_ref = ?')
+          .prepare('SELECT email, name FROM registrations WHERE payment_ref = ?')
           .bind(charge.transactionID)
-          .first<{ email: string }>();
+          .first<{ email: string; name: string }>();
 
         if (registration) {
-          // Atualizar o registro como PAID
+          // Gerar número de inscrição
+          const registrationNumber = await generateRegistrationNumber(context.env.DB);
+
+          // Atualizar o registro como PAID com número de inscrição
           await context.env.DB
             .prepare(
-              "UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?"
+              "UPDATE registrations SET status = 'PAID', paid_at = ?, registration_number = ? WHERE email = ?"
             )
-            .bind(Date.now(), registration.email)
+            .bind(Date.now(), registrationNumber, registration.email)
             .run();
 
           console.log(
-            `Registro marcado como PAID: ${registration.email} (transactionID: ${charge.transactionID})`
+            `Registro marcado como PAID: ${registration.email} (número: ${registrationNumber})`
           );
 
-          // Opcional: registrar informações da transação
+          // Enviar email de confirmação com número de inscrição
+          if (context.env.RESEND_API_KEY) {
+            const emailSent = await sendRegistrationConfirmationEmail(
+              {
+                to: registration.email,
+                name: registration.name,
+                registrationNumber,
+              },
+              context.env.RESEND_API_KEY
+            );
+            
+            if (emailSent) {
+              console.log(`Email enviado para ${registration.email}`);
+            } else {
+              console.warn(`Falha ao enviar email para ${registration.email}`);
+            }
+          } else {
+            console.warn('RESEND_API_KEY não configurado, email não será enviado');
+          }
+
+          // Registrar informações da transação
           if (pix) {
             console.log(
               `PIX recebido: ${pix.value} centavos, endToEndId: ${pix.endToEndId}`

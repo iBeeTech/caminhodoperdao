@@ -104,7 +104,7 @@ const LandingController: React.FC = () => {
   // Polling de status quando em modo "status" e status é PENDING
   const userEmailForPolling = phase === "status" && currentStatus === "PENDING" ? existingDataRef.current?.email : null;
 
-  const { } = usePaymentStatusPolling({
+  usePaymentStatusPolling({
     email: userEmailForPolling || "",
     enabled: !!userEmailForPolling,
     onStatusChange: (newStatus) => {
