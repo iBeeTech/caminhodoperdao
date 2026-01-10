@@ -109,6 +109,14 @@ const LandingController: React.FC = () => {
     enabled: !!userEmailForPolling,
     onStatusChange: (newStatus) => {
       if (newStatus === "PAID") {
+        // Persistir nome e email no sessionStorage para exibição na tela PAID
+        if (existingDataRef.current?.name) {
+          sessionStorage.setItem("landing_registration_name", existingDataRef.current.name);
+        }
+        if (existingDataRef.current?.email) {
+          sessionStorage.setItem("landing_registration_email", existingDataRef.current.email);
+        }
+        
         setCurrentStatus("PAID");
         setStatusMessage(t("signup.status.paid") || "Pagamento confirmado!");
         setStatusTone("success");
@@ -133,6 +141,14 @@ const LandingController: React.FC = () => {
         
         // Se o status mudou para PAID, atualizar
         if (statusData.status === "PAID") {
+          // Persistir nome e email no sessionStorage para exibição na tela PAID
+          if (statusData.name) {
+            sessionStorage.setItem("landing_registration_name", statusData.name);
+          }
+          if (statusData.email) {
+            sessionStorage.setItem("landing_registration_email", statusData.email);
+          }
+          
           setCurrentStatus("PAID");
           setStatusMessage(t("signup.status.paid") || "Pagamento confirmado!");
           setStatusTone("success");
