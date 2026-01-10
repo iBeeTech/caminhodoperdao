@@ -53,7 +53,7 @@ export const Navigation = styled.nav<{ $open: boolean }>`
   display: flex;
   justify-content: flex-end;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1090px) {
     position: absolute;
     top: 60px;
     right: 15px;
@@ -79,7 +79,7 @@ export const NavList = styled.ul`
   padding: 0;
   gap: 2rem;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1090px) {
     flex-direction: column;
     gap: 0.75rem;
   }
@@ -180,7 +180,7 @@ export const MenuToggle = styled.button<{ $open: boolean }>`
       }
     `}
 
-  @media (max-width: 768px) {
+  @media (max-width: 1090px) {
     display: inline-flex;
   }
 `;

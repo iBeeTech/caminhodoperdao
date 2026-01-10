@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
 import { useAnalytics } from "../../../hooks/useAnalytics";
+import { usePaymentStatusPolling } from "../../../hooks/usePaymentStatusPolling";
 import LandingView from "../View/LandingView";
 import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone } from "../Model";
 import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
@@ -60,6 +61,19 @@ const LandingController: React.FC = () => {
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
   const pageViewTrackedRef = useRef(false);
 
+  // Limpar sessionStorage ao fazer reload ou sair da página
+  React.useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("landing_registration_name");
+        sessionStorage.removeItem("landing_registration_email");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   // Rastrear page view ao montar (SSR-safe)
   React.useEffect(() => {
     if (!pageViewTrackedRef.current && typeof window !== "undefined") {
@@ -88,6 +102,26 @@ const LandingController: React.FC = () => {
   }, [phase]);
 
   // Polling de status quando em modo "status" e status é PENDING
+  const userEmailForPolling = phase === "status" && currentStatus === "PENDING" ? existingDataRef.current?.email : null;
+
+  const { } = usePaymentStatusPolling({
+    email: userEmailForPolling || "",
+    enabled: !!userEmailForPolling,
+    onStatusChange: (newStatus) => {
+      if (newStatus === "PAID") {
+        setCurrentStatus("PAID");
+        setStatusMessage(t("signup.status.paid") || "Pagamento confirmado!");
+        setStatusTone("success");
+        
+        // Disparar evento de pagamento confirmado
+        paymentConfirmed("landing", "woovi", "pix", {
+          status: "PAID",
+        });
+      }
+    },
+  });
+
+  // Legacy polling - manter para compatibilidade se hook não funcionar
   React.useEffect(() => {
     if (phase !== "status" || currentStatus !== "PENDING" || !existingDataRef.current?.email) {
       return;
@@ -388,6 +422,12 @@ const LandingController: React.FC = () => {
       setStatusTone("warn");
       setPhase("status");
 
+      // Guardar nome e email no sessionStorage para exibição
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("landing_registration_name", payload.name);
+        sessionStorage.setItem("landing_registration_email", payload.email);
+      }
+
       // Disparar evento de inscrição reservada
       enrollmentReserved("landing", "woovi", {
         status: data.status,
@@ -466,6 +506,11 @@ const LandingController: React.FC = () => {
   const handleReopenRegistration = async () => {
     setCapacityCallout(null);
     resetStatusState();
+    // Limpar dados da sessão quando reabrir registro
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("landing_registration_name");
+      sessionStorage.removeItem("landing_registration_email");
+    }
 
     try {
       const result = await refetchAvailability();

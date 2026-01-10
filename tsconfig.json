@@ -14,11 +14,20 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@tanstack/react-query": [
+        "node_modules/@tanstack/react-query"
+      ],
+      "@tanstack/*": [
+        "node_modules/@tanstack/*"
+      ]
+    }
   },
   "include": [
     "src",

@@ -410,6 +410,19 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
               {currentStatus === "PENDING" && (
                 <PixBox>
+                  {(() => {
+                    const name = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_name") : null;
+                    const email = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_email") : null;
+                    if (name || email) {
+                      return (
+                        <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: "1rem", textAlign: "center", padding: "1rem", backgroundColor: "#f5f5f5", borderRadius: "8px" }}>
+                          {name && <div><strong>Nome:</strong> {name}</div>}
+                          {email && <div><strong>Email:</strong> {email}</div>}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   <PixLabelContainer>
                     <PixLabel htmlFor={pixTextareaId}>{t("signup.status.pixCopyLabel")}</PixLabel>
                     <CopyButton 
@@ -505,6 +518,19 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       <span style={{ fontSize: "1rem" }}>
                         {t("signup.status.paidBox")}
                       </span>
+                      {(() => {
+                        const name = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_name") : null;
+                        const email = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_email") : null;
+                        if (name || email) {
+                          return (
+                            <div style={{ fontSize: "0.95rem", color: "#555", marginTop: "0.5rem", textAlign: "center" }}>
+                              {name && <div><strong>Nome:</strong> {name}</div>}
+                              {email && <div><strong>Email:</strong> {email}</div>}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </PaidBox>
                     <style>{`
                       @keyframes scaleAndSpin {
