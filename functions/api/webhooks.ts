@@ -24,11 +24,29 @@ async function generateRegistrationNumber(db: any): Promise<string> {
  * Evento: OPENPIX:CHARGE_COMPLETED
  */
 export default async function handler(request: Request, context: any) {
+  // Adicionar headers CORS
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
+  // Responder a OPTIONS requests
+  if (request.method === 'OPTIONS') {
+    return new Response('OK', {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
   try {
-    // Retornar 200 para qualquer método primeiro
+    // Retornar 200 para qualquer método
     if (request.method !== 'POST') {
       console.warn(`Webhook recebido com método ${request.method}`);
-      return new Response('OK', { status: 200 });
+      return new Response('OK', { 
+        status: 200,
+        headers: corsHeaders,
+      });
     }
 
     // ========== PARSE PAYLOAD ==========
@@ -37,18 +55,27 @@ export default async function handler(request: Request, context: any) {
       payload = (await request.json()) as WooviWebhookPayload;
     } catch (e) {
       console.warn('Erro ao fazer parse do JSON:', e);
-      return new Response('OK', { status: 200 });
+      return new Response('OK', { 
+        status: 200,
+        headers: corsHeaders,
+      });
     }
 
     // Validação básica
     if (!payload) {
       console.log('Payload vazio recebido');
-      return new Response('OK', { status: 200 });
+      return new Response('OK', { 
+        status: 200,
+        headers: corsHeaders,
+      });
     }
 
     if (!payload.charge) {
       console.log('Payload sem charge:', JSON.stringify(payload));
-      return new Response('OK', { status: 200 });
+      return new Response('OK', { 
+        status: 200,
+        headers: corsHeaders,
+      });
     }
 
     const { charge, pix } = payload;
@@ -109,9 +136,19 @@ export default async function handler(request: Request, context: any) {
     }
 
     // Retornar sempre 200
-    return new Response('OK', { status: 200 });
+    return new Response('OK', { 
+      status: 200,
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error('Erro no webhook:', error);
-    return new Response('OK', { status: 200 });
+    return new Response('OK', { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   }
 }
