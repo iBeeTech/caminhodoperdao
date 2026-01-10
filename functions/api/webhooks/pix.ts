@@ -21,35 +21,38 @@ async function generateRegistrationNumber(db: D1Database): Promise<string> {
 
 /**
  * Webhook para receber confirmações de pagamento PIX da Woovi
- * Evento: OPENPIX:TRANSACTION_RECEIVED
+ * Evento: OPENPIX:CHARGE_COMPLETED
  */
 export default async function handler(request: Request, context: any) {
-  // Apenas POST
+  // Apenas POST - mas retornar 200 mesmo se for outro método
   if (request.method !== 'POST') {
-    return new Response('Not allowed', { status: 405 });
+    console.warn(`Webhook recebido com método ${request.method}, retornando 200`);
+    return new Response('OK', { status: 200 });
   }
 
   try {
-    // ========== VALIDAR WEBHOOK ==========
-    // Opcional: validar token se configurado
-    const webhookToken = request.headers.get('authorization');
-    const configuredToken = context.env.WOOVI_WEBHOOK_SECRET;
-
-    if (configuredToken && webhookToken !== configuredToken) {
-      console.warn('Webhook token inválido');
-      return new Response('Unauthorized', { status: 401 });
-    }
-
     // ========== PARSE PAYLOAD ==========
-    const payload = (await request.json()) as WooviWebhookPayload;
-
-    if (!payload.charge || !payload.pix) {
-      console.warn('Payload de webhook inválido:', payload);
-      return new Response('Invalid payload', { status: 400 });
+    let payload;
+    try {
+      payload = (await request.json()) as WooviWebhookPayload;
+    } catch (e) {
+      console.warn('Erro ao fazer parse do JSON:', e);
+      return new Response('OK', { status: 200 });
     }
 
-    const { charge, pix } = payload;
-    const correlationId = charge.correlationID;
+    // Validação básica
+    if (!payload) {
+      console.log('Payload vazio recebido');
+      return new Response('OK', { status: 200 });
+    }
+
+    if (!payload.charge) {
+      console.log('Payload sem charge:', JSON.stringify(payload));
+      return new Response('OK', { status: 200 });
+    }
+
+    const { charge } = payload;
+    const correlationId = charge.correlationID || 'unknown';
 
     console.log(
       `Webhook recebido - correlationID: ${correlationId}, status: ${charge.status}`
