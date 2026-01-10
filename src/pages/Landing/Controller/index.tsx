@@ -332,6 +332,15 @@ const LandingController: React.FC = () => {
       }
 
       syncFormWithStatus(result, fieldRefs);
+      
+      // Persistir nome e email no sessionStorage para exibição na tela de status
+      if (result.name) {
+        sessionStorage.setItem("landing_registration_name", result.name);
+      }
+      if (result.email) {
+        sessionStorage.setItem("landing_registration_email", result.email);
+      }
+      
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
       setQrCodeText(result.qrCodeText ?? null);
@@ -447,6 +456,15 @@ const LandingController: React.FC = () => {
           const statusData = await landingService.checkStatus(payload.email);
           existingDataRef.current = statusData;
           syncFormWithStatus(statusData, fieldRefs);
+          
+          // Persistir nome e email no sessionStorage para exibição na tela de status
+          if (statusData.name) {
+            sessionStorage.setItem("landing_registration_name", statusData.name);
+          }
+          if (statusData.email) {
+            sessionStorage.setItem("landing_registration_email", statusData.email);
+          }
+          
           const normalizedStatus = statusData.status ?? (statusData.expired ? "CANCELED" : null);
           setCurrentStatus(normalizedStatus);
           setQrCodeText(statusData.qrCodeText ?? null);
