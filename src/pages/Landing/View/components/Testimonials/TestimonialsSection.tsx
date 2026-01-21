@@ -38,7 +38,13 @@ const TestimonialsSection: React.FC = () => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
   const { externalLinkClicked } = useAnalytics();
-  const whatsappUrl = t("testimonials.callout.whatsappUrl");
+  // Usar os dois números fornecidos
+  const whatsappNumbers = [
+    "5516982221415",
+    "5516999650319"
+  ];
+  // Usar o primeiro número para o link principal
+  const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappNumbers[0]}&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0`;
   const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     externalLinkClicked("whatsapp_testimonial");

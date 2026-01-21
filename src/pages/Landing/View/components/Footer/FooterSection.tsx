@@ -82,7 +82,7 @@ const FooterSection: React.FC = () => {
                   aria-label={socialLabel(t("social.whatsapp") as string)}
                   onClick={e => {
                     e.preventDefault();
-                    handleSocialClick("whatsapp", "https://wa.me/5511999999999");
+                    handleSocialClick("whatsapp", "https://api.whatsapp.com/send/?phone=5516982221415&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0");
                   }}
                 >
                   <SocialImage src={whatsappIcon} alt="" aria-hidden="true" loading="lazy" />
