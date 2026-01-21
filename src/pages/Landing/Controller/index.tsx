@@ -179,6 +179,7 @@ const LandingController: React.FC = () => {
   const cityRef = useRef<HTMLInputElement>(null);
   const stateRef = useRef<HTMLInputElement>(null);
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
+  const companionRef = useRef<HTMLInputElement>(null);
 
   const fieldRefs: FieldRefsType = {
     name: nameRef,
@@ -191,6 +192,7 @@ const LandingController: React.FC = () => {
     city: cityRef,
     state: stateRef,
     sleepAtMonastery: sleepAtMonasteryRef,
+    companionRef: companionRef,
   };
 
   const {
@@ -638,6 +640,7 @@ const LandingController: React.FC = () => {
         cityRef,
         stateRef,
         sleepAtMonasteryRef,
+        companionRef,
       }}
       onCheckStatus={handleCheckStatus}
       onSubmitRegistration={handleRegister}

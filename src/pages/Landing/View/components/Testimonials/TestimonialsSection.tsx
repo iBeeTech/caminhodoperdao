@@ -23,6 +23,7 @@ import {
   CalloutText,
   WhatsAppLink,
 } from "./TestimonialsSection.styles";
+import { useAnalytics } from "../../../../../hooks/useAnalytics";
 
 const renderStars = (rating?: number) =>
   Array(rating || 5)
@@ -72,6 +73,14 @@ const TestimonialsSection: React.FC = () => {
     );
   }
 
+  const { externalLinkClicked } = useAnalytics();
+  const whatsappUrl = t("testimonials.callout.whatsappUrl");
+  const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    externalLinkClicked("whatsapp_testimonial");
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
     <TestimonialsSectionWrapper id="testimonials">
       <Container>
@@ -98,9 +107,10 @@ const TestimonialsSection: React.FC = () => {
           <CalloutTitle>{t("testimonials.callout.title")}</CalloutTitle>
           <CalloutText>{t("testimonials.callout.message")}</CalloutText>
           <WhatsAppLink 
-            href={t("testimonials.callout.whatsappUrl")} 
+            href={whatsappUrl} 
             target="_blank" 
             rel="noopener noreferrer"
+            onClick={handleWhatsAppClick}
           >
             {t("testimonials.callout.buttonText")}
           </WhatsAppLink>

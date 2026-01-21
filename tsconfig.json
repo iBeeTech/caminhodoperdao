@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "types": [
+      "react",
+      "react-dom"
+    ],
     "target": "ES2022",
     "lib": [
       "dom",
@@ -14,7 +18,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -31,7 +35,8 @@
   },
   "include": [
     "src",
-    "functions"
+    "functions",
+    "types"
   ],
   "exclude": [
     "node_modules",

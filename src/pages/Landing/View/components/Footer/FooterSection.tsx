@@ -25,8 +25,11 @@ const FooterSection: React.FC = () => {
   const newTabNotice = (t("footer.newTabNotice") as string) || "Abre em nova aba";
   const socialLabel = (name: string) => `${name} (${newTabNotice})`;
 
-  const handleSocialClick = (platform: string) => {
+  const handleSocialClick = (platform: string, url?: string) => {
     externalLinkClicked(platform);
+    if (platform === "whatsapp" && url) {
+      window.open(url, "_blank");
+    }
   };
 
   return (
@@ -73,11 +76,14 @@ const FooterSection: React.FC = () => {
               </FooterSocialItem>
               <FooterSocialItem>
                 <SocialIcon
-                  href="https://wa.me/5511999999999"
+                  href="#"
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label={socialLabel(t("social.whatsapp") as string)}
-                  onClick={() => handleSocialClick("whatsapp")}
+                  onClick={e => {
+                    e.preventDefault();
+                    handleSocialClick("whatsapp", "https://wa.me/5511999999999");
+                  }}
                 >
                   <SocialImage src={whatsappIcon} alt="" aria-hidden="true" loading="lazy" />
                   <SrOnly>{t("social.whatsapp")}</SrOnly>

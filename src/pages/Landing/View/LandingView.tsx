@@ -50,6 +50,7 @@ interface LandingViewProps {
     cityRef: RefObject<HTMLInputElement | null>;
     stateRef: RefObject<HTMLInputElement | null>;
     sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
+    companionRef: RefObject<HTMLInputElement | null>;
   };
   onCheckStatus: (event: FormEvent<HTMLFormElement>) => void;
   onSubmitRegistration: (event: FormEvent<HTMLFormElement>) => void;
