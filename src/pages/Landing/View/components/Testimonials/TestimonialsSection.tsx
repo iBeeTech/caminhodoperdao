@@ -37,6 +37,13 @@ const renderStars = (rating?: number) =>
 const TestimonialsSection: React.FC = () => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
+  const { externalLinkClicked } = useAnalytics();
+  const whatsappUrl = t("testimonials.callout.whatsappUrl");
+  const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    externalLinkClicked("whatsapp_testimonial");
+    window.open(whatsappUrl, "_blank");
+  };
 
   if (isLoading) {
     return (
@@ -72,14 +79,6 @@ const TestimonialsSection: React.FC = () => {
       </TestimonialsSectionWrapper>
     );
   }
-
-  const { externalLinkClicked } = useAnalytics();
-  const whatsappUrl = t("testimonials.callout.whatsappUrl");
-  const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    externalLinkClicked("whatsapp_testimonial");
-    window.open(whatsappUrl, "_blank");
-  };
 
   return (
     <TestimonialsSectionWrapper id="testimonials">
