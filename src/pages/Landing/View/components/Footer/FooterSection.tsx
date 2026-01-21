@@ -19,15 +19,35 @@ import {
   SrOnly,
 } from "./FooterSection.styles";
 
-const FooterSection: React.FC = () => {
+interface FooterSectionProps {
+  getNextWhatsappUrl: () => string;
+}
+
+const FooterSection: React.FC<FooterSectionProps> = ({ getNextWhatsappUrl }) => {
   const { t } = useTranslation("common");
   const { externalLinkClicked } = useAnalytics();
   const newTabNotice = (t("footer.newTabNotice") as string) || "Abre em nova aba";
   const socialLabel = (name: string) => `${name} (${newTabNotice})`;
 
+  // Round robin para WhatsApp
+  const whatsappNumbers = [
+    "5516982221415",
+    "5516999650319"
+  ];
+  const roundRobinIndexRef = React.useRef(0);
+  const getNextWhatsappUrl = () => {
+    const idx = roundRobinIndexRef.current;
+    const url = `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&type=phone_number&app_absent=0`;
+    roundRobinIndexRef.current = (idx + 1) % whatsappNumbers.length;
+    return url;
+  };
+
   const handleSocialClick = (platform: string, url?: string) => {
     externalLinkClicked(platform);
-    if (platform === "whatsapp" && url) {
+    if (platform === "whatsapp") {
+      const nextUrl = getNextWhatsappUrl();
+      window.open(nextUrl, "_blank");
+    } else if (url) {
       window.open(url, "_blank");
     }
   };
@@ -82,7 +102,7 @@ const FooterSection: React.FC = () => {
                   aria-label={socialLabel(t("social.whatsapp") as string)}
                   onClick={e => {
                     e.preventDefault();
-                    handleSocialClick("whatsapp", "https://api.whatsapp.com/send/?phone=5516982221415&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0");
+                    handleSocialClick("whatsapp");
                   }}
                 >
                   <SocialImage src={whatsappIcon} alt="" aria-hidden="true" loading="lazy" />

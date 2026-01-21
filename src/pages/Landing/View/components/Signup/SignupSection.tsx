@@ -67,6 +67,7 @@ interface SignupSectionProps {
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onEmailBlur: () => void;
   onReopenRegistration: () => void;
+  getNextWhatsappUrl: () => string;
 }
 
 const SignupSection: React.FC<SignupSectionProps> = ({
@@ -595,7 +596,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         if (window && window.analytics) {
                           window.analytics.track && window.analytics.track("whatsapp_signup_button_click");
                         }
-                        window.open("https://chat.whatsapp.com/seu-grupo-aqui", "_blank");
+                        const url = getNextWhatsappUrl();
+                        window.open(url, "_blank");
                       }}
                       className="whatsapp-button"
                       style={{

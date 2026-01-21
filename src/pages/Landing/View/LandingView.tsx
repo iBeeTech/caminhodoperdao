@@ -61,6 +61,7 @@ interface LandingViewProps {
   onSecondaryAction: () => void;
   onCallToAction: () => void;
   onReopenRegistration: () => void;
+  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => string;
 }
 
 const LandingView: React.FC<LandingViewProps> = ({
@@ -87,6 +88,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onSecondaryAction,
   onCallToAction,
   onReopenRegistration,
+  getNextWhatsappUrl,
 }) => {
   const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
   return (
@@ -136,7 +138,8 @@ const LandingView: React.FC<LandingViewProps> = ({
             onCepChange={onCepChange}
             onEmailBlur={onEmailBlur}
             onReopenRegistration={onReopenRegistration}
-          />
+          getNextWhatsappUrl={getNextWhatsappUrl}
+        />
         </TrackSection>
 
         <TrackSection
@@ -172,7 +175,7 @@ const LandingView: React.FC<LandingViewProps> = ({
           sectionName={LANDING_SECTIONS.TESTIMONIALS.name}
           position={LANDING_SECTIONS.TESTIMONIALS.position}
         >
-          <TestimonialsSection />
+          <TestimonialsSection getNextWhatsappUrl={getNextWhatsappUrl} />
         </TrackSection>
 
         <TrackSection
@@ -192,7 +195,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         position={LANDING_SECTIONS.FOOTER.position}
         as="footer"
       >
-        <FooterSection />
+        <FooterSection getNextWhatsappUrl={getNextWhatsappUrl} />
       </TrackSection>
     </LandingPage>
   );

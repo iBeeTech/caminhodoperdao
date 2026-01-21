@@ -34,21 +34,19 @@ const renderStars = (rating?: number) =>
       </Star>
     ));
 
-const TestimonialsSection: React.FC = () => {
+interface TestimonialsSectionProps {
+  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => string;
+}
+
+const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ getNextWhatsappUrl }) => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
   const { externalLinkClicked } = useAnalytics();
-  // Usar os dois números fornecidos
-  const whatsappNumbers = [
-    "5516982221415",
-    "5516999650319"
-  ];
-  // Usar o primeiro número para o link principal
-  const whatsappUrl = `https://api.whatsapp.com/send/?phone=${whatsappNumbers[0]}&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0`;
   const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     externalLinkClicked("whatsapp_testimonial");
-    window.open(whatsappUrl, "_blank");
+    const url = getNextWhatsappUrl({ depoimento: true });
+    window.open(url, "_blank");
   };
 
   if (isLoading) {
@@ -112,7 +110,7 @@ const TestimonialsSection: React.FC = () => {
           <CalloutTitle>{t("testimonials.callout.title")}</CalloutTitle>
           <CalloutText>{t("testimonials.callout.message")}</CalloutText>
           <WhatsAppLink 
-            href={whatsappUrl} 
+            href="#"
             target="_blank" 
             rel="noopener noreferrer"
             onClick={handleWhatsAppClick}

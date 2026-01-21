@@ -20,6 +20,20 @@ import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
+const whatsappNumbers = [
+  "5516982221415",
+  "5516999650319"
+];
+let roundRobinIndex = 0;
+const getNextWhatsappUrl = (opts?: { depoimento?: boolean }) => {
+  const idx = roundRobinIndex;
+  roundRobinIndex = (roundRobinIndex + 1) % whatsappNumbers.length;
+  if (opts?.depoimento) {
+    return `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0`;
+  }
+  return `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&type=phone_number&app_absent=0`;
+};
+
 const LandingController: React.FC = () => {
   const { t } = useTranslation("landing");
   const { pageViewed, formSubmitted, formError, enrollmentReserved, paymentConfirmed } = useAnalytics();
@@ -657,6 +671,7 @@ const LandingController: React.FC = () => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onReopenRegistration={handleReopenRegistration}
+      getNextWhatsappUrl={getNextWhatsappUrl}
     />
   );
 };
