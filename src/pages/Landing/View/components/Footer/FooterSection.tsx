@@ -29,18 +29,6 @@ const FooterSection: React.FC<FooterSectionProps> = ({ getNextWhatsappUrl }) => 
   const newTabNotice = (t("footer.newTabNotice") as string) || "Abre em nova aba";
   const socialLabel = (name: string) => `${name} (${newTabNotice})`;
 
-  // Round robin para WhatsApp
-  const whatsappNumbers = [
-    "5516982221415",
-    "5516999650319"
-  ];
-  const roundRobinIndexRef = React.useRef(0);
-  const getNextWhatsappUrl = () => {
-    const idx = roundRobinIndexRef.current;
-    const url = `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&type=phone_number&app_absent=0`;
-    roundRobinIndexRef.current = (idx + 1) % whatsappNumbers.length;
-    return url;
-  };
 
   const handleSocialClick = (platform: string, url?: string) => {
     externalLinkClicked(platform);
