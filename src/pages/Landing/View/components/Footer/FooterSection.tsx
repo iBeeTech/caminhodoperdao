@@ -50,8 +50,8 @@ const FooterSection: React.FC<FooterSectionProps> = ({ getNextWhatsappUrl }) => 
           </FooterColumn>
           <FooterColumn>
             <FooterSubheading>{t("footer.contactHeading")}</FooterSubheading>
-            <p>{t("footer.email")}</p>
-            <p>{t("footer.phone")}</p>
+            <p>caminhadadoperdaoassis@gmail.com</p>
+            <p>(16) 3017-0571</p>
           </FooterColumn>
           <FooterColumn>
             <FooterSubheading>{t("footer.socialHeading")}</FooterSubheading>
