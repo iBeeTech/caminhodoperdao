@@ -488,19 +488,19 @@ const LandingController: React.FC = () => {
     }
 
     const payload: RegistrationPayload = {
-      name: getFieldValue(nameRef.current),
-      email: getFieldValue(emailRef.current),
-      phone: getFieldValue(phoneRef.current),
-      cep: getFieldValue(cepRef.current),
-      address: getFieldValue(addressRef.current),
-      number: getFieldValue(numberRef.current),
-      complement: getFieldValue(complementRef.current),
-      city: getFieldValue(cityRef.current),
-      state: getFieldValue(stateRef.current).toUpperCase(),
+      name: getFieldValue(nameRef?.current ?? null),
+      email: getFieldValue(emailRef?.current ?? null),
+      phone: getFieldValue(phoneRef?.current ?? null),
+      cep: getFieldValue(cepRef?.current ?? null),
+      address: getFieldValue(addressRef?.current ?? null),
+      number: getFieldValue(numberRef?.current ?? null),
+      complement: getFieldValue(complementRef?.current ?? null),
+      city: getFieldValue(cityRef?.current ?? null),
+      state: (getFieldValue(stateRef?.current ?? null) || "").toUpperCase(),
       sleepAtMonastery: isMonasterySlotUnavailable
         ? false
-        : (sleepAtMonasteryRef.current?.value ?? "") === "yes",
-      companionName: getFieldValue(fieldRefs.companionRef),
+        : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
+      companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
     };
 
     try {
