@@ -418,7 +418,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
               {currentStatus === "PENDING" && (
                 <PixBox>
-                  {/* Frase de pagamento pendente */}
+                  {/* Frase de pagamento pendente única */}
                   <div style={{
                     fontSize: "1rem",
                     color: "#a15c00",
@@ -430,6 +430,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     textAlign: "center"
                   }}>
                     <span dangerouslySetInnerHTML={{ __html: t("signup.status.pending") }} />
+                    <br /><br />
+                    <span>{t("signup.status.pendingReload")}</span>
                   </div>
                   {(() => {
                     const name = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_name") : null;

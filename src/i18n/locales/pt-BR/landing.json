@@ -140,6 +140,7 @@
             "loading": "Enviando..."
         },
         "status": {
+                        "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
             "pending": "Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.",
             "canceled": "Pix expirado. Edite para reenviar.",
             "paid": "Sua inscrição já está confirmada.",
