@@ -149,7 +149,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
             <Callout variant="warning">{t("signup.callouts.full")}</Callout>
           )}
           {/* Callout para email já utilizado por outro nome */}
-          {errors.emailUsedByOtherName && (phase === "check" || phase === "form" || phase === "status") && (
+          {errors.emailUsedByOtherName && (
             <Callout variant="warning" style={{ marginBottom: 24, textAlign: 'center', fontSize: '1.1rem' }}>
               {errors.emailUsedByOtherName}
             </Callout>
