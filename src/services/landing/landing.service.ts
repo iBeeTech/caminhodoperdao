@@ -11,8 +11,12 @@ export const landingService = {
     return httpClient.get<AvailabilityResponse>("/api/availability");
   },
 
-  async checkStatus(email: string): Promise<RegistrationStatusResponse> {
-    return httpClient.get<RegistrationStatusResponse>(`/api/status?email=${encodeURIComponent(email)}`);
+  async checkStatus(email: string, name?: string): Promise<RegistrationStatusResponse> {
+    let url = `/api/status?email=${encodeURIComponent(email)}`;
+    if (name) {
+      url += `&name=${encodeURIComponent(name)}`;
+    }
+    return httpClient.get<RegistrationStatusResponse>(url);
   },
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {

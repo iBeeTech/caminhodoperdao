@@ -165,7 +165,7 @@ const LandingController: React.FC = () => {
   const isMonasterySlotUnavailable = availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
 
   const checkStatusMutation = useMutation({
-    mutationFn: (email: string) => landingService.checkStatus(email),
+    mutationFn: (params: { email: string, name?: string }) => landingService.checkStatus(params.email, params.name),
   });
 
   const registerMutation = useMutation({
@@ -185,13 +185,14 @@ const LandingController: React.FC = () => {
     if (phase !== "form") return;
 
     const email = getFieldValue(emailRef.current);
+    const name = getFieldValue(nameRef.current);
     
     // Se o email está vazio, não fazer nada
     if (!email || !email.includes("@")) return;
 
     try {
       // Verificar se esse email já tem uma inscrição
-      const result = await checkStatusMutation.mutateAsync(email);
+      const result = await checkStatusMutation.mutateAsync({ email, name });
 
       // Se a inscrição existe
       if (result.exists) {
@@ -329,10 +330,11 @@ const LandingController: React.FC = () => {
     }
 
     const email = getFieldValue(emailRef.current);
+    const name = getFieldValue(nameRef.current);
     formSubmitted("landing", "signup_check", "pending");
 
     try {
-      const result = await checkStatusMutation.mutateAsync(email);
+      const result = await checkStatusMutation.mutateAsync({ email, name });
       existingDataRef.current = result;
 
       if (!result.exists) {
