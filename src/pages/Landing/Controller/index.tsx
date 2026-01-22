@@ -533,6 +533,12 @@ const LandingController: React.FC = () => {
       }, 100);
     } catch (error) {
       if (error instanceof HttpError && error.status === 409) {
+        const errorData = error.response?.body as any;
+        if (errorData?.error === "email_used_by_other_name") {
+          setErrors({ emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.` });
+          setPhase("form");
+          return;
+        }
         try {
           const statusData = await landingService.checkStatus(payload.email);
           existingDataRef.current = statusData;
