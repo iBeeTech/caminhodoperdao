@@ -37,44 +37,6 @@ async function findActivePayment(
 /**
  * Salva novo pagamento no D1
  */
-async function savePayment(
-  db: any,
-  payment: Omit<PaymentRecord, 'id'> & { id?: string }
-): Promise<PaymentRecord> {
-  const id = payment.id || crypto.randomUUID();
-  const now = Date.now();
-
-  try {
-    await db
-      .prepare(
-        `INSERT INTO payments (
-          id, email, correlation_id, provider_charge_id, 
-          amount_cents, status, brcode, qr_code_image, qr_code_url,
-          expires_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        id,
-        payment.email,
-        payment.correlation_id,
-        payment.provider_charge_id || null,
-        payment.amount_cents,
-        payment.status,
-        payment.brcode || null,
-        payment.qr_code_image || null,
-        payment.qr_code_url || null,
-        payment.expires_at || null,
-        payment.created_at || now,
-        payment.updated_at || now
-      )
-      .run();
-
-    return { ...payment, id } as PaymentRecord;
-  } catch (error) {
-    console.error('Erro ao salvar pagamento:', error);
-    throw error;
-  }
-}
 
 export default async function handler(request: Request, context: any) {
   // Apenas POST

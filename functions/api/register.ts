@@ -99,8 +99,9 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     });
     correlationId = charge.payment_ref;
     // Salvar pagamento na tabela payments
+    const { savePayment } = await import("../_utils/payments");
     const now = Date.now();
-    await import("../pix/create").then(mod => mod.savePayment(env.DB, {
+    await savePayment(env.DB, {
       email,
       correlation_id: correlationId,
       provider_charge_id: charge.payment_ref,
@@ -112,7 +113,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       expires_at: now + 86400 * 1000,
       created_at: now,
       updated_at: now,
-    }));
+    });
   } catch (error: any) {
     console.error(`Erro ao criar cobrança PIX: ${error.message}`);
     const message = error.message.includes('not configured') 
