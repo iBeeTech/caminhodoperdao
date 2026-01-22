@@ -104,7 +104,6 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     correlationId = charge.payment_ref;
     // Log para depuração do QR code
     console.log('[register] charge.qrCodeImageUrl:', charge.qrCodeImageUrl);
-    console.log('[register] charge.qrCodeImage:', charge.qrCodeImage);
     // Salvar pagamento na tabela payments
     const { savePayment } = await import("../_utils/payments");
     const now = Date.now();
@@ -115,8 +114,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       amount_cents: 1000,
       status: 'pending',
       brcode: charge.qrCodeText,
-      qr_code_image: charge.qrCodeImageUrl || charge.qrCodeImage || null,
-      qr_code_url: charge.qrCodeImageUrl || charge.qrCodeImage || null,
+      qr_code_image: charge.qrCodeImageUrl || null,
+      qr_code_url: charge.qrCodeImageUrl || null,
       expires_at: now + 86400 * 1000,
       created_at: now,
       updated_at: now,
