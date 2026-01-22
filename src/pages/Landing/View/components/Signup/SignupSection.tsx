@@ -418,6 +418,19 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
               {currentStatus === "PENDING" && (
                 <PixBox>
+                  {/* Frase de pagamento pendente */}
+                  <div style={{
+                    fontSize: "1rem",
+                    color: "#a15c00",
+                    background: "#fff7ed",
+                    borderRadius: "6px",
+                    padding: "0.75rem 1rem",
+                    marginBottom: "1rem",
+                    borderLeft: "4px solid #f59e0b",
+                    textAlign: "center"
+                  }}>
+                    <span dangerouslySetInnerHTML={{ __html: t("signup.status.pending") }} />
+                  </div>
                   {(() => {
                     const name = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_name") : null;
                     const email = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_email") : null;
