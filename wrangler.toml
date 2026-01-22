@@ -7,18 +7,21 @@ pages_build_output_dir = "build"
 [env.production]
 vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhadadoperdaodeassis.pages.dev/", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false" }
 
+
 [[env.production.durable_objects.bindings]]
 name = "WA_COUNTER"
 class_name = "WaCounter"
+script_name = "caminhodoperdao"
 
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "caminhodoperdao-db"
 database_id = "784a0aec-8695-48d4-8ede-df680660735e"
 
-migrations = [
-  { tag = "v2026-01-21-wa-counter", new_classes = ["WaCounter"] }
-]
+
+[[migrations]]
+tag = "v2026-01-21-wa-counter"
+new_classes = ["WaCounter"]
 
 [env.preview]
 vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false" }
