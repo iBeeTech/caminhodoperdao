@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { landingService } from "../../../services/landing/landing.service";
 import { HttpError } from "../../../services/http/client";
 import { useAnalytics } from "../../../hooks/useAnalytics";
-import { usePaymentStatusPolling } from "../../../hooks/usePaymentStatusPolling";
 import LandingView from "../View/LandingView";
 import { AvailabilityState, FeatureSection, LandingContent, LandingPhase, LandingTone } from "../Model";
 import { RegistrationPayload, RegistrationStatusResponse } from "../../../services/landing/landing.types";
