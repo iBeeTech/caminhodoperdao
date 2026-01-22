@@ -322,7 +322,10 @@ const LandingController: React.FC = () => {
   const handleCheckStatus = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetStatusState();
-    setErrors({});
+    setErrors((prev) => {
+      const { emailUsedByOtherName, ...rest } = prev;
+      return rest;
+    });
 
     const validationErrors = validateCheckForm(t, { name: nameRef, email: emailRef }).errors;
     if (Object.keys(validationErrors).length > 0) {
