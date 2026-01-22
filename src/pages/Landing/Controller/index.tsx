@@ -19,19 +19,6 @@ import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
-type SignupErrors = Partial<{
-  name: string;
-  email: string;
-  phone: string;
-  cep: string;
-  address: string;
-  number: string;
-  city: string;
-  state: string;
-  sleepAtMonastery: string;
-  emailUsedByOtherName: string;
-}>;
-
 const whatsappNumbers = [
   "5516982221415",
   "5516999650319",
@@ -41,10 +28,13 @@ const whatsappNumbers = [
   "5516999690305",
   "5516999651001",
 ];
+
 let roundRobinIndex = 0;
+
 const getNextWhatsappUrl = (opts?: { depoimento?: boolean }) => {
   const idx = roundRobinIndex;
   roundRobinIndex = (roundRobinIndex + 1) % whatsappNumbers.length;
+
   if (opts?.depoimento) {
     return `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0`;
   }
@@ -86,11 +76,43 @@ const LandingController: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [qrCodeText, setQrCodeText] = useState<string | null>(null);
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
-  const [errors, setErrors] = useState<SignupErrors>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
   const pageViewTrackedRef = useRef(false);
+
+  // -------- Helpers (robustos: não dependem de instanceof) --------
+  const getHttpInfo = (err: any) => {
+    const status =
+      err?.status ??
+      err?.response?.status ??
+      err?.response?.statusCode ??
+      err?.data?.status;
+
+    const body =
+      err?.response?.body ??
+      err?.response?.data ??
+      err?.body ??
+      err?.data;
+
+    return { status, body };
+  };
+
+  const clearEmailUsedByOtherNameError = () => {
+    setErrors((prev) => {
+      const { emailUsedByOtherName, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const setEmailUsedByOtherNameError = (email?: string, name?: string) => {
+    setErrors((prev) => ({
+      ...prev,
+      emailUsedByOtherName: `O e-mail ${email ?? ""} já foi utilizado para fazer a inscrição de ${name ?? ""}. Utilize outro e-mail.`,
+    }));
+  };
+  // ---------------------------------------------------------------
 
   // Limpar sessionStorage ao fazer reload ou sair da página
   React.useEffect(() => {
@@ -126,7 +148,6 @@ const LandingController: React.FC = () => {
         emailRef.current.value = savedEmail;
       }
 
-      // Limpar localStorage após usar
       localStorage.removeItem("landing_form_name");
       localStorage.removeItem("landing_form_email");
     }
@@ -179,8 +200,7 @@ const LandingController: React.FC = () => {
     [availabilityData, availabilityError, isAvailabilityLoading, t]
   );
 
-  const isMonasterySlotUnavailable =
-    availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
+  const isMonasterySlotUnavailable = availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
 
   const checkStatusMutation = useMutation({
     mutationFn: (params: { email: string; name?: string }) => landingService.checkStatus(params.email, params.name),
@@ -199,10 +219,8 @@ const LandingController: React.FC = () => {
   };
 
   /**
-   * ✅ Agora valida email tanto no "check" quanto no "form".
-   * - Se backend responder 409 email_used_by_other_name -> seta errors.emailUsedByOtherName (imutável)
-   * - Se email ficar inválido -> limpa emailUsedByOtherName
-   * - Se request der 200 OK -> limpa emailUsedByOtherName (pra não "grudar")
+   * ✅ Agora roda no "check" e no "form"
+   * ✅ Captura 409 mesmo quando `instanceof HttpError` falha (bundler/duplicação)
    */
   const onEmailBlur = async () => {
     if (phase !== "form" && phase !== "check") return;
@@ -210,25 +228,19 @@ const LandingController: React.FC = () => {
     const email = getFieldValue(emailRef.current);
     const name = getFieldValue(nameRef.current);
 
-    // Se email vazio/ inválido -> limpar erro específico
+    // Se inválido, não faz nada e limpa o callout específico
     if (!email || !email.includes("@")) {
-      setErrors((prev) => {
-        const { emailUsedByOtherName, ...rest } = prev;
-        return rest;
-      });
+      clearEmailUsedByOtherNameError();
       return;
     }
 
     try {
       const result = await checkStatusMutation.mutateAsync({ email, name });
 
-      // Se deu sucesso, limpar o erro específico (caso tenha ficado do estado anterior)
-      setErrors((prev) => {
-        const { emailUsedByOtherName, ...rest } = prev;
-        return rest;
-      });
+      // Se deu sucesso, não deixa o erro antigo "grudado"
+      clearEmailUsedByOtherNameError();
 
-      // Seu fluxo atual para quando existe inscrição (mesmo email/nome)
+      // Seu fluxo atual quando existe inscrição (mesmo email/nome)
       if (result.exists) {
         existingDataRef.current = result;
         syncFormWithStatus(result, fieldRefs);
@@ -250,23 +262,26 @@ const LandingController: React.FC = () => {
           setStatusTone("warn");
           setPhase("status");
         }
-        // cancelado/expirado -> permanece no form/check
       }
     } catch (error: any) {
-      // ✅ ESTE é o ponto de ouro do callout
+      // Robusto (não depende de instanceof)
+      const { status, body } = getHttpInfo(error);
+
+      if (status === 409 && body?.error === "email_used_by_other_name") {
+        setEmailUsedByOtherNameError(body?.email, body?.name);
+        return;
+      }
+
+      // fallback (caso seu client ainda use HttpError de forma confiável)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
         if (errorData?.error === "email_used_by_other_name") {
-          setErrors((prev) => ({
-            ...prev,
-            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
-          }));
+          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
           return;
         }
       }
 
-      // Falha silenciosa; não bloqueia usuário
-      console.debug("Email verification failed, allowing user to continue", error);
+      console.debug("Email verification on blur failed, allowing user to continue", error);
     }
   };
 
@@ -276,14 +291,11 @@ const LandingController: React.FC = () => {
     const previousValue = input.value;
     const newValue = event.target.value;
 
-    // Detectar se é backspace
     const isBackspace = previousValue.length > newValue.length;
 
-    // Extrair apenas dígitos do valor anterior e novo
     const previousDigits = previousValue.replace(/\D/g, "");
     const newDigits = newValue.replace(/\D/g, "");
 
-    // Se é backspace, remover um dígito
     let cleanDigits = newDigits;
     let newCursorPos = cursorPos;
 
@@ -343,13 +355,11 @@ const LandingController: React.FC = () => {
     event.preventDefault();
     resetStatusState();
 
-    // limpar apenas erro do emailUsedByOtherName ao iniciar check
-    setErrors((prev) => {
-      const { emailUsedByOtherName, ...rest } = prev;
-      return rest;
-    });
+    // limpa só o callout específico quando re-submeter
+    clearEmailUsedByOtherNameError();
 
     const validationErrors = validateCheckForm(t, { name: nameRef, email: emailRef }).errors;
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       focusFirstError(validationErrors, fieldRefs);
@@ -405,17 +415,23 @@ const LandingController: React.FC = () => {
         setPhase("form");
       }
     } catch (error: any) {
+      // Robusto (não depende de instanceof)
+      const { status, body } = getHttpInfo(error);
+
+      if (status === 409 && body?.error === "email_used_by_other_name") {
+        setEmailUsedByOtherNameError(body?.email, body?.name);
+        return; // permanece em 'check'
+      }
+
+      // fallback (se HttpError funcionar)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
         if (errorData?.error === "email_used_by_other_name") {
-          // ✅ merge imutável (não apaga outros erros)
-          setErrors((prev) => ({
-            ...prev,
-            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
-          }));
-          return; // permanece em 'check'
+          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
+          return;
         }
       }
+
       setStatusMessage(t("signup.status.checkError"));
       setStatusTone("error");
       formError("landing", "signup_check", "check_status_error");
@@ -440,6 +456,7 @@ const LandingController: React.FC = () => {
     });
 
     const validationErrors = validationResult.errors;
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setStatusMessage(t("signup.status.validationError"));
@@ -467,6 +484,7 @@ const LandingController: React.FC = () => {
 
     try {
       const data = await registerMutation.mutateAsync(payload);
+
       setCurrentStatus(data.status ?? null);
       setQrCodeText(data.qrCodeText ?? null);
       setQrCodeImageUrl(data.qrCodeImageUrl ?? null);
@@ -489,15 +507,20 @@ const LandingController: React.FC = () => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
     } catch (error: any) {
+      const { status, body } = getHttpInfo(error);
+
+      // ✅ email usado por outro nome (robusto)
+      if (status === 409 && body?.error === "email_used_by_other_name") {
+        setEmailUsedByOtherNameError(body?.email, body?.name);
+        setPhase("form");
+        return;
+      }
+
+      // fallback (se HttpError funcionar)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
-
         if (errorData?.error === "email_used_by_other_name") {
-          // ✅ merge imutável
-          setErrors((prev) => ({
-            ...prev,
-            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
-          }));
+          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
           setPhase("form");
           return;
         }
@@ -542,6 +565,7 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      // Erro específico de criação de PIX
       if (error instanceof HttpError && error.status === 500) {
         const errorData = error.response?.body as any;
         if (errorData?.error === "payment_provider_not_configured") {
