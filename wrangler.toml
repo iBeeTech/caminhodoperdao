@@ -16,9 +16,8 @@ binding = "DB"
 database_name = "caminhodoperdao-db"
 database_id = "784a0aec-8695-48d4-8ede-df680660735e"
 
-[migrations]
-entries = [
-	{ tag = "v2026-01-21-wa-counter", new_classes = ["WaCounter"] }
+migrations = [
+  { tag = "v2026-01-21-wa-counter", new_classes = ["WaCounter"] }
 ]
 
 [env.preview]
