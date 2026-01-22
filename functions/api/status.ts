@@ -14,10 +14,30 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
   if (!email) return badRequest("email_required");
   if (!isValidEmail(email)) return badRequest("invalid_email");
 
+  // Permitir receber nome via querystring
+  let name: string | null = null;
+  try {
+    // Se rodando via PagesFunction, pode acessar context.request.url
+    // Se rodando via função, pode não ter
+    if (typeof Request !== "undefined" && typeof URL !== "undefined") {
+      // @ts-ignore
+      const url = typeof context !== "undefined" ? new URL(context.request.url) : null;
+      name = url?.searchParams.get("name") ?? null;
+    }
+  } catch {}
+
   await expirePending(env.DB);
   const registration = await getByEmail(env.DB, email);
   if (!registration) {
     return json(200, { exists: false });
+  }
+  // Nova regra: email já usado por outro nome (na consulta de status)
+  if (name && registration.name && registration.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+    return json(409, {
+      error: "email_used_by_other_name",
+      email,
+      name: registration.name
+    });
   }
 
   // Se o status já é PAID, não precisa consultar Woovi
