@@ -10,21 +10,11 @@ interface Env {
   WOOVI_APP_ID?: string;
 }
 
-export async function handleStatus(env: Env, email: string | null): Promise<Response> {
+export async function handleStatus(env: Env, email: string | null, name: string | null = null): Promise<Response> {
   if (!email) return badRequest("email_required");
   if (!isValidEmail(email)) return badRequest("invalid_email");
 
-  // Permitir receber nome via querystring
-  let name: string | null = null;
-  try {
-    // Se rodando via PagesFunction, pode acessar context.request.url
-    // Se rodando via função, pode não ter
-    if (typeof Request !== "undefined" && typeof URL !== "undefined") {
-      // @ts-ignore
-      const url = typeof context !== "undefined" ? new URL(context.request.url) : null;
-      name = url?.searchParams.get("name") ?? null;
-    }
-  } catch {}
+
 
   await expirePending(env.DB);
   const registration = await getByEmail(env.DB, email);
@@ -108,5 +98,6 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url);
   const email = url.searchParams.get("email");
-  return handleStatus(context.env, email);
+  const name = url.searchParams.get("name");
+  return handleStatus(context.env, email, name);
 };
