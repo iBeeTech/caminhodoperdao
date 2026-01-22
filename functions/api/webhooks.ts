@@ -48,9 +48,8 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
     const correlationId = charge.correlationID || 'unknown';
     const transactionID = pix?.transactionID || charge.correlationID;
 
-    console.log(
-      `Webhook recebido - correlationID: ${correlationId}, status: ${charge.status}`
-    );
+    console.log('Payload recebido:', JSON.stringify(payload));
+    console.log('transactionID:', transactionID);
 
     // ========== ATUALIZAR STATUS NO D1 ==========
     try {
@@ -62,18 +61,21 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           .bind(transactionID)
           .first() as any;
 
+        console.log('Resultado da query de busca:', registration);
+
         if (registration) {
           // Gerar número de inscrição
           const registrationNumber = await generateRegistrationNumber(context.env.DB);
 
           // Atualizar o registro como PAID com número de inscrição
-          await context.env.DB
+          const updateResult = await context.env.DB
             .prepare(
               "UPDATE registrations SET status = 'PAID', paid_at = ?, registration_number = ? WHERE email = ?"
             )
             .bind(Date.now(), registrationNumber, registration.email)
             .run();
 
+          console.log('Resultado do update:', updateResult);
           console.log(
             `Registro marcado como PAID: ${registration.email} (número: ${registrationNumber})`
           );
@@ -86,12 +88,15 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           .bind(transactionID)
           .first() as any;
 
+        console.log('Resultado da query de busca (expirado):', registration);
+
         if (registration) {
-          await context.env.DB
+          const updateResult = await context.env.DB
             .prepare("UPDATE registrations SET status = 'CANCELED' WHERE email = ?")
             .bind(registration.email)
             .run();
 
+          console.log('Resultado do update (expirado):', updateResult);
           console.log(
             `Registro marcado como CANCELED (expirado): ${registration.email}`
           );
