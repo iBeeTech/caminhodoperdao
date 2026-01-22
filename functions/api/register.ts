@@ -177,12 +177,15 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     return serverError();
   }
 
+  // Buscar o pagamento salvo para garantir que usamos o campo do banco
+  const { getPaymentByRef } = await import("../_utils/payments");
+  const payment = await getPaymentByRef(env.DB, charge.payment_ref);
   return json(200, {
     status: "PENDING",
     registration_id: existing?.id ?? id,
     payment_ref: charge.payment_ref,
     qrCodeText: charge.qrCodeText,
-    qrCodeImageUrl: charge.qrCodeImageUrl ?? null,
+    qrCodeImageUrl: payment?.qr_code_image ?? null,
     expires_at: charge.expires_at ?? null,
   });
 }
