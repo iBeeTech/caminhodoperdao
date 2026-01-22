@@ -1,4 +1,4 @@
-import { WooviWebhookPayload } from '../types/woovi';
+import { WooviWebhookPayload } from '../../types/woovi';
 
 /**
  * Função para gerar número de inscrição sequencial
