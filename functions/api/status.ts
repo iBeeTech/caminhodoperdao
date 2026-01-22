@@ -2,6 +2,7 @@
 import { badRequest, json } from "../_utils/responses";
 import { isValidEmail } from "../_utils/validation";
 import { expirePending, getByEmail } from "../_utils/registrations";
+import { getPaymentByRef } from "../_utils/payments";
 import { getWooviChargeStatus } from "../_utils/woovi";
 
 interface Env {
@@ -28,7 +29,7 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
         const wooviResponse = await getWooviChargeStatus(appId, registration.payment_ref);
         
         // Se a Woovi diz que foi pago, atualizar o D1
-        if (wooviResponse.charge?.status === 'COMPLETED' || wooviResponse.charge?.status === 'RECEIVED') {
+        if (["COMPLETED", "RECEIVED"].includes(wooviResponse.charge?.status)) {
           await env.DB
             .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?")
             .bind(Date.now(), email.toLowerCase())
@@ -47,8 +48,19 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
   }
 
   const expired = registration.status === "CANCELED" && !registration.paid_at;
-  const qrCodeText = registration.payment_ref ? `PIX|REF=${registration.payment_ref}` : null;
   const message = registration.status === "PAID" ? "Inscrição confirmada" : null;
+
+  let qrCodeText = null;
+  let qrCodeImage = null;
+  if (registration.status === "PENDING" && registration.payment_ref) {
+    const payment = await getPaymentByRef(env.DB, registration.payment_ref);
+    if (payment) {
+      qrCodeText = payment.brcode;
+      qrCodeImage = payment.qr_code_image;
+    }
+  } else if (registration.payment_ref) {
+    qrCodeText = `PIX|REF=${registration.payment_ref}`;
+  }
 
   return json(200, {
     exists: true,
@@ -59,6 +71,7 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
     email: registration.email,
     payment_ref: registration.payment_ref,
     qrCodeText,
+    qrCodeImage,
     sleep_at_monastery: registration.sleep_at_monastery,
     phone: registration.phone,
     cep: registration.cep,
