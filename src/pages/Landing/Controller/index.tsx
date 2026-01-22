@@ -21,7 +21,12 @@ import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
 const whatsappNumbers = [
   "5516982221415",
-  "5516999650319"
+  "5516999650319",
+  "5516999994064",
+  "5516992051785",
+  "5534992896160",
+  "5516999690305",
+  "5516999651001"
 ];
 let roundRobinIndex = 0;
 const getNextWhatsappUrl = (opts?: { depoimento?: boolean }) => {
