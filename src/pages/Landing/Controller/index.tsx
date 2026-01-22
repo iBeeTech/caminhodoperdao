@@ -19,6 +19,19 @@ import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
+type SignupErrors = Partial<{
+  name: string;
+  email: string;
+  phone: string;
+  cep: string;
+  address: string;
+  number: string;
+  city: string;
+  state: string;
+  sleepAtMonastery: string;
+  emailUsedByOtherName: string;
+}>;
+
 const whatsappNumbers = [
   "5516982221415",
   "5516999650319",
@@ -26,7 +39,7 @@ const whatsappNumbers = [
   "5516992051785",
   "5534992896160",
   "5516999690305",
-  "5516999651001"
+  "5516999651001",
 ];
 let roundRobinIndex = 0;
 const getNextWhatsappUrl = (opts?: { depoimento?: boolean }) => {
@@ -54,7 +67,7 @@ const LandingController: React.FC = () => {
         primaryButtonText: t("hero.primaryButton"),
         secondaryButtonText: t("hero.secondaryButton"),
       },
-      features: featuresWithoutIcon.map(feature => ({
+      features: featuresWithoutIcon.map((feature) => ({
         ...feature,
         icon: featureIconMap[feature.id] ?? "",
       })),
@@ -73,7 +86,7 @@ const LandingController: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [qrCodeText, setQrCodeText] = useState<string | null>(null);
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<SignupErrors>({});
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
@@ -118,7 +131,6 @@ const LandingController: React.FC = () => {
       localStorage.removeItem("landing_form_email");
     }
   }, [phase]);
-
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -167,10 +179,11 @@ const LandingController: React.FC = () => {
     [availabilityData, availabilityError, isAvailabilityLoading, t]
   );
 
-  const isMonasterySlotUnavailable = availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
+  const isMonasterySlotUnavailable =
+    availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
 
   const checkStatusMutation = useMutation({
-    mutationFn: (params: { email: string, name?: string }) => landingService.checkStatus(params.email, params.name),
+    mutationFn: (params: { email: string; name?: string }) => landingService.checkStatus(params.email, params.name),
   });
 
   const registerMutation = useMutation({
@@ -185,32 +198,43 @@ const LandingController: React.FC = () => {
     setCurrentStatus(null);
   };
 
+  /**
+   * ✅ Agora valida email tanto no "check" quanto no "form".
+   * - Se backend responder 409 email_used_by_other_name -> seta errors.emailUsedByOtherName (imutável)
+   * - Se email ficar inválido -> limpa emailUsedByOtherName
+   * - Se request der 200 OK -> limpa emailUsedByOtherName (pra não "grudar")
+   */
   const onEmailBlur = async () => {
-    // Apenas executar se estamos no formulário de inscrição completa
-    if (phase !== "form") return;
+    if (phase !== "form" && phase !== "check") return;
 
     const email = getFieldValue(emailRef.current);
     const name = getFieldValue(nameRef.current);
-    
-    // Se o email está vazio, não fazer nada
-    if (!email || !email.includes("@")) return;
+
+    // Se email vazio/ inválido -> limpar erro específico
+    if (!email || !email.includes("@")) {
+      setErrors((prev) => {
+        const { emailUsedByOtherName, ...rest } = prev;
+        return rest;
+      });
+      return;
+    }
 
     try {
-      // Verificar se esse email já tem uma inscrição
       const result = await checkStatusMutation.mutateAsync({ email, name });
 
-      // Se a inscrição existe
+      // Se deu sucesso, limpar o erro específico (caso tenha ficado do estado anterior)
+      setErrors((prev) => {
+        const { emailUsedByOtherName, ...rest } = prev;
+        return rest;
+      });
+
+      // Seu fluxo atual para quando existe inscrição (mesmo email/nome)
       if (result.exists) {
         existingDataRef.current = result;
         syncFormWithStatus(result, fieldRefs);
 
-        // Persistir nome e email no sessionStorage para exibição na tela de status
-        if (result.name) {
-          sessionStorage.setItem("landing_registration_name", result.name);
-        }
-        if (result.email) {
-          sessionStorage.setItem("landing_registration_email", result.email);
-        }
+        if (result.name) sessionStorage.setItem("landing_registration_name", result.name);
+        if (result.email) sessionStorage.setItem("landing_registration_email", result.email);
 
         const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
         setCurrentStatus(normalizedStatus);
@@ -226,12 +250,23 @@ const LandingController: React.FC = () => {
           setStatusTone("warn");
           setPhase("status");
         }
-        // Se expirada/cancelada, permanece no formulário para permitir novo cadastro
+        // cancelado/expirado -> permanece no form/check
       }
-    } catch (error) {
-      // Silenciosamente falhar se a verificação não funcionar
-      // Permitir que o usuário continue preenchendo o formulário
-      console.debug("Email verification on blur failed, allowing user to continue", error);
+    } catch (error: any) {
+      // ✅ ESTE é o ponto de ouro do callout
+      if (error instanceof HttpError && error.status === 409) {
+        const errorData = error.response?.body as any;
+        if (errorData?.error === "email_used_by_other_name") {
+          setErrors((prev) => ({
+            ...prev,
+            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
+          }));
+          return;
+        }
+      }
+
+      // Falha silenciosa; não bloqueia usuário
+      console.debug("Email verification failed, allowing user to continue", error);
     }
   };
 
@@ -240,47 +275,39 @@ const LandingController: React.FC = () => {
     const cursorPos = input.selectionStart ?? 0;
     const previousValue = input.value;
     const newValue = event.target.value;
-    
+
     // Detectar se é backspace
     const isBackspace = previousValue.length > newValue.length;
-    
+
     // Extrair apenas dígitos do valor anterior e novo
     const previousDigits = previousValue.replace(/\D/g, "");
     const newDigits = newValue.replace(/\D/g, "");
-    
+
     // Se é backspace, remover um dígito
     let cleanDigits = newDigits;
     let newCursorPos = cursorPos;
-    
+
     if (isBackspace) {
-      // Detectar qual dígito foi removido
       const deletedDigitCount = previousDigits.length - newDigits.length;
       if (deletedDigitCount > 0) {
-        // Encontrar a posição do dígito deletado e remover os caracteres especiais ao redor
         const charBeforeCursor = previousValue[cursorPos - 1];
         if (charBeforeCursor && /[^\d]/.test(charBeforeCursor)) {
-          // Se há caractere especial, mover cursor pra trás dele também
           newCursorPos = Math.max(0, cursorPos - 1);
         }
       }
     } else {
-      // Se está digitando (inserindo um dígito)
       const digitsAdded = newDigits.length - previousDigits.length;
       if (digitsAdded > 0) {
-        cleanDigits = newDigits.slice(0, 11); // Máximo 11 dígitos
+        cleanDigits = newDigits.slice(0, 11);
       }
       newCursorPos = cursorPos + (newValue.length - previousValue.length);
     }
-    
-    // Formatar os dígitos
+
     const formatted = formatPhoneBR(cleanDigits);
     input.value = formatted;
-    
-    // Posicionar o cursor logo após o último dígito inserido
+
     if (!isBackspace && formatted.length > 0) {
-      // Encontrar a posição do último dígito + 1
       newCursorPos = formatted.length;
-      // Voltar até encontrar o último dígito e posicionar após ele
       for (let i = formatted.length - 1; i >= 0; i--) {
         if (/\d/.test(formatted[i])) {
           newCursorPos = i + 1;
@@ -288,11 +315,9 @@ const LandingController: React.FC = () => {
         }
       }
     }
-    
-    // Limitar a posição do cursor
+
     newCursorPos = Math.max(0, Math.min(newCursorPos, formatted.length));
-    
-    // Usar setTimeout para garantir que o cursor seja posicionado após o render
+
     setTimeout(() => {
       input.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
@@ -302,16 +327,11 @@ const LandingController: React.FC = () => {
     const masked = formatCepBR(event.target.value);
     event.target.value = masked;
 
-    // Se tem 8 dígitos, buscar endereço
     if (masked.replace(/\D/g, "").length === 8) {
       const address = await fetchAddress(masked);
       if (address) {
-        // Preencher campos automaticamente
-        // Concatenar endereço + bairro
-        const fullAddress = address.neighborhood 
-          ? `${address.street}, ${address.neighborhood}`
-          : address.street;
-        
+        const fullAddress = address.neighborhood ? `${address.street}, ${address.neighborhood}` : address.street;
+
         if (addressRef.current) addressRef.current.value = fullAddress;
         if (cityRef.current) cityRef.current.value = address.city;
         if (stateRef.current) stateRef.current.value = address.state;
@@ -322,6 +342,8 @@ const LandingController: React.FC = () => {
   const handleCheckStatus = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetStatusState();
+
+    // limpar apenas erro do emailUsedByOtherName ao iniciar check
     setErrors((prev) => {
       const { emailUsedByOtherName, ...rest } = prev;
       return rest;
@@ -331,8 +353,8 @@ const LandingController: React.FC = () => {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       focusFirstError(validationErrors, fieldRefs);
-      Object.entries(validationErrors).forEach(([field, error]) => {
-        formError("landing", "signup_check", error, field);
+      Object.entries(validationErrors).forEach(([field, errorMsg]) => {
+        formError("landing", "signup_check", errorMsg, field);
       });
       return;
     }
@@ -346,36 +368,31 @@ const LandingController: React.FC = () => {
       existingDataRef.current = result;
 
       if (!result.exists) {
-        // Persistir nome e email para pré-preenchimento
-        const name = getFieldValue(nameRef.current);
-        localStorage.setItem("landing_form_name", name);
+        const currentName = getFieldValue(nameRef.current);
+        localStorage.setItem("landing_form_name", currentName);
         localStorage.setItem("landing_form_email", email);
         setPhase("form");
         return;
       }
 
       syncFormWithStatus(result, fieldRefs);
-      // Persistir nome e email no sessionStorage para exibição na tela de status
-      if (result.name) {
-        sessionStorage.setItem("landing_registration_name", result.name);
-      }
-      if (result.email) {
-        sessionStorage.setItem("landing_registration_email", result.email);
-      }
+
+      if (result.name) sessionStorage.setItem("landing_registration_name", result.name);
+      if (result.email) sessionStorage.setItem("landing_registration_email", result.email);
+
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
       setQrCodeText(result.qrCodeText ?? null);
       setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+
       if (normalizedStatus === "PAID") {
         setStatusMessage(result.message ?? t("signup.status.paid"));
         setStatusTone("success");
-        // Disparar evento de pagamento confirmado
-        paymentConfirmed("landing", "woovi", "pix", {
-          status: "PAID",
-        });
+        paymentConfirmed("landing", "woovi", "pix", { status: "PAID" });
         setPhase("status");
         return;
       }
+
       if (result.expired || normalizedStatus === "CANCELED") {
         setStatusMessage(t("signup.status.canceled"));
         setStatusTone("error");
@@ -391,9 +408,12 @@ const LandingController: React.FC = () => {
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
         if (errorData?.error === "email_used_by_other_name") {
-          setErrors({ emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.` });
-          // Não muda a fase, permanece em 'check' para exibir o callout
-          return;
+          // ✅ merge imutável (não apaga outros erros)
+          setErrors((prev) => ({
+            ...prev,
+            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
+          }));
+          return; // permanece em 'check'
         }
       }
       setStatusMessage(t("signup.status.checkError"));
@@ -424,8 +444,8 @@ const LandingController: React.FC = () => {
       setErrors(validationErrors);
       setStatusMessage(t("signup.status.validationError"));
       setStatusTone("error");
-      Object.entries(validationErrors).forEach(([field, error]) => {
-        formError("landing", "signup_registration", error, field);
+      Object.entries(validationErrors).forEach(([field, errorMsg]) => {
+        formError("landing", "signup_registration", errorMsg, field);
       });
       focusFirstError(validationErrors, fieldRefs);
       return;
@@ -441,9 +461,7 @@ const LandingController: React.FC = () => {
       complement: getFieldValue(complementRef?.current ?? null),
       city: getFieldValue(cityRef?.current ?? null),
       state: (getFieldValue(stateRef?.current ?? null) || "").toUpperCase(),
-      sleepAtMonastery: isMonasterySlotUnavailable
-        ? false
-        : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
+      sleepAtMonastery: isMonasterySlotUnavailable ? false : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
       companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
     };
 
@@ -456,46 +474,42 @@ const LandingController: React.FC = () => {
       setStatusTone("warn");
       setPhase("status");
 
-      // Guardar nome e email no sessionStorage para exibição
       if (typeof window !== "undefined") {
         sessionStorage.setItem("landing_registration_name", payload.name);
         sessionStorage.setItem("landing_registration_email", payload.email);
       }
 
-      // Disparar evento de inscrição reservada
-      enrollmentReserved("landing", "woovi", {
-        status: data.status,
-      });
+      enrollmentReserved("landing", "woovi", { status: data.status });
 
       if (data.registration_id) {
         identifyRegisteredUser(data.registration_id);
       }
 
-      // Manter usuário na seção de inscrição após submissão bem-sucedida
       setTimeout(() => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
+
         if (errorData?.error === "email_used_by_other_name") {
-          setErrors({ emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.` });
+          // ✅ merge imutável
+          setErrors((prev) => ({
+            ...prev,
+            emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.`,
+          }));
           setPhase("form");
           return;
         }
+
         try {
           const statusData = await landingService.checkStatus(payload.email);
           existingDataRef.current = statusData;
           syncFormWithStatus(statusData, fieldRefs);
-          
-          // Persistir nome e email no sessionStorage para exibição na tela de status
-          if (statusData.name) {
-            sessionStorage.setItem("landing_registration_name", statusData.name);
-          }
-          if (statusData.email) {
-            sessionStorage.setItem("landing_registration_email", statusData.email);
-          }
-          
+
+          if (statusData.name) sessionStorage.setItem("landing_registration_name", statusData.name);
+          if (statusData.email) sessionStorage.setItem("landing_registration_email", statusData.email);
+
           const normalizedStatus = statusData.status ?? (statusData.expired ? "CANCELED" : null);
           setCurrentStatus(normalizedStatus);
           setQrCodeText(statusData.qrCodeText ?? null);
@@ -504,10 +518,7 @@ const LandingController: React.FC = () => {
           if (normalizedStatus === "PAID") {
             setStatusMessage(t("signup.status.paid"));
             setStatusTone("success");
-            // Disparar evento de pagamento confirmado
-            paymentConfirmed("landing", "woovi", "pix", {
-              status: "PAID",
-            });
+            paymentConfirmed("landing", "woovi", "pix", { status: "PAID" });
           } else if (normalizedStatus === "PENDING") {
             setStatusMessage(t("signup.status.defaultPending"));
             setStatusTone("warn");
@@ -521,7 +532,6 @@ const LandingController: React.FC = () => {
 
           setPhase("status");
 
-          // Manter usuário na seção de inscrição após verificação
           setTimeout(() => {
             document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 100);
@@ -532,11 +542,13 @@ const LandingController: React.FC = () => {
         return;
       }
 
-      // Erro específico de criação de PIX
       if (error instanceof HttpError && error.status === 500) {
         const errorData = error.response?.body as any;
         if (errorData?.error === "payment_provider_not_configured") {
-          setStatusMessage(t("signup.status.paymentConfigError") || "Erro de configuração de pagamento. Por favor, contate o administrador.");
+          setStatusMessage(
+            t("signup.status.paymentConfigError") ||
+              "Erro de configuração de pagamento. Por favor, contate o administrador."
+          );
           setStatusTone("error");
           return;
         }
@@ -555,7 +567,7 @@ const LandingController: React.FC = () => {
   const handleReopenRegistration = async () => {
     setCapacityCallout(null);
     resetStatusState();
-    // Limpar dados da sessão quando reabrir registro
+
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("landing_registration_name");
       sessionStorage.removeItem("landing_registration_email");
