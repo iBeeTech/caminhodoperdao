@@ -91,11 +91,28 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   }
 
   let charge;
+  let correlationId;
   try {
     charge = await provider.createCharge({ 
       name: name?.trim() || email.split('@')[0], 
       email 
     });
+    correlationId = charge.payment_ref;
+    // Salvar pagamento na tabela payments
+    const now = Date.now();
+    await import("../pix/create").then(mod => mod.savePayment(env.DB, {
+      email,
+      correlation_id: correlationId,
+      provider_charge_id: charge.payment_ref,
+      amount_cents: 1000,
+      status: 'pending',
+      brcode: charge.qrCodeText,
+      qr_code_image: charge.qrCodeImageUrl,
+      qr_code_url: charge.qrCodeImageUrl,
+      expires_at: now + 86400 * 1000,
+      created_at: now,
+      updated_at: now,
+    }));
   } catch (error: any) {
     console.error(`Erro ao criar cobrança PIX: ${error.message}`);
     const message = error.message.includes('not configured') 
