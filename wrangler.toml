@@ -11,7 +11,7 @@ vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhadadoperdaodeassis
 [[env.production.durable_objects.bindings]]
 name = "WA_COUNTER"
 class_name = "WaCounter"
-script_name = "caminhodoperdao"
+script_name = "caminhadadoperdaodeassis"
 
 [[env.production.d1_databases]]
 binding = "DB"
