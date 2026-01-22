@@ -102,6 +102,9 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       email 
     });
     correlationId = charge.payment_ref;
+    // Log para depuração do QR code
+    console.log('[register] charge.qrCodeImageUrl:', charge.qrCodeImageUrl);
+    console.log('[register] charge.qrCodeImage:', charge.qrCodeImage);
     // Salvar pagamento na tabela payments
     const { savePayment } = await import("../_utils/payments");
     const now = Date.now();
