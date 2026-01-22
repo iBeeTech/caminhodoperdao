@@ -56,6 +56,7 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
     message,
     expired,
     name: registration.name,
+    email: registration.email,
     payment_ref: registration.payment_ref,
     qrCodeText,
     sleep_at_monastery: registration.sleep_at_monastery,
