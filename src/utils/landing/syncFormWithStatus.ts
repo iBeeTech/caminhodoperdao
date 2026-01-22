@@ -20,8 +20,8 @@ export function syncFormWithStatus(
     }
   };
 
-  assign(refs.name, data.name ?? "");
-  assign(refs.email, data.email ?? "");
+  if (data.name) assign(refs.name, data.name);
+  if (data.email) assign(refs.email, data.email);
   assign(refs.phone, data.phone ? formatPhoneBR(data.phone) : "");
   assign(refs.cep, data.cep ? formatCepBR(data.cep) : "");
   assign(refs.address, data.address ?? "");

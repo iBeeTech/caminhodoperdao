@@ -260,12 +260,12 @@ const LandingController: React.FC = () => {
     try {
       // Verificar se esse email já tem uma inscrição
       const result = await checkStatusMutation.mutateAsync(email);
-      
+
       // Se a inscrição existe
       if (result.exists) {
         existingDataRef.current = result;
         syncFormWithStatus(result, fieldRefs);
-        
+
         // Persistir nome e email no sessionStorage para exibição na tela de status
         if (result.name) {
           sessionStorage.setItem("landing_registration_name", result.name);
@@ -273,7 +273,7 @@ const LandingController: React.FC = () => {
         if (result.email) {
           sessionStorage.setItem("landing_registration_email", result.email);
         }
-        
+
         const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
         setCurrentStatus(normalizedStatus);
         setQrCodeText(result.qrCodeText ?? null);
@@ -287,11 +287,8 @@ const LandingController: React.FC = () => {
           setStatusMessage(t("signup.status.pending"));
           setStatusTone("warn");
           setPhase("status");
-        } else if (result.expired || normalizedStatus === "CANCELED") {
-          setStatusMessage(t("signup.status.canceled"));
-          setStatusTone("error");
-          setPhase("status");
         }
+        // Se expirada/cancelada, permanece no formulário para permitir novo cadastro
       }
     } catch (error) {
       // Silenciosamente falhar se a verificação não funcionar
@@ -621,7 +618,7 @@ const LandingController: React.FC = () => {
         setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
-      setPhase("check");
+      setPhase("form");
     } catch (error) {
       setStatusMessage(t("signup.status.reopenError"));
       setStatusTone("error");

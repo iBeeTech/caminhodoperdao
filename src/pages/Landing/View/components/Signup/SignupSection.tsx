@@ -408,7 +408,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       }
                     }
                   `}</style>
-                  {statusMessage}
+                  {currentStatus === "PENDING" ? (
+                    <span dangerouslySetInnerHTML={{ __html: statusMessage || "" }} />
+                  ) : (
+                    statusMessage
+                  )}
                 </StatusMessage>
               )}
 
