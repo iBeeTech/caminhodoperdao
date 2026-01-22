@@ -349,8 +349,9 @@ function generateReport(groups, roomAllocation) {
 function generateCSV(registrations) {
     // Ordena por grupo/familia e depois por nome
     const sorted = [...registrations].sort((a, b) => {
-        const groupA = (a.companion_name && a.companion_name !== 'null') ? a.companion_name : 'Sem Grupo';
-        const groupB = (b.companion_name && b.companion_name !== 'null') ? b.companion_name : 'Sem Grupo';
+        // Para garantir que "Sem Grupo" fique no final, prefixe com 'ZZZ_'
+        const groupA = (a.companion_name && a.companion_name !== 'null') ? a.companion_name : 'ZZZ_Sem Grupo';
+        const groupB = (b.companion_name && b.companion_name !== 'null') ? b.companion_name : 'ZZZ_Sem Grupo';
 
         if (groupA !== groupB) {
             return groupA.localeCompare(groupB);
