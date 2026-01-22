@@ -199,7 +199,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   autoComplete="name"
                 />
               </FormField>
-              <FormField label={t("signup.checkForm.emailLabel")} htmlFor="email" error={errors.email} required>
+              <FormField label={t("signup.checkForm.emailLabel")} htmlFor="email" error={undefined} required>
                 <Input
                   id="email"
                   name="email"
@@ -218,7 +218,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 variant="primary"
                 size="md"
                 type="submit"
-                disabled={isCheckingStatus || availability.loading}
+                disabled={isCheckingStatus || availability.loading || Boolean(errors.emailUsedByOtherName)}
                 loading={isCheckingStatus}
               >
                 {isCheckingStatus ? t("signup.checkForm.loading") : t("signup.checkForm.submit")}
