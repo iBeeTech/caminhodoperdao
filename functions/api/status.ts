@@ -71,7 +71,7 @@ export async function handleStatus(env: Env, email: string | null): Promise<Resp
     email: registration.email,
     payment_ref: registration.payment_ref,
     qrCodeText,
-    qrCodeImage,
+    qrCodeImageUrl: qrCodeImage,
     sleep_at_monastery: registration.sleep_at_monastery,
     phone: registration.phone,
     cep: registration.cep,
