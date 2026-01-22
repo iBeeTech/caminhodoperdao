@@ -148,6 +148,44 @@ const SignupSection: React.FC<SignupSectionProps> = ({
           {availability.totalFull && phase !== "status" && !capacityCallout && (
             <Callout variant="warning">{t("signup.callouts.full")}</Callout>
           )}
+          {/* Callout para email já utilizado por outro nome */}
+          {errors.emailUsedByOtherName && (
+            <Callout variant="warning" style={{ marginBottom: 24, textAlign: 'center', fontSize: '1.1rem' }}>
+              {errors.emailUsedByOtherName}
+            </Callout>
+          )}
+
+          {/* Callout principal para inscrição reservada: mostrar apenas no status pendente, não no formulário inicial */}
+          {(showStatus && currentStatus === "PENDING") && (
+            <div
+              style={{
+                marginBottom: 24,
+                background: '#fffcf2', // amarelo mais claro
+                border: '1.5px solid #facc15',
+                color: '#a15c00',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px 0 rgba(250,204,21,0.07)',
+                borderRadius: 20,
+                padding: '2rem 1.5rem',
+                fontSize: '1.25rem',
+                fontWeight: 500,
+                lineHeight: 1.5,
+                maxWidth: '100%',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+              }}
+            >
+              <div style={{ fontWeight: "bold", textTransform: "uppercase", fontSize: "1.5rem", marginBottom: 18, display: "flex", alignItems: "center", gap: 12, justifyContent: 'center', color: '#a15c00' }}>
+                <img src={checkAmarelo} alt="Pendente" style={{ width: 32, height: 32 }} />
+                SUA INSCRIÇÃO FOI RESERVADA!
+              </div>
+              <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 18, color: '#a15c00', fontWeight: 600, fontSize: '1.18rem' }}>
+                <div>Para finalizá-la, realize o pagamento do PIX, o qual irá se expirar em 24h.</div>
+                <div>Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.</div>
+                <div>Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento.</div>
+              </div>
+            </div>
+          )}
 
           {showCheckForm && (
             <SignupForm noValidate onSubmit={onCheckStatus}>
@@ -361,7 +399,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showStatus && (
             <>
-              {statusMessage && currentStatus !== "PAID" && currentStatus !== "CANCELED" && (
+              {/* Não mostrar o callout duplicado nem o StatusMessage para pendente */}
+              {statusMessage && currentStatus !== "PAID" && currentStatus !== "CANCELED" && currentStatus !== "PENDING" && (
                 <StatusMessage
                   $tone={statusTone}
                   role={statusRole}
@@ -369,70 +408,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   tabIndex={-1}
                   style={{ fontSize: "1.05rem", textAlign: "center" }}
                 >
-                  {currentStatus === "PENDING" && (
-                    <div style={{
-                      fontWeight: "bold",
-                      textAlign: "center",
-                      textTransform: "uppercase",
-                      marginBottom: "1rem",
-                      fontSize: "1.1rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "0.5rem"
-                    }}>
-                      <img 
-                        src={checkAmarelo} 
-                        alt="Sucesso" 
-                        style={{
-                          width: "1.5rem",
-                          height: "1.5rem",
-                          animation: "scaleAndSpin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                        }}
-                      />
-                      Sua inscrição foi reservada!
-                    </div>
-                  )}
-                  <style>{`
-                    @keyframes scaleAndSpin {
-                      0% {
-                        transform: scale(0) rotate(-180deg);
-                        opacity: 0;
-                      }
-                      50% {
-                        transform: scale(1.1);
-                      }
-                      100% {
-                        transform: scale(1) rotate(0deg);
-                        opacity: 1;
-                      }
-                    }
-                  `}</style>
-                  {currentStatus === "PENDING" ? (
-                    <span dangerouslySetInnerHTML={{ __html: statusMessage || "" }} />
-                  ) : (
-                    statusMessage
-                  )}
+                  {statusMessage}
                 </StatusMessage>
               )}
 
               {currentStatus === "PENDING" && (
                 <PixBox>
-                  {/* Frase de pagamento pendente única */}
-                  <div style={{
-                    fontSize: "1rem",
-                    color: "#a15c00",
-                    background: "#fff7ed",
-                    borderRadius: "6px",
-                    padding: "0.75rem 1rem",
-                    marginBottom: "1rem",
-                    borderLeft: "4px solid #f59e0b",
-                    textAlign: "center"
-                  }}>
-                    <span dangerouslySetInnerHTML={{ __html: t("signup.status.pending") }} />
-                    <br /><br />
-                    <span>{t("signup.status.pendingReload")}</span>
-                  </div>
                   {(() => {
                     const name = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_name") : null;
                     const email = typeof window !== "undefined" ? sessionStorage.getItem("landing_registration_email") : null;
@@ -510,7 +491,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       Inscrição cancelada
                     </span>
                   </div>
-                  <span style={{ fontSize: "0.95rem", color: "#991b1b", textAlign: "center" }}>
+                  <span style={{ fontSize: "1.18rem", color: "#991b1b", textAlign: "center", fontWeight: 500 }}>
                     Devido ao PIX ter expirado. Refaça a inscrição e pague o PIX dentro de 24h para confirmá-la.
                   </span>
                   <PixActions>

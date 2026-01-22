@@ -59,6 +59,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   await expirePending(env.DB);
 
   const existing = await getByEmail(env.DB, email);
+  // Nova regra: email já usado por outro nome
+  if (existing && existing.name && name && existing.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+    return conflict("email_used_by_other_name", { email, name: existing.name });
+  }
 
   let total = await countActive(env.DB);
   let sleepers = await countActiveSleep(env.DB);
