@@ -389,7 +389,7 @@ const LandingController: React.FC = () => {
         const errorData = error.response?.body as any;
         if (errorData?.error === "email_used_by_other_name") {
           setErrors({ emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.` });
-          setPhase("form");
+          // Não muda a fase, permanece em 'check' para exibir o callout
           return;
         }
       }
