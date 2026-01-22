@@ -347,7 +347,6 @@ const LandingController: React.FC = () => {
       }
 
       syncFormWithStatus(result, fieldRefs);
-      
       // Persistir nome e email no sessionStorage para exibição na tela de status
       if (result.name) {
         sessionStorage.setItem("landing_registration_name", result.name);
@@ -355,25 +354,20 @@ const LandingController: React.FC = () => {
       if (result.email) {
         sessionStorage.setItem("landing_registration_email", result.email);
       }
-      
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
       setQrCodeText(result.qrCodeText ?? null);
       setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
-
       if (normalizedStatus === "PAID") {
         setStatusMessage(result.message ?? t("signup.status.paid"));
         setStatusTone("success");
-        
         // Disparar evento de pagamento confirmado
         paymentConfirmed("landing", "woovi", "pix", {
           status: "PAID",
         });
-        
         setPhase("status");
         return;
       }
-
       if (result.expired || normalizedStatus === "CANCELED") {
         setStatusMessage(t("signup.status.canceled"));
         setStatusTone("error");
@@ -385,7 +379,15 @@ const LandingController: React.FC = () => {
       } else {
         setPhase("form");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof HttpError && error.status === 409) {
+        const errorData = error.response?.body as any;
+        if (errorData?.error === "email_used_by_other_name") {
+          setErrors({ emailUsedByOtherName: `O e-mail ${errorData.email} já foi utilizado para fazer a inscrição de ${errorData.name}. Utilize outro e-mail.` });
+          setPhase("form");
+          return;
+        }
+      }
       setStatusMessage(t("signup.status.checkError"));
       setStatusTone("error");
       formError("landing", "signup_check", "check_status_error");
