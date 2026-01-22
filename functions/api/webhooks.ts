@@ -23,7 +23,7 @@ async function generateRegistrationNumber(db: any): Promise<string> {
  * POST /api/webhooks
  * Evento: OPENPIX:CHARGE_COMPLETED
  */
-export default async function handler(request: Request, context: any) {
+export const onRequestPost = async (context: { request: Request; env: any }) => {
   // Adicionar headers CORS
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -31,51 +31,17 @@ export default async function handler(request: Request, context: any) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
-  // Responder a OPTIONS requests
-  if (request.method === 'OPTIONS') {
-    return new Response('OK', {
-      status: 200,
-      headers: corsHeaders,
-    });
-  }
-
   try {
-    // Retornar 200 para qualquer método
-    if (request.method !== 'POST') {
-      console.warn(`Webhook recebido com método ${request.method}`);
-      return new Response('OK', { 
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    // ========== PARSE PAYLOAD ==========
-    let payload;
+    let payload: WooviWebhookPayload;
     try {
-      payload = (await request.json()) as WooviWebhookPayload;
+      payload = await context.request.json();
     } catch (e) {
-      console.warn('Erro ao fazer parse do JSON:', e);
-      return new Response('OK', { 
-        status: 200,
-        headers: corsHeaders,
-      });
+      return new Response('OK', { status: 200, headers: corsHeaders });
     }
 
     // Validação básica
-    if (!payload) {
-      console.log('Payload vazio recebido');
-      return new Response('OK', { 
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    if (!payload.charge) {
-      console.log('Payload sem charge:', JSON.stringify(payload));
-      return new Response('OK', { 
-        status: 200,
-        headers: corsHeaders,
-      });
+    if (!payload || !payload.charge) {
+      return new Response('OK', { status: 200, headers: corsHeaders });
     }
 
     const { charge, pix } = payload;
@@ -135,20 +101,19 @@ export default async function handler(request: Request, context: any) {
       console.error('Erro ao atualizar pagamento:', error);
     }
 
-    // Retornar sempre 200
-    return new Response('OK', { 
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response('OK', { status: 200, headers: corsHeaders });
   } catch (error) {
-    console.error('Erro no webhook:', error);
-    return new Response('OK', { 
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+    return new Response('OK', { status: 200, headers: corsHeaders });
   }
-}
+};
+
+export const onRequestOptions = async () => {
+  return new Response('OK', {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+};
