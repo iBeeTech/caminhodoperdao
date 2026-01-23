@@ -17,7 +17,7 @@ interface GalleryApiResponse {
   albums?: GalleryApiAlbum[];
 }
 
-const FALLBACK_ALBUMS: Album[] = [2026, 2025, 2024].map(year => ({
+const FALLBACK_ALBUMS: Album[] = [2026, 2025].map(year => ({
   year,
   photos: [],
 }));
@@ -28,7 +28,10 @@ const GalleryController: React.FC = () => {
   const [albums, setAlbums] = React.useState<Album[]>(FALLBACK_ALBUMS);
 
   React.useEffect(() => {
-    const galleryUrl = process.env.REACT_APP_GALLERY_JSON_URL || "/gallery/gallery.json";
+    const galleryUrl =
+      process.env.REACT_APP_GALLERY_API_URL ||
+      process.env.REACT_APP_GALLERY_JSON_URL ||
+      "/gallery/gallery.json";
     const controller = new AbortController();
 
     const loadGallery = async () => {
