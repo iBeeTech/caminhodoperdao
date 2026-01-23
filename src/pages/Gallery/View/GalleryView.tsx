@@ -9,11 +9,6 @@ import {
   AlbumCard,
   AlbumGrid,
   AlbumHeader,
-  AlbumPhotoCard,
-  AlbumPhotoGrid,
-  AlbumPhotoImage,
-  AlbumPhotoSection,
-  AlbumPhotoTitle,
   AlbumStatus,
   AlbumThumb,
   AlbumThumbImage,
@@ -91,27 +86,6 @@ const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
             </Container>
           </GalleryListSection>
         </TrackSection>
-
-        {content.albums
-          .filter(album => album.photos.length)
-          .map(album => (
-            <AlbumPhotoSection key={album.year} id={`album-${album.year}`}>
-              <Container>
-                <AlbumPhotoTitle>{`Fotos ${album.year}`}</AlbumPhotoTitle>
-                <AlbumPhotoGrid>
-                  {album.photos.map((photo, index) => (
-                    <AlbumPhotoCard key={`${album.year}-${index}`}>
-                      <AlbumPhotoImage
-                        src={photo.url}
-                        alt={photo.alt ?? `Foto ${index + 1} do álbum ${album.year}`}
-                        loading="lazy"
-                      />
-                    </AlbumPhotoCard>
-                  ))}
-                </AlbumPhotoGrid>
-              </Container>
-            </AlbumPhotoSection>
-          ))}
       </GalleryMain>
     </GalleryPage>
   );

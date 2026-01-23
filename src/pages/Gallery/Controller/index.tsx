@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "../../../hooks/useAnalytics";
 import GalleryView from "../View/GalleryView";
 import { Album, GalleryContent, GalleryPhoto } from "../Model";
@@ -25,6 +26,7 @@ const FALLBACK_ALBUMS: Album[] = [2026, 2025].map(year => ({
 const GalleryController: React.FC = () => {
   const { t } = useTranslation("gallery");
   const { galleryViewed, galleryAlbumClicked } = useAnalytics();
+  const navigate = useNavigate();
   const [albums, setAlbums] = React.useState<Album[]>(FALLBACK_ALBUMS);
 
   React.useEffect(() => {
@@ -84,10 +86,7 @@ const GalleryController: React.FC = () => {
           position: GALLERY_SECTIONS.ALBUM_LIST.position,
           cta_id: GALLERY_CTAS.VIEW_ALBUM,
         });
-        const target = document.getElementById(`album-${year}`);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        navigate(`/gallery/${year}`);
       }}
     />
   );
