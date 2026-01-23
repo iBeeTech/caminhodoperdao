@@ -49,5 +49,15 @@ CREATE TABLE IF NOT EXISTS admin_users (
   updated_at INTEGER NOT NULL
 );
 
+-- WhatsApp round-robin counter
+CREATE TABLE IF NOT EXISTS whatsapp_round_robin (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  counter INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO whatsapp_round_robin (id, counter)
+VALUES (1, 0)
+ON CONFLICT(id) DO NOTHING;
+
 -- Example migration command (replace <DB_NAME>):
 -- wrangler d1 execute <DB_NAME> --file=./schema.sql
