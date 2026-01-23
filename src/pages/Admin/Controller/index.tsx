@@ -59,7 +59,16 @@ const AdminController: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
       if (!response.ok) {
-        throw new Error("invalid_credentials");
+        const apiError = await readApiError(response);
+        if (response.status === 401) {
+          setError("Credenciais inválidas.");
+        } else if (response.status === 500) {
+          setError("Erro no servidor. Verifique a migração do admin.");
+        } else {
+          setError(apiError || "Não foi possível entrar.");
+        }
+        setStatus("unauthenticated");
+        return;
       }
       const data = (await response.json()) as { token: string };
       localStorage.setItem(STORAGE_KEY, data.token);
@@ -67,7 +76,7 @@ const AdminController: React.FC = () => {
       setStatus("authenticated");
       setPassword("");
     } catch {
-      setError("Credenciais inválidas.");
+      setError("Não foi possível entrar.");
       setStatus("unauthenticated");
     } finally {
       setIsSubmitting(false);
@@ -93,7 +102,15 @@ const AdminController: React.FC = () => {
         }),
       });
       if (!response.ok) {
-        throw new Error("change_password_failed");
+        const apiError = await readApiError(response);
+        if (response.status === 401) {
+          setError("Credenciais inválidas.");
+        } else if (response.status === 500) {
+          setError("Erro no servidor. Verifique a migração do admin.");
+        } else {
+          setError(apiError || "Não foi possível trocar a senha.");
+        }
+        return;
       }
       setSuccess("Senha atualizada com sucesso.");
       setPassword("");
@@ -169,4 +186,13 @@ const AdminController: React.FC = () => {
 };
 
 export default AdminController;
+
+async function readApiError(response: Response): Promise<string | null> {
+  try {
+    const data = (await response.json()) as { error?: string };
+    return data?.error || null;
+  } catch {
+    return null;
+  }
+}
 
