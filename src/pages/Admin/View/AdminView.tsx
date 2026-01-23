@@ -24,6 +24,9 @@ interface AdminViewProps {
   isSubmitting: boolean;
   isDownloading: boolean;
   isChangingPassword: boolean;
+  isAddingAdmin: boolean;
+  canManageAdmins: boolean;
+  newAdminEmail: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
@@ -33,6 +36,8 @@ interface AdminViewProps {
   onDownloadMonastery: () => void;
   onDownloadInscritos: () => void;
   onLogout: () => void;
+  onNewAdminEmailChange: (value: string) => void;
+  onAddAdmin: () => void;
 }
 
 const AdminView: React.FC<AdminViewProps> = ({
@@ -45,6 +50,9 @@ const AdminView: React.FC<AdminViewProps> = ({
   isSubmitting,
   isDownloading,
   isChangingPassword,
+  isAddingAdmin,
+  canManageAdmins,
+  newAdminEmail,
   onEmailChange,
   onPasswordChange,
   onNewPasswordChange,
@@ -54,6 +62,8 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadMonastery,
   onDownloadInscritos,
   onLogout,
+  onNewAdminEmailChange,
+  onAddAdmin,
 }) => {
   if (status === "loading") {
     return (
@@ -131,6 +141,7 @@ const AdminView: React.FC<AdminViewProps> = ({
         <AdminCard>
           <AdminTitle>Central de Planilhas</AdminTitle>
           {error && <ErrorText>{error}</ErrorText>}
+          {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
             <PrimaryButton type="button" onClick={onDownloadMonastery} disabled={isDownloading}>
               Gerar e Baixar Planilha Mosteiro
@@ -142,6 +153,21 @@ const AdminView: React.FC<AdminViewProps> = ({
               Sair
             </DangerButton>
           </ButtonRow>
+          {canManageAdmins && (
+            <FieldGroup>
+              <Label htmlFor="admin-new-email">Adicionar admin</Label>
+              <input
+                id="admin-new-email"
+                type="email"
+                value={newAdminEmail}
+                onChange={event => onNewAdminEmailChange(event.target.value)}
+                placeholder="email@dominio.com"
+              />
+              <PrimaryButton type="button" onClick={onAddAdmin} disabled={isAddingAdmin}>
+                {isAddingAdmin ? "Adicionando..." : "Adicionar"}
+              </PrimaryButton>
+            </FieldGroup>
+          )}
         </AdminCard>
       </AdminContainer>
     </AdminPage>

@@ -9,14 +9,17 @@ const DEFAULT_EMAIL = "cassiotakarada7@gmail.com";
 const AdminController: React.FC = () => {
   const [status, setStatus] = React.useState<AuthStatus>("loading");
   const [token, setToken] = React.useState<string | null>(null);
+  const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
   const [email, setEmail] = React.useState(DEFAULT_EMAIL);
   const [password, setPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
+  const [newAdminEmail, setNewAdminEmail] = React.useState("");
   const [isChangingPassword, setIsChangingPassword] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isAddingAdmin, setIsAddingAdmin] = React.useState(false);
 
   const verifyToken = React.useCallback(async (jwt: string) => {
     try {
@@ -26,10 +29,13 @@ const AdminController: React.FC = () => {
       if (!response.ok) {
         throw new Error("invalid_token");
       }
+      const data = (await response.json()) as { email?: string };
+      setAdminEmail(data.email ?? null);
       setStatus("authenticated");
     } catch {
       localStorage.removeItem(STORAGE_KEY);
       setToken(null);
+      setAdminEmail(null);
       setStatus("unauthenticated");
     }
   }, []);
@@ -73,6 +79,7 @@ const AdminController: React.FC = () => {
       const data = (await response.json()) as { token: string };
       localStorage.setItem(STORAGE_KEY, data.token);
       setToken(data.token);
+      setAdminEmail(email.toLowerCase());
       setStatus("authenticated");
       setPassword("");
     } catch {
@@ -120,6 +127,46 @@ const AdminController: React.FC = () => {
       setError("Não foi possível trocar a senha.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleAddAdmin = async () => {
+    if (!token) {
+      setError("Você precisa entrar novamente.");
+      setStatus("unauthenticated");
+      return;
+    }
+    if (!newAdminEmail) {
+      setError("Informe o email do novo admin.");
+      return;
+    }
+    setIsAddingAdmin(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await fetch("/api/admin/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: newAdminEmail }),
+      });
+      if (!response.ok) {
+        const apiError = await readApiError(response);
+        if (response.status === 403) {
+          setError("Sem permissão para adicionar admin.");
+        } else {
+          setError(apiError || "Não foi possível adicionar admin.");
+        }
+        return;
+      }
+      setSuccess("Admin adicionado com sucesso.");
+      setNewAdminEmail("");
+    } catch {
+      setError("Não foi possível adicionar admin.");
+    } finally {
+      setIsAddingAdmin(false);
     }
   };
 
@@ -187,9 +234,16 @@ const AdminController: React.FC = () => {
         setStatus("unauthenticated");
         setPassword("");
         setNewPassword("");
+        setNewAdminEmail("");
+        setAdminEmail(null);
         setError(null);
         setSuccess(null);
       }}
+      canManageAdmins={adminEmail?.toLowerCase() === DEFAULT_EMAIL}
+      newAdminEmail={newAdminEmail}
+      isAddingAdmin={isAddingAdmin}
+      onNewAdminEmailChange={setNewAdminEmail}
+      onAddAdmin={handleAddAdmin}
     />
   );
 };
