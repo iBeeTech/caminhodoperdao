@@ -19,26 +19,30 @@ import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 
-const whatsappNumbers = [
-  "5516982221415",
-  "5516999650319",
-  "5516999994064",
-  "5516992051785",
-  "5534992896160",
-  "5516999690305",
-  "5516999651001",
-];
+const DEFAULT_WA_NUMBER = "5516982221415";
+const DEFAULT_WA_MESSAGE = "Olá! Vim pelo site e preciso de ajuda.";
+const DEPOIMENTO_MESSAGE =
+  "Olá! Gostaria de deixar meu depoimento sobre o Caminho do Perdão.";
 
-let roundRobinIndex = 0;
-
-const getNextWhatsappUrl = (opts?: { depoimento?: boolean }) => {
-  const idx = roundRobinIndex;
-  roundRobinIndex = (roundRobinIndex + 1) % whatsappNumbers.length;
-
-  if (opts?.depoimento) {
-    return `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&text=Ol%C3%A1%21+Gostaria+de+deixar+meu+depoimento+sobre+o+Caminho+do+Perd%C3%A3o&type=phone_number&app_absent=0`;
+const getNextWhatsappUrl = async (opts?: { depoimento?: boolean }) => {
+  const message = opts?.depoimento ? DEPOIMENTO_MESSAGE : DEFAULT_WA_MESSAGE;
+  try {
+    const response = await fetch(
+      `/api/whatsapp/next?message=${encodeURIComponent(message)}`
+    );
+    if (response.ok) {
+      const data = (await response.json()) as { waUrl?: string };
+      if (data.waUrl) {
+        return data.waUrl;
+      }
+    }
+  } catch {
+    // fallback below
   }
-  return `https://api.whatsapp.com/send/?phone=${whatsappNumbers[idx]}&type=phone_number&app_absent=0`;
+
+  return `https://api.whatsapp.com/send/?phone=${DEFAULT_WA_NUMBER}&text=${encodeURIComponent(
+    message
+  )}&type=phone_number&app_absent=0`;
 };
 
 const LandingController: React.FC = () => {

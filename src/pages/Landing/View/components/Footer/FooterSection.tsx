@@ -20,7 +20,7 @@ import {
 } from "./FooterSection.styles";
 
 interface FooterSectionProps {
-  getNextWhatsappUrl: () => string;
+  getNextWhatsappUrl: () => Promise<string>;
 }
 
 const FooterSection: React.FC<FooterSectionProps> = ({ getNextWhatsappUrl }) => {
@@ -30,10 +30,10 @@ const FooterSection: React.FC<FooterSectionProps> = ({ getNextWhatsappUrl }) => 
   const socialLabel = (name: string) => `${name} (${newTabNotice})`;
 
 
-  const handleSocialClick = (platform: string, url?: string) => {
+  const handleSocialClick = async (platform: string, url?: string) => {
     externalLinkClicked(platform);
     if (platform === "whatsapp") {
-      const nextUrl = getNextWhatsappUrl();
+      const nextUrl = await getNextWhatsappUrl();
       window.open(nextUrl, "_blank");
     } else if (url) {
       window.open(url, "_blank");

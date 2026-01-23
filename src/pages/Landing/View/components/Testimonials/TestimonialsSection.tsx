@@ -35,17 +35,17 @@ const renderStars = (rating?: number) =>
     ));
 
 interface TestimonialsSectionProps {
-  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => string;
+  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
 }
 
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ getNextWhatsappUrl }) => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
   const { externalLinkClicked } = useAnalytics();
-  const handleWhatsAppClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleWhatsAppClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     externalLinkClicked("whatsapp_testimonial");
-    const url = getNextWhatsappUrl({ depoimento: true });
+    const url = await getNextWhatsappUrl({ depoimento: true });
     window.open(url, "_blank");
   };
 

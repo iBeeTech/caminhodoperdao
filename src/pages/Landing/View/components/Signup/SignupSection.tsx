@@ -85,7 +85,7 @@ interface SignupSectionProps {
    */
   onEmailBlur: () => void;
   onReopenRegistration: () => void;
-  getNextWhatsappUrl: () => string;
+  getNextWhatsappUrl: () => Promise<string>;
 }
 
 const SignupSection: React.FC<SignupSectionProps> = ({
@@ -733,11 +733,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       position={LANDING_SECTIONS.REGISTRATION_FORM.position}
                       variant="primary"
                       size="md"
-                      onClick={() => {
+                      onClick={async () => {
                         if (window && (window as any).analytics) {
                           (window as any).analytics.track && (window as any).analytics.track("whatsapp_signup_button_click");
                         }
-                        const url = getNextWhatsappUrl();
+                        const url = await getNextWhatsappUrl();
                         window.open(url, "_blank");
                       }}
                       className="whatsapp-button"

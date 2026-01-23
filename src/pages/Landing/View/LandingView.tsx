@@ -61,7 +61,7 @@ interface LandingViewProps {
   onSecondaryAction: () => void;
   onCallToAction: () => void;
   onReopenRegistration: () => void;
-  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => string;
+  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
 }
 
 const LandingView: React.FC<LandingViewProps> = ({
