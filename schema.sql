@@ -40,5 +40,14 @@ CREATE TABLE IF NOT EXISTS testimonials (
 CREATE INDEX IF NOT EXISTS idx_testimonials_featured ON testimonials(featured);
 CREATE INDEX IF NOT EXISTS idx_testimonials_created_at ON testimonials(created_at DESC);
 
+-- Admin users table
+CREATE TABLE IF NOT EXISTS admin_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 -- Example migration command (replace <DB_NAME>):
 -- wrangler d1 execute <DB_NAME> --file=./schema.sql
