@@ -84,3 +84,7 @@ export const SecondaryButton = styled(PrimaryButton)`
   background: #0f9d58;
 `;
 
+export const DangerButton = styled(PrimaryButton)`
+  background: #d32f2f;
+`;
+

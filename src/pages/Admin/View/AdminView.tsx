@@ -5,6 +5,7 @@ import {
   AdminPage,
   AdminTitle,
   ButtonRow,
+  DangerButton,
   ErrorText,
   FieldGroup,
   Label,
@@ -31,6 +32,7 @@ interface AdminViewProps {
   onChangePassword: () => void;
   onDownloadMonastery: () => void;
   onDownloadInscritos: () => void;
+  onLogout: () => void;
 }
 
 const AdminView: React.FC<AdminViewProps> = ({
@@ -51,6 +53,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   onChangePassword,
   onDownloadMonastery,
   onDownloadInscritos,
+  onLogout,
 }) => {
   if (status === "loading") {
     return (
@@ -135,6 +138,9 @@ const AdminView: React.FC<AdminViewProps> = ({
             <SecondaryButton type="button" onClick={onDownloadInscritos} disabled={isDownloading}>
               Gerar e Baixar Planilha de Inscritos
             </SecondaryButton>
+            <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
+              Sair
+            </DangerButton>
           </ButtonRow>
         </AdminCard>
       </AdminContainer>

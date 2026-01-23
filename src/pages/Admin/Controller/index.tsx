@@ -181,6 +181,15 @@ const AdminController: React.FC = () => {
       onDownloadInscritos={() =>
         downloadReport("/api/admin/reports/inscritos", "planilha-inscritos.csv")
       }
+      onLogout={() => {
+        localStorage.removeItem(STORAGE_KEY);
+        setToken(null);
+        setStatus("unauthenticated");
+        setPassword("");
+        setNewPassword("");
+        setError(null);
+        setSuccess(null);
+      }}
     />
   );
 };

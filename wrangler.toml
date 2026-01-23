@@ -5,7 +5,7 @@ pages_build_output_dir = "build"
 ## Durable Object: WaCounter
 
 [env.production]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhadadoperdaodeassis.pages.dev/", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", ADMIN_JWT_SECRET = "CHANGE_ME_STRONG_SECRET", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhadadoperdaodeassis.pages.dev/", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200" }
 
 
 
