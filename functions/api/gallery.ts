@@ -111,6 +111,9 @@ async function fetchGithubContents(
 
   const response = await fetch(url.toString(), { headers });
   if (!response.ok) {
+    if (response.status === 404) {
+      return [];
+    }
     throw new Error(`github_api_error:${response.status}`);
   }
   const data = (await response.json()) as GithubContentItem[] | GithubContentItem;
