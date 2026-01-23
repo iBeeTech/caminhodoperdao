@@ -24,7 +24,7 @@ interface GalleryAlbum {
   photos: GalleryPhoto[];
 }
 
-const DEFAULT_REPO = "cassiotakarada/caminhodoperdao-gallery";
+const DEFAULT_REPO = "iBeeTech/caminhodoperdao-gallery";
 const DEFAULT_BRANCH = "main";
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
@@ -61,8 +61,13 @@ export const onRequestGet: PagesFunction<Env> = async context => {
 
     return jsonResponse(200, { albums });
   } catch (error) {
-    console.error("Gallery API error:", error);
-    return jsonResponse(500, { error: "gallery_fetch_failed" });
+    const message = error instanceof Error ? error.message : String(error);
+    const githubStatus = parseGithubStatus(message);
+    console.error("Gallery API error:", message);
+    return jsonResponse(500, {
+      error: "gallery_fetch_failed",
+      github_status: githubStatus ?? undefined,
+    });
   }
 };
 
@@ -101,6 +106,7 @@ async function fetchGithubContents(
 ): Promise<GithubContentItem[]> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
+    "User-Agent": "caminhodoperdao-gallery",
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -121,6 +127,15 @@ async function fetchGithubContents(
     return data;
   }
   return [];
+}
+
+function parseGithubStatus(message: string): number | null {
+  if (!message.startsWith("github_api_error:")) {
+    return null;
+  }
+  const statusText = message.replace("github_api_error:", "");
+  const status = Number(statusText);
+  return Number.isFinite(status) ? status : null;
 }
 
 function jsonResponse(status: number, body: unknown): Response {
