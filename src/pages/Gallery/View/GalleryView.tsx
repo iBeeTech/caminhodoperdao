@@ -9,8 +9,14 @@ import {
   AlbumCard,
   AlbumGrid,
   AlbumHeader,
+  AlbumPhotoCard,
+  AlbumPhotoGrid,
+  AlbumPhotoImage,
+  AlbumPhotoSection,
+  AlbumPhotoTitle,
   AlbumStatus,
   AlbumThumb,
+  AlbumThumbImage,
   AlbumYear,
   Container,
   GalleryHero,
@@ -61,8 +67,22 @@ const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
                       <AlbumYear as="h2">{album.year}</AlbumYear>
                       <AlbumStatus>{album.status ?? (t("albums.defaultStatus") as string)}</AlbumStatus>
                     </AlbumHeader>
-                    <AlbumThumb>{album.thumbnailText ?? (t("albums.placeholderThumb") as string)}</AlbumThumb>
-                    <AlbumButton type="button" onClick={() => onOpenAlbum(album.year)}>
+                    <AlbumThumb>
+                      {album.coverUrl || album.photos[0]?.url ? (
+                        <AlbumThumbImage
+                          src={album.coverUrl || album.photos[0]?.url}
+                          alt={`Capa do álbum ${album.year}`}
+                          loading="lazy"
+                        />
+                      ) : (
+                        album.thumbnailText ?? (t("albums.placeholderThumb") as string)
+                      )}
+                    </AlbumThumb>
+                    <AlbumButton
+                      type="button"
+                      onClick={() => onOpenAlbum(album.year)}
+                      disabled={!album.photos.length}
+                    >
                       {t("actions.viewAlbum")}
                     </AlbumButton>
                   </AlbumCard>
@@ -71,6 +91,27 @@ const GalleryView: React.FC<GalleryViewProps> = ({ content, onOpenAlbum }) => {
             </Container>
           </GalleryListSection>
         </TrackSection>
+
+        {content.albums
+          .filter(album => album.photos.length)
+          .map(album => (
+            <AlbumPhotoSection key={album.year} id={`album-${album.year}`}>
+              <Container>
+                <AlbumPhotoTitle>{`Fotos ${album.year}`}</AlbumPhotoTitle>
+                <AlbumPhotoGrid>
+                  {album.photos.map((photo, index) => (
+                    <AlbumPhotoCard key={`${album.year}-${index}`}>
+                      <AlbumPhotoImage
+                        src={photo.url}
+                        alt={photo.alt ?? `Foto ${index + 1} do álbum ${album.year}`}
+                        loading="lazy"
+                      />
+                    </AlbumPhotoCard>
+                  ))}
+                </AlbumPhotoGrid>
+              </Container>
+            </AlbumPhotoSection>
+          ))}
       </GalleryMain>
     </GalleryPage>
   );

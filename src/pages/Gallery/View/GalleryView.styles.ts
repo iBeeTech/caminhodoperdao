@@ -98,6 +98,13 @@ export const AlbumThumb = styled.div`
   border: 1px dashed #d1d5db;
 `;
 
+export const AlbumThumbImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+`;
+
 export const AlbumButton = styled.button`
   border: none;
   padding: 10px 14px;
@@ -118,4 +125,34 @@ export const AlbumFootnote = styled.p`
   margin: 0;
   color: #6b7280;
   font-size: 0.9rem;
+`;
+
+export const AlbumPhotoSection = styled.section`
+  padding: 40px 0 60px;
+`;
+
+export const AlbumPhotoTitle = styled.h2`
+  margin: 0 0 18px 0;
+  font-size: 1.6rem;
+  color: #1f2937;
+`;
+
+export const AlbumPhotoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+`;
+
+export const AlbumPhotoCard = styled.div`
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+`;
+
+export const AlbumPhotoImage = styled.img`
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 `;
