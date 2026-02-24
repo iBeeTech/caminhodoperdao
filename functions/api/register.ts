@@ -14,6 +14,7 @@ import {
 interface Env {
   DB: D1Database;
   GATEWAY_API_KEY?: string;
+  REGISTRATION_COST?: string;
 }
 
 const MAX_TOTAL = 400;
@@ -107,11 +108,16 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     // Salvar pagamento na tabela payments
     const { savePayment } = await import("../_utils/payments");
     const now = Date.now();
+    const registrationCostCents =
+      Number.isFinite(Number(env.REGISTRATION_COST)) && Number(env.REGISTRATION_COST) > 0
+        ? Math.trunc(Number(env.REGISTRATION_COST))
+        : 1000;
+
     await savePayment(env.DB, {
       email,
       correlation_id: correlationId,
       provider_charge_id: charge.payment_ref,
-      amount_cents: 1000,
+      amount_cents: registrationCostCents,
       status: 'pending',
       brcode: charge.qrCodeText,
       qr_code_image: charge.qrCodeImageUrl || null,
