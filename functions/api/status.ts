@@ -1,31 +1,58 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, json } from "../_utils/responses";
 import { isValidEmail } from "../_utils/validation";
-import { expirePending, getByEmail } from "../_utils/registrations";
+import { expirePending, getByEmail, getByCpfEncrypted } from "../_utils/registrations";
 import { getPaymentByRef } from "../_utils/payments";
 import { getWooviChargeStatus } from "../_utils/woovi";
+import { encryptCpf } from "../_utils/cpfCrypto";
+import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 
 interface Env {
   DB: D1Database;
   WOOVI_APP_ID?: string;
+  CPF_ENCRYPTION_KEY?: string;
+  CPF_ENCRYPTION_IV?: string;
 }
 
-export async function handleStatus(env: Env, email: string | null, name: string | null = null): Promise<Response> {
-  if (!email) return badRequest("email_required");
-  if (!isValidEmail(email)) return badRequest("invalid_email");
+export async function handleStatus(
+  env: Env,
+  email: string | null,
+  name: string | null,
+  cpf: string | null
+): Promise<Response> {
+  let registration = null;
 
+  if (cpf && cpf.trim()) {
+    if (!isValidCpf(cpf)) return badRequest("invalid_cpf");
+    const key = env.CPF_ENCRYPTION_KEY;
+    const iv = env.CPF_ENCRYPTION_IV;
+    if (!key || !iv) return badRequest("cpf_lookup_not_configured");
+    let cpfEncrypted: string;
+    try {
+      cpfEncrypted = await encryptCpf(canonicalizeCpf(cpf), key, iv);
+    } catch {
+      return badRequest("cpf_lookup_failed");
+    }
+    await expirePending(env.DB);
+    registration = await getByCpfEncrypted(env.DB, cpfEncrypted);
+  } else if (email && email.trim()) {
+    if (!isValidEmail(email)) return badRequest("invalid_email");
+    await expirePending(env.DB);
+    registration = await getByEmail(env.DB, email);
+  } else {
+    return badRequest("cpf_or_email_required");
+  }
 
-
-  await expirePending(env.DB);
-  const registration = await getByEmail(env.DB, email);
   if (!registration) {
     return json(200, { exists: false });
   }
-  // Nova regra: email já usado por outro nome (na consulta de status)
+
+  const emailForReg = registration.email;
+  // Nome diferente na consulta por CPF
   if (name && registration.name && registration.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
     return json(409, {
       error: "email_used_by_other_name",
-      email,
+      email: emailForReg,
       name: registration.name
     });
   }
@@ -42,13 +69,13 @@ export async function handleStatus(env: Env, email: string | null, name: string 
         if (["COMPLETED", "RECEIVED"].includes(wooviResponse.charge?.status)) {
           await env.DB
             .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?")
-            .bind(Date.now(), email.toLowerCase())
+            .bind(Date.now(), emailForReg.toLowerCase())
             .run();
           
           registration.status = "PAID";
           registration.paid_at = new Date(Date.now()).toISOString();
           
-          console.log(`Status atualizado via Woovi: ${email} -> PAID`);
+          console.log(`Status atualizado via Woovi: ${emailForReg} -> PAID`);
         }
       }
     } catch (error) {
@@ -90,6 +117,7 @@ export async function handleStatus(env: Env, email: string | null, name: string 
     complement: registration.complement,
     city: registration.city,
     state: registration.state,
+    date_of_birth: registration.date_of_birth ?? undefined,
     created_at: registration.created_at,
     paid_at: registration.paid_at,
   });
@@ -97,7 +125,8 @@ export async function handleStatus(env: Env, email: string | null, name: string 
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url);
+  const cpf = url.searchParams.get("cpf");
   const email = url.searchParams.get("email");
   const name = url.searchParams.get("name");
-  return handleStatus(context.env, email, name);
+  return handleStatus(context.env, email, name, cpf);
 };

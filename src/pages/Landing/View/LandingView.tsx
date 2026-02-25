@@ -42,6 +42,8 @@ interface LandingViewProps {
   refs: {
     nameRef: RefObject<HTMLInputElement | null>;
     emailRef: RefObject<HTMLInputElement | null>;
+    cpfRef: RefObject<HTMLInputElement | null>;
+    dateOfBirthRef: RefObject<HTMLInputElement | null>;
     phoneRef: RefObject<HTMLInputElement | null>;
     cepRef: RefObject<HTMLInputElement | null>;
     addressRef: RefObject<HTMLInputElement | null>;
@@ -50,6 +52,7 @@ interface LandingViewProps {
     cityRef: RefObject<HTMLInputElement | null>;
     stateRef: RefObject<HTMLInputElement | null>;
     sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
+    termsAcceptedRef: RefObject<HTMLInputElement | null>;
     companionRef: RefObject<HTMLInputElement | null>;
   };
   onCheckStatus: (event: FormEvent<HTMLFormElement>) => void;

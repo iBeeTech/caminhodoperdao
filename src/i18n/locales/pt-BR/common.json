@@ -32,6 +32,9 @@
         "message": "Estamos trabalhando para consertar o site!",
         "back": "Voltar para o início"
     },
+    "responsibilityTerms": {
+        "title": "Termos de Responsabilidade da Caminhada do Perdão"
+    },
     "loading": "Carregando...",
     "error": "Ocorreu um erro ao carregar os dados. Tente novamente mais tarde."
 }

@@ -22,6 +22,7 @@ export function syncFormWithStatus(
 
   if (data.name) assign(refs.name, data.name);
   if (data.email) assign(refs.email, data.email);
+  if (refs.dateOfBirth && data.date_of_birth) assign(refs.dateOfBirth, data.date_of_birth);
   assign(refs.phone, data.phone ? formatPhoneBR(data.phone) : "");
   assign(refs.cep, data.cep ? formatCepBR(data.cep) : "");
   assign(refs.address, data.address ?? "");

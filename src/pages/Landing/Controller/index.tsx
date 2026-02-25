@@ -143,22 +143,29 @@ const LandingController: React.FC = () => {
   React.useEffect(() => {
     if (phase === "form" && typeof window !== "undefined") {
       const savedName = localStorage.getItem("landing_form_name");
+      const savedCpf = localStorage.getItem("landing_form_cpf");
       const savedEmail = localStorage.getItem("landing_form_email");
 
       if (savedName && nameRef.current) {
         nameRef.current.value = savedName;
+      }
+      if (savedCpf && cpfRef.current) {
+        cpfRef.current.value = savedCpf;
       }
       if (savedEmail && emailRef.current) {
         emailRef.current.value = savedEmail;
       }
 
       localStorage.removeItem("landing_form_name");
+      localStorage.removeItem("landing_form_cpf");
       localStorage.removeItem("landing_form_email");
     }
   }, [phase]);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const cpfRef = useRef<HTMLInputElement>(null);
+  const dateOfBirthRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const cepRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
@@ -167,11 +174,14 @@ const LandingController: React.FC = () => {
   const cityRef = useRef<HTMLInputElement>(null);
   const stateRef = useRef<HTMLInputElement>(null);
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
+  const termsAcceptedRef = useRef<HTMLInputElement>(null);
   const companionRef = useRef<HTMLInputElement>(null);
 
   const fieldRefs: FieldRefsType = {
     name: nameRef,
     email: emailRef,
+    cpf: cpfRef,
+    dateOfBirth: dateOfBirthRef,
     phone: phoneRef,
     cep: cepRef,
     address: addressRef,
@@ -180,6 +190,7 @@ const LandingController: React.FC = () => {
     city: cityRef,
     state: stateRef,
     sleepAtMonastery: sleepAtMonasteryRef,
+    termsAccepted: termsAcceptedRef,
     companionRef: companionRef,
   };
 
@@ -207,7 +218,7 @@ const LandingController: React.FC = () => {
   const isMonasterySlotUnavailable = availability.monasteryFull && existingDataRef.current?.sleep_at_monastery !== 1;
 
   const checkStatusMutation = useMutation({
-    mutationFn: (params: { email: string; name?: string }) => landingService.checkStatus(params.email, params.name),
+    mutationFn: (params: { cpf: string; name?: string }) => landingService.checkStatus(params.cpf, params.name),
   });
 
   const registerMutation = useMutation({
@@ -227,7 +238,7 @@ const LandingController: React.FC = () => {
    * ✅ Captura 409 mesmo quando `instanceof HttpError` falha (bundler/duplicação)
    */
   const onEmailBlur = async () => {
-    if (phase !== "form" && phase !== "check") return;
+    if (phase !== "form") return;
 
     const email = getFieldValue(emailRef.current);
     const name = getFieldValue(nameRef.current);
@@ -362,7 +373,7 @@ const LandingController: React.FC = () => {
     // limpa só o callout específico quando re-submeter
     clearEmailUsedByOtherNameError();
 
-    const validationErrors = validateCheckForm(t, { name: nameRef, email: emailRef }).errors;
+    const validationErrors = validateCheckForm(t, { name: nameRef, cpf: cpfRef }).errors;
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -373,18 +384,18 @@ const LandingController: React.FC = () => {
       return;
     }
 
-    const email = getFieldValue(emailRef.current);
+    const cpf = getFieldValue(cpfRef.current);
     const name = getFieldValue(nameRef.current);
     formSubmitted("landing", "signup_check", "pending");
 
     try {
-      const result = await checkStatusMutation.mutateAsync({ email, name });
+      const result = await checkStatusMutation.mutateAsync({ cpf, name });
       existingDataRef.current = result;
 
       if (!result.exists) {
         const currentName = getFieldValue(nameRef.current);
         localStorage.setItem("landing_form_name", currentName);
-        localStorage.setItem("landing_form_email", email);
+        localStorage.setItem("landing_form_cpf", cpf);
         setPhase("form");
         return;
       }
@@ -475,6 +486,8 @@ const LandingController: React.FC = () => {
     const payload: RegistrationPayload = {
       name: getFieldValue(nameRef?.current ?? null),
       email: getFieldValue(emailRef?.current ?? null),
+      cpf: getFieldValue(cpfRef?.current ?? null).replace(/\D/g, ""),
+      dateOfBirth: getFieldValue(dateOfBirthRef?.current ?? null),
       phone: getFieldValue(phoneRef?.current ?? null),
       cep: getFieldValue(cepRef?.current ?? null),
       address: getFieldValue(addressRef?.current ?? null),
@@ -520,6 +533,13 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      if (status === 409 && body?.error === "cpf_already_registered") {
+        setStatusMessage(t("signup.callouts.cpfAlreadyRegistered"));
+        setStatusTone("error");
+        setErrors((prev) => ({ ...prev, cpf: t("signup.callouts.cpfAlreadyRegistered") }));
+        return;
+      }
+
       // fallback (se HttpError funcionar)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
@@ -530,7 +550,7 @@ const LandingController: React.FC = () => {
         }
 
         try {
-          const statusData = await landingService.checkStatus(payload.email);
+          const statusData = await landingService.checkStatus(payload.cpf, payload.name);
           existingDataRef.current = statusData;
           syncFormWithStatus(statusData, fieldRefs);
 
@@ -633,6 +653,8 @@ const LandingController: React.FC = () => {
       refs={{
         nameRef,
         emailRef,
+        cpfRef,
+        dateOfBirthRef,
         phoneRef,
         cepRef,
         addressRef,
@@ -641,6 +663,7 @@ const LandingController: React.FC = () => {
         cityRef,
         stateRef,
         sleepAtMonasteryRef,
+        termsAcceptedRef,
         companionRef,
       }}
       onCheckStatus={handleCheckStatus}

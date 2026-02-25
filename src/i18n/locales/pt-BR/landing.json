@@ -102,11 +102,14 @@
         "callouts": {
             "availabilityError": "Algo de errado aconteceu, volte mais tarde para realizar sua inscrição!",
             "full": "As inscrições estão esgotadas no momento. Se alguém desistir, uma vaga pode ser reaberta — volte mais tarde.",
-            "capacityFull": "As inscrições estão esgotadas no momento. Volte mais tarde."
+            "capacityFull": "As inscrições estão esgotadas no momento. Volte mais tarde.",
+            "cpfAlreadyRegistered": "Este CPF já possui uma inscrição."
         },
         "checkForm": {
             "nameLabel": "Nome completo",
             "namePlaceholder": "Seu nome",
+            "cpfLabel": "CPF",
+            "cpfPlaceholder": "000.000.000-00",
             "emailLabel": "Email",
             "emailPlaceholder": "seu@email.com",
             "submit": "Verificar inscrição ou Inscrever-se",
@@ -117,6 +120,9 @@
             "namePlaceholder": "Seu nome",
             "emailLabel": "Email",
             "emailPlaceholder": "seu@email.com",
+            "cpfLabel": "CPF",
+            "cpfPlaceholder": "000.000.000-00",
+            "dateOfBirthLabel": "Data de nascimento",
             "whatsappLabel": "WhatsApp",
             "whatsappPlaceholder": "(DDD) 9XXXX-XXXX",
             "cepLabel": "CEP",
@@ -138,7 +144,9 @@
             "sleepYesFull": "Sim (sem vagas)",
             "sleepNo": "Não",
             "submit": "Verificar inscrição ou Inscrever-se",
-            "loading": "Enviando..."
+            "loading": "Enviando...",
+            "termsLabel": "Ao realizar a inscrição você concorda com os nossos",
+            "termsLinkText": "Termos de Responsabilidade"
         },
         "status": {
                         "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
@@ -164,10 +172,13 @@
         "errors": {
             "required": "Obrigatório",
             "emailInvalid": "Email inválido",
+            "cpfInvalid": "CPF inválido",
+            "dateOfBirthInvalid": "Data de nascimento inválida",
             "phoneInvalid": "Informe DDD + 9 dígitos",
             "cepInvalid": "CEP inválido",
             "sleepRequired": "Selecione uma opção",
-            "sleepFull": "Vagas no mosteiro esgotadas"
+            "sleepFull": "Vagas no mosteiro esgotadas",
+            "termsRequired": "Você precisa aceitar os Termos de Responsabilidade"
         }
     }
 }

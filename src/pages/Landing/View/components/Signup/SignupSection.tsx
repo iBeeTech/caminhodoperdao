@@ -2,6 +2,7 @@ import React, { ChangeEvent, FormEvent, RefObject, useRef, useState } from "reac
 import { useTranslation } from "react-i18next";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
 import { Callout, FormField, Input, Select } from "../../../../../components";
+import { ErrorText } from "../../../../../components/molecules/FormField/FormField.styles";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
 import EnrollmentCallout from "../../../../../components/molecules/EnrollmentCallout/EnrollmentCallout";
 import { useFeatureFlags } from "../../../../../hooks/useFeatureFlags";
@@ -11,6 +12,8 @@ import checkAmarelo from "../../../../../assets/check-amarelo.png";
 import check from "../../../../../assets/check.png";
 import whatsappIcon from "../../../../../assets/whatsapp.png";
 import starIcon from "../../../../../assets/star.png";
+import { formatCpfBR } from "../../../../../utils/formatters/cpf";
+import { Link } from "react-router-dom";
 import {
   Container,
   MonasteryNote,
@@ -36,6 +39,8 @@ import {
 interface SignupRefs {
   nameRef: RefObject<HTMLInputElement | null>;
   emailRef: RefObject<HTMLInputElement | null>;
+  cpfRef: RefObject<HTMLInputElement | null>;
+  dateOfBirthRef: RefObject<HTMLInputElement | null>;
   phoneRef: RefObject<HTMLInputElement | null>;
   cepRef: RefObject<HTMLInputElement | null>;
   addressRef: RefObject<HTMLInputElement | null>;
@@ -44,12 +49,15 @@ interface SignupRefs {
   cityRef: RefObject<HTMLInputElement | null>;
   stateRef: RefObject<HTMLInputElement | null>;
   sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
+  termsAcceptedRef: RefObject<HTMLInputElement | null>;
   companionRef: RefObject<HTMLInputElement | null>;
 }
 
 type SignupErrors = Partial<{
   name: string;
   email: string;
+  cpf: string;
+  dateOfBirth: string;
   phone: string;
   cep: string;
   address: string;
@@ -57,6 +65,7 @@ type SignupErrors = Partial<{
   city: string;
   state: string;
   sleepAtMonastery: string;
+  termsAccepted: string;
   emailUsedByOtherName: string;
 }>;
 
@@ -142,6 +151,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const {
     nameRef,
     emailRef,
+    cpfRef,
+    dateOfBirthRef,
     phoneRef,
     cepRef,
     addressRef,
@@ -150,6 +161,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     cityRef,
     stateRef,
     sleepAtMonasteryRef,
+    termsAcceptedRef,
     companionRef,
   } = refs;
 
@@ -165,6 +177,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     emailDebounceRef.current = window.setTimeout(() => {
       validateEmailNow();
     }, 450);
+  };
+
+  const handleCpfChange = (event: ChangeEvent<HTMLInputElement>) => {
+    event.target.value = formatCpfBR(event.target.value);
   };
 
   const handleCheckSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -295,15 +311,16 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 />
               </FormField>
 
-              <FormField label={t("signup.checkForm.emailLabel")} htmlFor="email" error={undefined} required>
+              <FormField label={t("signup.checkForm.cpfLabel")} htmlFor="cpf" error={errors.cpf} required>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder={t("signup.checkForm.emailPlaceholder")}
-                  ref={emailRef as RefObject<HTMLInputElement>}
-                  autoComplete="email"
-                  onBlur={validateEmailNow} // ✅ agora valida no check também
+                  id="cpf"
+                  name="cpf"
+                  type="text"
+                  placeholder={t("signup.checkForm.cpfPlaceholder")}
+                  ref={cpfRef as RefObject<HTMLInputElement>}
+                  onChange={handleCpfChange}
+                  inputMode="numeric"
+                  autoComplete="off"
                 />
               </FormField>
 
@@ -352,6 +369,34 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   onBlur={validateEmailNow}
                   onChange={handleEmailChangeDebounced} // ✅ valida enquanto digita (debounced)
                   autoComplete="email"
+                />
+              </FormField>
+
+              <FormField label={t("signup.registrationForm.cpfLabel")} htmlFor="cpf-full" error={errors.cpf} required>
+                <Input
+                  id="cpf-full"
+                  name="cpf-full"
+                  type="text"
+                  placeholder={t("signup.registrationForm.cpfPlaceholder")}
+                  ref={cpfRef as RefObject<HTMLInputElement>}
+                  onChange={handleCpfChange}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </FormField>
+
+              <FormField
+                label={t("signup.registrationForm.dateOfBirthLabel")}
+                htmlFor="dateOfBirth"
+                error={errors.dateOfBirth}
+                required
+              >
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  ref={dateOfBirthRef as RefObject<HTMLInputElement>}
+                  autoComplete="bday"
                 />
               </FormField>
 
@@ -490,6 +535,42 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </FormField>
               )}
 
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label
+                  htmlFor="termsAccepted"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    cursor: "pointer",
+                    flexWrap: "wrap",
+                    fontWeight: 600,
+                    color: "var(--color-text, #333)",
+                  }}
+                >
+                  <span style={{ color: "var(--color-error, #b91c1c)", flexShrink: 0 }} aria-hidden="true">*</span>
+                  <input
+                    ref={termsAcceptedRef as RefObject<HTMLInputElement>}
+                    id="termsAccepted"
+                    name="termsAccepted"
+                    type="checkbox"
+                    style={{ marginTop: "0", flexShrink: 0 }}
+                  />
+                  <span>
+                    {t("signup.registrationForm.termsLabel")}{" "}
+                    <Link to="/responsabilityTerms" style={{ color: "inherit", textDecoration: "underline", fontWeight: 600 }}>
+                      {t("signup.registrationForm.termsLinkText")}
+                    </Link>
+                    .
+                  </span>
+                </label>
+                {errors.termsAccepted && (
+                  <ErrorText role="alert" aria-live="assertive">
+                    {errors.termsAccepted}
+                  </ErrorText>
+                )}
+              </div>
+
               <TrackedButton
                 pageName="landing"
                 ctaId={LANDING_CTAS.FORM_SUBMIT}
@@ -499,7 +580,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 variant="primary"
                 size="md"
                 type="submit"
-                disabled={isSubmittingRegistration || Boolean(errors.emailUsedByOtherName)} // ✅ bloqueia submit com conflito
+                disabled={isSubmittingRegistration || Boolean(errors.emailUsedByOtherName) || Boolean(errors.termsAccepted)}
                 loading={isSubmittingRegistration}
               >
                 {isSubmittingRegistration ? t("signup.registrationForm.loading") : t("signup.registrationForm.submit")}

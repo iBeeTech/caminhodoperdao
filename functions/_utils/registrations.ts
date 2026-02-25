@@ -15,21 +15,30 @@ export interface Registration {
   complement: string | null;
   city: string;
   state: string;
+  cpf_encrypted: string | null;
+  date_of_birth: string | null;
   created_at: string;
   paid_at: string | null;
 }
 
 export async function getByEmail(DB: D1Database, email: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE email = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, created_at, paid_at FROM registrations WHERE email = ?"
   ).bind(email.toLowerCase());
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByPaymentRef(DB: D1Database, paymentRef: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at, paid_at FROM registrations WHERE payment_ref = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, created_at, paid_at FROM registrations WHERE payment_ref = ?"
   ).bind(paymentRef);
+  return (await stmt.first<Registration>()) ?? null;
+}
+
+export async function getByCpfEncrypted(DB: D1Database, cpfEncrypted: string): Promise<Registration | null> {
+  const stmt = DB.prepare(
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, created_at, paid_at FROM registrations WHERE cpf_encrypted = ?"
+  ).bind(cpfEncrypted);
   return (await stmt.first<Registration>()) ?? null;
 }
 
@@ -51,10 +60,12 @@ export async function insertRegistration(
     complement: string | null;
     city: string;
     state: string;
+    cpf_encrypted: string | null;
+    date_of_birth: string | null;
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, datetime('now'))"
+    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, datetime('now'))"
   ).bind(
     input.id,
     input.email.toLowerCase(),
@@ -70,7 +81,9 @@ export async function insertRegistration(
     input.number,
     input.complement,
     input.city,
-    input.state
+    input.state,
+    input.cpf_encrypted,
+    input.date_of_birth,
   );
   await stmt.run();
 }
@@ -92,10 +105,12 @@ export async function updateRegistration(
     complement: string | null;
     city: string;
     state: string;
+    cpf_encrypted: string | null;
+    date_of_birth: string | null;
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, created_at = datetime('now'), paid_at = NULL WHERE email = ?14"
+    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, created_at = datetime('now'), paid_at = NULL WHERE email = ?16"
   ).bind(
     input.name,
     input.status,
@@ -110,6 +125,8 @@ export async function updateRegistration(
     input.complement,
     input.city,
     input.state,
+    input.cpf_encrypted,
+    input.date_of_birth,
     email.toLowerCase()
   );
   await stmt.run();

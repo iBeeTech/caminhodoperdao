@@ -7,6 +7,8 @@ import React from "react";
 export type FieldRefsType = {
   name: React.RefObject<HTMLInputElement | null>;
   email: React.RefObject<HTMLInputElement | null>;
+  cpf: React.RefObject<HTMLInputElement | null>;
+  dateOfBirth: React.RefObject<HTMLInputElement | null>;
   phone: React.RefObject<HTMLInputElement | null>;
   cep: React.RefObject<HTMLInputElement | null>;
   address: React.RefObject<HTMLInputElement | null>;
@@ -15,6 +17,7 @@ export type FieldRefsType = {
   city: React.RefObject<HTMLInputElement | null>;
   state: React.RefObject<HTMLInputElement | null>;
   sleepAtMonastery: React.RefObject<HTMLSelectElement | null>;
+  termsAccepted: React.RefObject<HTMLInputElement | null>;
 };
 
 export type ErrorMap = Record<string, string>;
@@ -27,6 +30,8 @@ export type ValidationResult = {
 export interface RegistrationFormData {
   name: string;
   email: string;
+  cpf: string;
+  dateOfBirth: string;
   phone: string;
   cep: string;
   address: string;
@@ -53,5 +58,6 @@ export type RegistrationStatusResponse = {
   complement?: string | null;
   city?: string;
   state?: string;
+  date_of_birth?: string;
   sleep_at_monastery?: 0 | 1 | number;
 };

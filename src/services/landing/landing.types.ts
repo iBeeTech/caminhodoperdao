@@ -20,12 +20,15 @@ export interface RegistrationStatusResponse {
   complement?: string | null;
   city?: string;
   state?: string;
+  date_of_birth?: string;
   message?: string;
 }
 
 export interface RegistrationPayload {
   name: string;
   email: string;
+  cpf: string;
+  dateOfBirth: string;
   phone: string;
   cep: string;
   address: string;

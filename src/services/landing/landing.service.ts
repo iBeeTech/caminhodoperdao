@@ -11,8 +11,8 @@ export const landingService = {
     return httpClient.get<AvailabilityResponse>("/api/availability");
   },
 
-  async checkStatus(email: string, name?: string): Promise<RegistrationStatusResponse> {
-    let url = `/api/status?email=${encodeURIComponent(email)}`;
+  async checkStatus(cpf: string, name?: string): Promise<RegistrationStatusResponse> {
+    let url = `/api/status?cpf=${encodeURIComponent(cpf)}`;
     if (name) {
       url += `&name=${encodeURIComponent(name)}`;
     }

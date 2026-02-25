@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   complement TEXT,
   city TEXT NOT NULL DEFAULT '',
   state TEXT NOT NULL DEFAULT '',
+  cpf_encrypted TEXT UNIQUE,
+  date_of_birth TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );
@@ -23,6 +25,7 @@ CREATE TABLE IF NOT EXISTS registrations (
 CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
 CREATE INDEX IF NOT EXISTS idx_registrations_payment_ref ON registrations(payment_ref);
 CREATE INDEX IF NOT EXISTS idx_registrations_status_sleep ON registrations(status, sleep_at_monastery);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_cpf_encrypted ON registrations(cpf_encrypted) WHERE cpf_encrypted IS NOT NULL;
 
 -- D1 schema for testimonials
 CREATE TABLE IF NOT EXISTS testimonials (

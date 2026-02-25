@@ -5,33 +5,30 @@
  */
 
 import { isEmailValid } from "../validators/email";
+import { isValidCpf } from "../validators/cpf";
 import { getFieldValue } from "../dom/forms";
 import type { FieldRefsType, ValidationResult, ErrorMap } from "./types";
 
 /**
- * Valida o formulário de "Check Status"
- * 
- * @param t - Função de tradução i18n
- * @param refs - Referências aos campos
- * @returns ValidationResult com status de validação e erros
+ * Valida o formulário de "Check Status" (por CPF e nome)
  */
 export function validateCheckForm(
   t: (key: string) => string,
-  refs: Pick<FieldRefsType, "name" | "email">
+  refs: Pick<FieldRefsType, "name" | "cpf">
 ): ValidationResult {
   const errors: ErrorMap = {};
   
   const name = getFieldValue(refs.name.current);
-  const email = getFieldValue(refs.email.current);
+  const cpf = getFieldValue(refs.cpf.current);
 
   if (!name) {
     errors.name = t("signup.errors.required");
   }
   
-  if (!email) {
-    errors.email = t("signup.errors.required");
-  } else if (!isEmailValid(email)) {
-    errors.email = t("signup.errors.emailInvalid");
+  if (!cpf) {
+    errors.cpf = t("signup.errors.required");
+  } else if (!isValidCpf(cpf)) {
+    errors.cpf = t("signup.errors.cpfInvalid");
   }
 
   return {
@@ -77,6 +74,18 @@ export function validateRegistrationForm(
       value: getFieldValue(refs.email.current),
       message: t("signup.errors.emailInvalid"),
       validator: isEmailValid,
+    },
+    {
+      key: "cpf",
+      value: getFieldValue(refs.cpf.current),
+      message: t("signup.errors.cpfInvalid"),
+      validator: (v) => isValidCpf(v),
+    },
+    {
+      key: "dateOfBirth",
+      value: getFieldValue(refs.dateOfBirth.current),
+      message: t("signup.errors.dateOfBirthInvalid"),
+      validator: (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(new Date(v).getTime()),
     },
     {
       key: "phone",
@@ -127,12 +136,18 @@ export function validateRegistrationForm(
 
   if (!sleepSelection) {
     errors.sleepAtMonastery = t("signup.errors.sleepRequired");
-  } else if (
+  } else   if (
     sleepSelection === "yes" &&
     options?.monasteryFull &&
     !options?.alreadySleeper
   ) {
     errors.sleepAtMonastery = t("signup.errors.sleepFull");
+  }
+
+  // Termos de Responsabilidade
+  const termsChecked = refs.termsAccepted?.current?.checked === true;
+  if (!termsChecked) {
+    errors.termsAccepted = t("signup.errors.termsRequired");
   }
 
   return {

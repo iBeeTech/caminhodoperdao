@@ -2,11 +2,14 @@
 import { json, badRequest, conflict, serverError } from "../_utils/responses";
 import { isValidEmail } from "../_utils/validation";
 import { getPaymentProvider, parseRegistrationCostCents } from "../_utils/payment";
+import { encryptCpf } from "../_utils/cpfCrypto";
+import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 import {
   countActive,
   countActiveSleep,
   expirePending,
   getByEmail,
+  getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
 } from "../_utils/registrations";
@@ -16,6 +19,8 @@ interface Env {
   GATEWAY_API_KEY?: string;
   REGISTRATION_COST?: string;
   REGISTRATION_COST_MONASTERY?: string;
+  CPF_ENCRYPTION_KEY?: string;
+  CPF_ENCRYPTION_IV?: string;
 }
 
 const MAX_TOTAL = 400;
@@ -38,6 +43,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     state,
     sleepAtMonastery,
     companionName,
+    cpf,
+    dateOfBirth,
   } = body as {
     name?: string;
     email?: string;
@@ -50,13 +57,53 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     state?: string;
     sleepAtMonastery?: boolean;
     companionName?: string;
+    cpf?: string;
+    dateOfBirth?: string;
   };
 
   if (!email || !isValidEmail(email)) {
     return badRequest("invalid_email");
   }
 
+  if (!cpf || !isValidCpf(cpf)) {
+    return badRequest("invalid_cpf");
+  }
+
+  const rawDate = dateOfBirth?.trim();
+  if (!rawDate) {
+    return badRequest("date_of_birth_required");
+  }
+  const dateMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dateMatch) {
+    return badRequest("invalid_date_of_birth");
+  }
+  const [, y, m, d] = dateMatch;
+  const dob = new Date(parseInt(y!, 10), parseInt(m!, 10) - 1, parseInt(d!, 10));
+  const now = new Date();
+  if (dob.getTime() > now.getTime()) {
+    return badRequest("date_of_birth_future");
+  }
+  const age = (now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  if (age < 1 || age > 120) {
+    return badRequest("date_of_birth_invalid_range");
+  }
+  const dateOfBirthNormalized = `${y}-${m}-${d}`;
+
   const sleepFlag = sleepAtMonastery ? 1 : 0;
+
+  let cpfEncrypted: string;
+  try {
+    const key = env.CPF_ENCRYPTION_KEY;
+    const iv = env.CPF_ENCRYPTION_IV;
+    if (!key || !iv) {
+      console.error("CPF_ENCRYPTION_KEY or CPF_ENCRYPTION_IV not set");
+      return serverError("cpf_encryption_not_configured");
+    }
+    cpfEncrypted = await encryptCpf(canonicalizeCpf(cpf), key, iv);
+  } catch (err: any) {
+    console.error("CPF encryption error:", err?.message);
+    return serverError("cpf_encryption_failed");
+  }
 
   await expirePending(env.DB);
 
@@ -64,6 +111,14 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   // Nova regra: email já usado por outro nome
   if (existing && existing.name && name && existing.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
     return conflict("email_used_by_other_name", { email, name: existing.name });
+  }
+
+  // Inserção nova: CPF já usado por outra inscrição?
+  if (!existing) {
+    const existingByCpf = await getByCpfEncrypted(env.DB, cpfEncrypted);
+    if (existingByCpf) {
+      return conflict("cpf_already_registered");
+    }
   }
 
   let total = await countActive(env.DB);
@@ -154,6 +209,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         complement: complement?.trim() || null,
         city: city?.trim() ?? "",
         state: state?.trim() ?? "",
+        cpf_encrypted: cpfEncrypted,
+        date_of_birth: dateOfBirthNormalized,
       });
     } else if (existing && existing.status === "PAID") {
       return conflict("registration_exists", { status: existing.status });
@@ -174,6 +231,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         complement: complement?.trim() || null,
         city: city?.trim() ?? "",
         state: state?.trim() ?? "",
+        cpf_encrypted: cpfEncrypted,
+        date_of_birth: dateOfBirthNormalized,
       });
     }
   } catch (error) {
