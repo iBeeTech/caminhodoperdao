@@ -1,19 +1,19 @@
 {
     "hero": {
-        "title": "Caminhada do Perdão",
+        "title": "Caminho do Perdão",
         "subtitle": "Encontre paz interior e renovação espiritual",
         "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual. Descubra o poder libertador de perdoar e seja livre.",
         "primaryButton": "Fazer Inscrição",
         "secondaryButton": "Saiba Mais",
-        "imageAlt": "Caminhada do Perdão"
+        "imageAlt": "Caminho do Perdão"
     },
     "history": {
         "title": "Nossa História",
-        "description": "A Caminhada do Perdão nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
+        "description": "O Caminho do Perdão nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
     },
     "schedule": {
         "title": "Cronograma",
-        "note": "Lembrete: no dia da caminhada, antes de iniciá-la, fazemos um café comunitário. Leve um bolo, pão, pão de queijo ou o que quiser para somar na refeição.",
+        "note": "Lembrete: no dia do Caminho, antes de iniciá-lo, fazemos um café comunitário. Leve um bolo, pão, pão de queijo ou o que quiser para somar na refeição.",
         "confession": {
             "title": "Confissão - 01/08/2026 (Sábado)",
             "items": [
@@ -28,7 +28,7 @@
             ]
         },
         "walk": {
-            "title": "No dia da Caminhada",
+            "title": "No dia do Caminho",
             "items": [
                 "Café Comunitário às 03h00",
                 "Alongamento e aquecimento às 04h00",
@@ -44,7 +44,7 @@
         }
     },
     "features": {
-        "title": "Por que escolher a Caminhada do Perdão?",
+        "title": "Por que escolher o Caminho do Perdão?",
         "items": [
             {
                 "id": "1",

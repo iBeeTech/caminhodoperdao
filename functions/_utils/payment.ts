@@ -29,7 +29,7 @@ class WooviPixProvider implements PaymentProvider {
     const payload: WooviChargePayload = {
       correlationID: correlationId,
       value: valueCents,
-      comment: 'Inscrição - Caminhada do Perdão',
+      comment: 'Inscrição - Caminho do Perdão',
       expiresIn,
       customer: {
         name: name || email.split('@')[0],

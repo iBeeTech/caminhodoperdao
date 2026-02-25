@@ -114,7 +114,7 @@ export default async function handler(request: Request, context: any) {
     const wooviPayload: WooviChargePayload = {
       correlationID: correlationId,
       value: amountCents,
-      comment: description || 'Inscrição - Caminhada do Perdão',
+      comment: description || 'Inscrição - Caminho do Perdão',
       expiresIn,
       customer: name || email ? {
         name: name || email.split('@')[0],

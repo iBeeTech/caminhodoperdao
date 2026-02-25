@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Caminhada do Perdão"
+        "title": "Caminho do Perdão"
     },
     "nav": {
         "home": "Início",
@@ -14,13 +14,13 @@
         "menuToggle": "Abrir menu"
     },
     "footer": {
-        "heading": "Caminhada do Perdão",
+        "heading": "Caminho do Perdão",
         "description": "Transformando vidas através do perdão e autoconhecimento.",
         "contactHeading": "Contato",
         "email": "Email: contato@caminhodoperdao.com",
         "phone": "Telefone: (11) 99999-9999",
         "socialHeading": "Redes sociais",
-        "copyright": "© {{year}} Caminhada do Perdão. Todos os direitos reservados."
+        "copyright": "© {{year}} Caminho do Perdão. Todos os direitos reservados."
     },
     "social": {
         "instagram": "Instagram",
@@ -33,7 +33,7 @@
         "back": "Voltar para o início"
     },
     "responsibilityTerms": {
-        "title": "Termos de Responsabilidade da Caminhada do Perdão"
+        "title": "Termos de Responsabilidade da Caminho do Perdão"
     },
     "loading": "Carregando...",
     "error": "Ocorreu um erro ao carregar os dados. Tente novamente mais tarde."
