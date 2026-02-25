@@ -65,6 +65,7 @@ interface LandingViewProps {
   onCallToAction: () => void;
   onReopenRegistration: () => void;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
+  onCpfChange?: () => void;
 }
 
 const LandingView: React.FC<LandingViewProps> = ({
@@ -92,6 +93,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onCallToAction,
   onReopenRegistration,
   getNextWhatsappUrl,
+  onCpfChange,
 }) => {
   const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
   return (
@@ -142,6 +144,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             onEmailBlur={onEmailBlur}
             onReopenRegistration={onReopenRegistration}
           getNextWhatsappUrl={getNextWhatsappUrl}
+            onCpfChange={onCpfChange}
         />
         </TrackSection>
 

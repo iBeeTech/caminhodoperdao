@@ -116,6 +116,13 @@ const LandingController: React.FC = () => {
       emailUsedByOtherName: `O e-mail ${email ?? ""} já foi utilizado para fazer a inscrição de ${name ?? ""}. Utilize outro e-mail.`,
     }));
   };
+
+  const clearCpfError = () => {
+    setErrors((prev) => {
+      const { cpf, ...rest } = prev;
+      return rest;
+    });
+  };
   // ---------------------------------------------------------------
 
   // Limpar sessionStorage ao fazer reload ou sair da página
@@ -384,6 +391,7 @@ const LandingController: React.FC = () => {
       return;
     }
 
+    setErrors({}); // limpa erros anteriores quando a validação passa (ex.: CPF corrigido)
     const cpf = getFieldValue(cpfRef.current);
     const name = getFieldValue(nameRef.current);
     formSubmitted("landing", "signup_check", "pending");
@@ -436,6 +444,13 @@ const LandingController: React.FC = () => {
       if (status === 409 && body?.error === "email_used_by_other_name") {
         setEmailUsedByOtherNameError(body?.email, body?.name);
         return; // permanece em 'check'
+      }
+
+      if (status === 400 && body?.error === "invalid_cpf") {
+        setErrors((prev) => ({ ...prev, cpf: t("signup.errors.cpfInvalid") }));
+        setStatusMessage(null);
+        setStatusTone(null);
+        return;
       }
 
       // fallback (se HttpError funcionar)
@@ -689,6 +704,7 @@ const LandingController: React.FC = () => {
       }}
       onReopenRegistration={handleReopenRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
+      onCpfChange={clearCpfError}
     />
   );
 };

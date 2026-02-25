@@ -95,6 +95,8 @@ interface SignupSectionProps {
   onEmailBlur: () => void;
   onReopenRegistration: () => void;
   getNextWhatsappUrl: () => Promise<string>;
+  /** Limpa o erro de CPF ao editar o campo (check e registro) */
+  onCpfChange?: () => void;
 }
 
 const SignupSection: React.FC<SignupSectionProps> = ({
@@ -118,6 +120,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onEmailBlur,
   onReopenRegistration,
   getNextWhatsappUrl,
+  onCpfChange,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
@@ -318,7 +321,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.checkForm.cpfPlaceholder")}
                   ref={cpfRef as RefObject<HTMLInputElement>}
-                  onChange={handleCpfChange}
+                  onChange={(e) => {
+                    handleCpfChange(e);
+                    onCpfChange?.();
+                  }}
                   inputMode="numeric"
                   autoComplete="off"
                 />
@@ -354,6 +360,22 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 />
               </FormField>
 
+              <FormField label={t("signup.registrationForm.cpfLabel")} htmlFor="cpf-full" error={errors.cpf} required>
+                <Input
+                  id="cpf-full"
+                  name="cpf-full"
+                  type="text"
+                  placeholder={t("signup.registrationForm.cpfPlaceholder")}
+                  ref={cpfRef as RefObject<HTMLInputElement>}
+                  onChange={(e) => {
+                    handleCpfChange(e);
+                    onCpfChange?.();
+                  }}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </FormField>
+
               <FormField
                 label={t("signup.registrationForm.emailLabel")}
                 htmlFor="email-full"
@@ -369,19 +391,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   onBlur={validateEmailNow}
                   onChange={handleEmailChangeDebounced} // ✅ valida enquanto digita (debounced)
                   autoComplete="email"
-                />
-              </FormField>
-
-              <FormField label={t("signup.registrationForm.cpfLabel")} htmlFor="cpf-full" error={errors.cpf} required>
-                <Input
-                  id="cpf-full"
-                  name="cpf-full"
-                  type="text"
-                  placeholder={t("signup.registrationForm.cpfPlaceholder")}
-                  ref={cpfRef as RefObject<HTMLInputElement>}
-                  onChange={handleCpfChange}
-                  inputMode="numeric"
-                  autoComplete="off"
                 />
               </FormField>
 
