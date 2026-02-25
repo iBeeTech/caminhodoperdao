@@ -1,5 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
+import { decryptCpf } from "../../../_utils/cpfCrypto";
+
+type InscritosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
 
 interface InscritoRow {
   name: string;
@@ -8,16 +11,18 @@ interface InscritoRow {
   sleep_at_monastery: number;
   city: string | null;
   state: string | null;
+  cpf_encrypted: string | null;
+  date_of_birth: string | null;
 }
 
-export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
+export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
   const authResult = await authorizeAdminRequest(context.request, context.env);
   if (authResult instanceof Response) {
     return authResult;
   }
 
   const query = `
-    SELECT name, email, phone, sleep_at_monastery, city, state
+    SELECT name, email, phone, sleep_at_monastery, city, state, cpf_encrypted, date_of_birth
     FROM registrations
     WHERE status = 'PAID'
     ORDER BY name
@@ -26,7 +31,24 @@ export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
   const results = await context.env.DB.prepare(query).all<InscritoRow>();
   const rows = results.results ?? [];
 
-  const csv = buildInscritosCsv(rows);
+  const key = context.env.CPF_ENCRYPTION_KEY;
+  const iv = context.env.CPF_ENCRYPTION_IV;
+  const canDecrypt = Boolean(key && iv);
+
+  const rowsWithCpf: Array<InscritoRow & { cpfDecrypted: string }> = [];
+  for (const row of rows) {
+    let cpfDecrypted = "";
+    if (row.cpf_encrypted && canDecrypt) {
+      try {
+        cpfDecrypted = await decryptCpf(row.cpf_encrypted, key!, iv!);
+      } catch {
+        cpfDecrypted = "";
+      }
+    }
+    rowsWithCpf.push({ ...row, cpfDecrypted });
+  }
+
+  const csv = buildInscritosCsv(rowsWithCpf);
   return new Response(csv, {
     status: 200,
     headers: {
@@ -36,9 +58,17 @@ export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
   });
 };
 
-function buildInscritosCsv(rows: InscritoRow[]): string {
+function formatDateOfBirth(value: string | null): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value ?? "";
+  const [y, m, d] = value.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function buildInscritosCsv(
+  rows: Array<InscritoRow & { cpfDecrypted: string }>
+): string {
   const header =
-    "NOME,EMAIL,TELEFONE,DORME NO MOSTEIRO,CIDADE,ESTADO,ASSINATURA RECEBIMENTO KIT\n";
+    "NOME,EMAIL,CPF,DATA DE NASCIMENTO,TELEFONE,DORME NO MOSTEIRO,CIDADE,ESTADO,ASSINATURA RECEBIMENTO KIT\n";
   if (!rows.length) {
     return header;
   }
@@ -46,13 +76,15 @@ function buildInscritosCsv(rows: InscritoRow[]): string {
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
   const body = sorted
     .map(row => {
-      const name = `"${row.name}"`;
-      const email = `"${row.email}"`;
-      const phone = `"${row.phone ?? ""}"`;
+      const name = `"${(row.name || "").replace(/"/g, '""')}"`;
+      const email = `"${(row.email || "").replace(/"/g, '""')}"`;
+      const cpf = `"${(row.cpfDecrypted || "").replace(/"/g, '""')}"`;
+      const dateOfBirth = `"${formatDateOfBirth(row.date_of_birth)}"`;
+      const phone = `"${(row.phone ?? "").replace(/"/g, '""')}"`;
       const dorme = row.sleep_at_monastery === 1 ? "Sim" : "Não";
-      const city = `"${row.city ?? ""}"`;
-      const state = `"${row.state ?? ""}"`;
-      return `${name},${email},${phone},${dorme},${city},${state},""`;
+      const city = `"${(row.city ?? "").replace(/"/g, '""')}"`;
+      const state = `"${(row.state ?? "").replace(/"/g, '""')}"`;
+      return `${name},${email},${cpf},${dateOfBirth},${phone},${dorme},${city},${state},""`;
     })
     .join("\n");
 
