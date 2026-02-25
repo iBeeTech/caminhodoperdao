@@ -123,6 +123,13 @@ const LandingController: React.FC = () => {
       return rest;
     });
   };
+
+  const clearTermsError = () => {
+    setErrors((prev) => {
+      const { termsAccepted, ...rest } = prev;
+      return rest;
+    });
+  };
   // ---------------------------------------------------------------
 
   // Limpar sessionStorage ao fazer reload ou sair da página
@@ -512,7 +519,7 @@ const LandingController: React.FC = () => {
       state: (getFieldValue(stateRef?.current ?? null) || "").toUpperCase(),
       sleepAtMonastery: isMonasterySlotUnavailable ? false : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
       companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
-      termsAccepted: fieldRefs.termsAcceptedRef?.current?.checked === true,
+      termsAccepted: fieldRefs.termsAccepted?.current?.checked === true,
     };
 
     try {
@@ -705,6 +712,7 @@ const LandingController: React.FC = () => {
       onReopenRegistration={handleReopenRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
+      onTermsChange={clearTermsError}
     />
   );
 };

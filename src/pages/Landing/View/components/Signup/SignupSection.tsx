@@ -97,6 +97,8 @@ interface SignupSectionProps {
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
+  /** Limpa o erro de termos ao marcar o checkbox */
+  onTermsChange?: () => void;
 }
 
 const SignupSection: React.FC<SignupSectionProps> = ({
@@ -121,6 +123,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onReopenRegistration,
   getNextWhatsappUrl,
   onCpfChange,
+  onTermsChange,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
@@ -564,6 +567,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     name="termsAccepted"
                     type="checkbox"
                     style={{ marginTop: "0", flexShrink: 0 }}
+                    onChange={() => onTermsChange?.()}
                   />
                   <span>
                     {t("signup.registrationForm.termsLabel")}{" "}
