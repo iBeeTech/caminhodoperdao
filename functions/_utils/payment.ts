@@ -9,7 +9,7 @@ export interface PaymentCharge {
 }
 
 export interface PaymentProvider {
-  createCharge(input: { name: string; email: string }): Promise<PaymentCharge>;
+  createCharge(input: { name: string; email: string; amountCents?: number }): Promise<PaymentCharge>;
 }
 
 class WooviPixProvider implements PaymentProvider {
@@ -21,14 +21,15 @@ class WooviPixProvider implements PaymentProvider {
     this.registrationCostCents = registrationCostCents;
   }
 
-  async createCharge({ name, email }: { name: string; email: string }): Promise<PaymentCharge> {
+  async createCharge({ name, email, amountCents }: { name: string; email: string; amountCents?: number }): Promise<PaymentCharge> {
     const correlationId = crypto.randomUUID();
     const expiresIn = 86400; // 24 horas em segundos
+    const valueCents = amountCents ?? this.registrationCostCents;
 
     const payload: WooviChargePayload = {
       correlationID: correlationId,
-      value: this.registrationCostCents,
-      comment: 'Inscrição - Caminhada do Perdão de Assis',
+      value: valueCents,
+      comment: 'Inscrição - Caminhada do Perdão',
       expiresIn,
       customer: {
         name: name || email.split('@')[0],
@@ -52,7 +53,7 @@ class WooviPixProvider implements PaymentProvider {
   }
 }
 
-function parseRegistrationCostCents(rawValue: unknown): number | null {
+export function parseRegistrationCostCents(rawValue: unknown): number | null {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
     return null;
   }

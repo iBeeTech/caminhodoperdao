@@ -3,7 +3,7 @@
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Caminhada do Perdão de Assis",
+  "name": "Caminhada do Perdão",
   "url": "https://caminhodoperdao.com",
   "logo": "https://caminhodoperdao.com/logo.png",
   "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual.",
@@ -26,7 +26,7 @@
 {
   "@context": "https://schema.org",
   "@type": "Event",
-  "name": "Caminhada do Perdão de Assis",
+  "name": "Caminhada do Perdão",
   "description": "Uma jornada espiritual de transformação pessoal através do perdão e autoconhecimento.",
   "startDate": "2026-08-02T04:30:00-03:00",
   "endDate": "2026-08-02T14:00:00-03:00",
@@ -34,11 +34,11 @@
   "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
   "location": {
     "@type": "Place",
-    "name": "Assis, SP",
+    "name": "São Paulo, SP",
     "address": {
       "@type": "PostalAddress",
       "addressCountry": "BR",
-      "addressLocality": "Assis",
+      "addressLocality": "São Paulo",
       "addressRegion": "SP"
     }
   },
@@ -52,7 +52,7 @@
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "Caminhada do Perdão de Assis",
+  "name": "Caminhada do Perdão",
   "description": "Organização focada em transformação pessoal e espiritual",
   "image": "https://caminhodoperdao.com/logo.png",
   "priceRange": "R$ 100 - R$ 500",

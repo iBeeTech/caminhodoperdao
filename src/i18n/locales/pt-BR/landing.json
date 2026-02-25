@@ -1,15 +1,15 @@
 {
     "hero": {
-        "title": "Caminhada do Perdão de Assis",
+        "title": "Caminhada do Perdão",
         "subtitle": "Encontre paz interior e renovação espiritual",
         "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual. Descubra o poder libertador de perdoar e seja livre.",
         "primaryButton": "Fazer Inscrição",
         "secondaryButton": "Saiba Mais",
-        "imageAlt": "Assis"
+        "imageAlt": "Caminhada do Perdão"
     },
     "history": {
         "title": "Nossa História",
-        "description": "A Caminhada do Perdão de Assis nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
+        "description": "A Caminhada do Perdão nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
     },
     "schedule": {
         "title": "Cronograma",
@@ -44,7 +44,7 @@
         }
     },
     "features": {
-        "title": "Por que escolher a Caminhada do Perdão de Assis?",
+        "title": "Por que escolher a Caminhada do Perdão?",
         "items": [
             {
                 "id": "1",
@@ -94,6 +94,7 @@
     },
     "signup": {
         "title": "Confira sua inscrição ou Inscreva-se para o Caminho",
+        "disclaimer": "A inscrição é única e intransferível",
         "bullets": [
             "Se você já se inscreveu, verifique o status. Se ainda não se inscreveu, preencha os dados para gerar seu PIX.",
             "Se você já se inscreveu, consulte o status de sua inscrição usando exatamente o mesmo e-mail."

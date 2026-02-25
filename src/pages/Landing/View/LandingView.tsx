@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FormEvent, RefObject } from "react";
 import { Header } from "../../../components";
-import assis from "../../../assets/assis.png";
+import logo from "../../../assets/logo.png";
 import { AvailabilityState, LandingContent, LandingPhase, LandingTone } from "../Model";
 import TrackSection from "../../../components/analytics/TrackSection";
 import { LANDING_SECTIONS } from "../../../utils/analytics/catalog/sections";
@@ -104,7 +104,7 @@ const LandingView: React.FC<LandingViewProps> = ({
         >
           <HeroSection
             hero={content.hero}
-            heroImage={assis}
+            heroImage={logo}
             onPrimaryAction={onPrimaryAction}
             onSecondaryAction={onSecondaryAction}
           />

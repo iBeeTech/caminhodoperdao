@@ -198,6 +198,9 @@ const SignupSection: React.FC<SignupSectionProps> = ({
         <SignupCard>
           <SignupHeader>
             <h2>{t("signup.title")}</h2>
+            <p style={{ color: "#b91c1c", fontWeight: 600, margin: "0 0 0.75rem 0", fontSize: "1.25rem", textAlign: "center" }}>
+              {t("signup.disclaimer")}
+            </p>
             <SignupBullets>
               {(t("signup.bullets", { returnObjects: true }) as string[]).map((bullet, index) => (
                 <li key={index}>{bullet}</li>

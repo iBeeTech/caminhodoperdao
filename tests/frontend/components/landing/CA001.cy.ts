@@ -31,7 +31,7 @@ describe('CA001 - Landing Page - Happy Path', () => {
   context('Page Load and Initial Visibility', () => {
     it('should load the landing page successfully', () => {
       // Verify page title
-      cy.title().should('include', 'Caminhada do Perdão de Assis');
+      cy.title().should('include', 'Caminhada do Perdão');
     });
 
     it('should display the header with navigation', () => {

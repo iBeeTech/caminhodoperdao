@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { json, badRequest, conflict, serverError } from "../_utils/responses";
 import { isValidEmail } from "../_utils/validation";
-import { getPaymentProvider } from "../_utils/payment";
+import { getPaymentProvider, parseRegistrationCostCents } from "../_utils/payment";
 import {
   countActive,
   countActiveSleep,
@@ -15,6 +15,7 @@ interface Env {
   DB: D1Database;
   GATEWAY_API_KEY?: string;
   REGISTRATION_COST?: string;
+  REGISTRATION_COST_MONASTERY?: string;
 }
 
 const MAX_TOTAL = 400;
@@ -95,12 +96,17 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     return serverError('payment_provider_not_configured');
   }
 
+  const defaultCostCents = parseRegistrationCostCents(env.REGISTRATION_COST) ?? 1000;
+  const monasteryCostCents = parseRegistrationCostCents(env.REGISTRATION_COST_MONASTERY) ?? defaultCostCents;
+  const registrationCostCents = sleepFlag ? monasteryCostCents : defaultCostCents;
+
   let charge;
   let correlationId;
   try {
-    charge = await provider.createCharge({ 
-      name: name?.trim() || email.split('@')[0], 
-      email 
+    charge = await provider.createCharge({
+      name: name?.trim() || email.split('@')[0],
+      email,
+      amountCents: registrationCostCents,
     });
     correlationId = charge.payment_ref;
     // Log para depuração do QR code
@@ -108,10 +114,6 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     // Salvar pagamento na tabela payments
     const { savePayment } = await import("../_utils/payments");
     const now = Date.now();
-    const registrationCostCents =
-      Number.isFinite(Number(env.REGISTRATION_COST)) && Number(env.REGISTRATION_COST) > 0
-        ? Math.trunc(Number(env.REGISTRATION_COST))
-        : 1000;
 
     await savePayment(env.DB, {
       email,
