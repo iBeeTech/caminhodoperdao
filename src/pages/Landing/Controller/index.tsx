@@ -497,6 +497,7 @@ const LandingController: React.FC = () => {
       state: (getFieldValue(stateRef?.current ?? null) || "").toUpperCase(),
       sleepAtMonastery: isMonasterySlotUnavailable ? false : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
       companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
+      termsAccepted: fieldRefs.termsAcceptedRef?.current?.checked === true,
     };
 
     try {
@@ -537,6 +538,12 @@ const LandingController: React.FC = () => {
         setStatusMessage(t("signup.callouts.cpfAlreadyRegistered"));
         setStatusTone("error");
         setErrors((prev) => ({ ...prev, cpf: t("signup.callouts.cpfAlreadyRegistered") }));
+        return;
+      }
+
+      if (status === 400 && body?.error === "terms_required") {
+        setErrors((prev) => ({ ...prev, termsAccepted: t("signup.errors.termsRequired") }));
+        setPhase("form");
         return;
       }
 

@@ -38,6 +38,7 @@ export interface RegistrationPayload {
   state: string;
   sleepAtMonastery: boolean;
   companionName?: string;
+  termsAccepted: boolean;
 }
 
 export interface RegistrationResponse {

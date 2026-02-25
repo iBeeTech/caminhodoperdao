@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   state TEXT NOT NULL DEFAULT '',
   cpf_encrypted TEXT UNIQUE,
   date_of_birth TEXT,
+  terms_accepted_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );

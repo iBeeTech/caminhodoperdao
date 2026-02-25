@@ -45,6 +45,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     companionName,
     cpf,
     dateOfBirth,
+    termsAccepted,
   } = body as {
     name?: string;
     email?: string;
@@ -59,6 +60,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     companionName?: string;
     cpf?: string;
     dateOfBirth?: string;
+    termsAccepted?: boolean;
   };
 
   if (!email || !isValidEmail(email)) {
@@ -88,6 +90,11 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     return badRequest("date_of_birth_invalid_range");
   }
   const dateOfBirthNormalized = `${y}-${m}-${d}`;
+
+  if (termsAccepted !== true) {
+    return badRequest("terms_required");
+  }
+  const termsAcceptedAt = new Date().toISOString();
 
   const sleepFlag = sleepAtMonastery ? 1 : 0;
 
@@ -211,6 +218,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         state: state?.trim() ?? "",
         cpf_encrypted: cpfEncrypted,
         date_of_birth: dateOfBirthNormalized,
+        terms_accepted_at: termsAcceptedAt,
       });
     } else if (existing && existing.status === "PAID") {
       return conflict("registration_exists", { status: existing.status });
@@ -233,6 +241,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         state: state?.trim() ?? "",
         cpf_encrypted: cpfEncrypted,
         date_of_birth: dateOfBirthNormalized,
+        terms_accepted_at: termsAcceptedAt,
       });
     }
   } catch (error) {
