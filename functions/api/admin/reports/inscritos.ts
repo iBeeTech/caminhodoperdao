@@ -13,6 +13,8 @@ interface InscritoRow {
   state: string | null;
   cpf_encrypted: string | null;
   date_of_birth: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
 }
 
 export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
@@ -22,7 +24,7 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
   }
 
   const query = `
-    SELECT name, email, phone, sleep_at_monastery, city, state, cpf_encrypted, date_of_birth
+    SELECT name, email, phone, sleep_at_monastery, city, state, cpf_encrypted, date_of_birth, emergency_contact_name, emergency_contact_phone
     FROM registrations
     WHERE status = 'PAID'
     ORDER BY name
@@ -68,7 +70,7 @@ function buildInscritosCsv(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
 ): string {
   const header =
-    "NOME,EMAIL,CPF,DATA DE NASCIMENTO,TELEFONE,DORME NO MOSTEIRO,CIDADE,ESTADO,ASSINATURA RECEBIMENTO KIT\n";
+    "NOME,EMAIL,CPF,DATA DE NASCIMENTO,TELEFONE,CONTATO EMERGÊNCIA (NOME),CONTATO EMERGÊNCIA (TELEFONE),DORME NO MOSTEIRO,CIDADE,ESTADO,ASSINATURA RECEBIMENTO KIT\n";
   if (!rows.length) {
     return header;
   }
@@ -81,10 +83,12 @@ function buildInscritosCsv(
       const cpf = `"${(row.cpfDecrypted || "").replace(/"/g, '""')}"`;
       const dateOfBirth = `"${formatDateOfBirth(row.date_of_birth)}"`;
       const phone = `"${(row.phone ?? "").replace(/"/g, '""')}"`;
+      const emergencyName = `"${(row.emergency_contact_name ?? "").replace(/"/g, '""')}"`;
+      const emergencyPhone = `"${(row.emergency_contact_phone ?? "").replace(/"/g, '""')}"`;
       const dorme = row.sleep_at_monastery === 1 ? "Sim" : "Não";
       const city = `"${(row.city ?? "").replace(/"/g, '""')}"`;
       const state = `"${(row.state ?? "").replace(/"/g, '""')}"`;
-      return `${name},${email},${cpf},${dateOfBirth},${phone},${dorme},${city},${state},""`;
+      return `${name},${email},${cpf},${dateOfBirth},${phone},${emergencyName},${emergencyPhone},${dorme},${city},${state},""`;
     })
     .join("\n");
 

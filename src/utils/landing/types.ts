@@ -18,6 +18,8 @@ export type FieldRefsType = {
   state: React.RefObject<HTMLInputElement | null>;
   sleepAtMonastery: React.RefObject<HTMLSelectElement | null>;
   termsAccepted: React.RefObject<HTMLInputElement | null>;
+  emergencyContactName: React.RefObject<HTMLInputElement | null>;
+  emergencyContactPhone: React.RefObject<HTMLInputElement | null>;
 };
 
 export type ErrorMap = Record<string, string>;
@@ -60,4 +62,6 @@ export type RegistrationStatusResponse = {
   state?: string;
   date_of_birth?: string;
   sleep_at_monastery?: 0 | 1 | number;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
 };

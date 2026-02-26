@@ -31,6 +31,9 @@ export function syncFormWithStatus(
   assign(refs.city, data.city ?? "");
   assign(refs.state, data.state ?? "");
 
+  if (refs.emergencyContactName && data.emergency_contact_name) assign(refs.emergencyContactName, data.emergency_contact_name);
+  if (refs.emergencyContactPhone && data.emergency_contact_phone) assign(refs.emergencyContactPhone, data.emergency_contact_phone);
+
   if (refs.sleepAtMonastery.current) {
     refs.sleepAtMonastery.current.value =
       data.sleep_at_monastery === 1 ? "yes" : data.sleep_at_monastery === 0 ? "no" : "";

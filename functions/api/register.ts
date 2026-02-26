@@ -46,6 +46,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     cpf,
     dateOfBirth,
     termsAccepted,
+    emergencyContactName,
+    emergencyContactPhone,
   } = body as {
     name?: string;
     email?: string;
@@ -61,6 +63,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     cpf?: string;
     dateOfBirth?: string;
     termsAccepted?: boolean;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
   };
 
   if (!email || !isValidEmail(email)) {
@@ -219,6 +223,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         cpf_encrypted: cpfEncrypted,
         date_of_birth: dateOfBirthNormalized,
         terms_accepted_at: termsAcceptedAt,
+        emergency_contact_name: emergencyContactName?.trim() || null,
+        emergency_contact_phone: emergencyContactPhone?.trim() || null,
       });
     } else if (existing && existing.status === "PAID") {
       return conflict("registration_exists", { status: existing.status });
@@ -242,6 +248,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         cpf_encrypted: cpfEncrypted,
         date_of_birth: dateOfBirthNormalized,
         terms_accepted_at: termsAcceptedAt,
+        emergency_contact_name: emergencyContactName?.trim() || null,
+        emergency_contact_phone: emergencyContactPhone?.trim() || null,
       });
     }
   } catch (error) {

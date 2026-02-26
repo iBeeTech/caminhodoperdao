@@ -21,6 +21,8 @@ export interface RegistrationStatusResponse {
   city?: string;
   state?: string;
   date_of_birth?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
   message?: string;
 }
 
@@ -39,6 +41,8 @@ export interface RegistrationPayload {
   sleepAtMonastery: boolean;
   companionName?: string;
   termsAccepted: boolean;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
 }
 
 export interface RegistrationResponse {

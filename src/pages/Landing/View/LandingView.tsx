@@ -54,6 +54,8 @@ interface LandingViewProps {
     sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
     termsAcceptedRef: RefObject<HTMLInputElement | null>;
     companionRef: RefObject<HTMLInputElement | null>;
+    emergencyContactNameRef: RefObject<HTMLInputElement | null>;
+    emergencyContactPhoneRef: RefObject<HTMLInputElement | null>;
   };
   onCheckStatus: (event: FormEvent<HTMLFormElement>) => void;
   onSubmitRegistration: (event: FormEvent<HTMLFormElement>) => void;

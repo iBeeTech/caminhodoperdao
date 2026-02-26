@@ -118,6 +118,8 @@ export async function handleStatus(
     city: registration.city,
     state: registration.state,
     date_of_birth: registration.date_of_birth ?? undefined,
+    emergency_contact_name: registration.emergency_contact_name ?? undefined,
+    emergency_contact_phone: registration.emergency_contact_phone ?? undefined,
     created_at: registration.created_at,
     paid_at: registration.paid_at,
   });

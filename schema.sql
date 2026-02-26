@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   cpf_encrypted TEXT UNIQUE,
   date_of_birth TEXT,
   terms_accepted_at TEXT,
+  emergency_contact_name TEXT,
+  emergency_contact_phone TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );

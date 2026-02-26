@@ -51,6 +51,8 @@ interface SignupRefs {
   sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
   termsAcceptedRef: RefObject<HTMLInputElement | null>;
   companionRef: RefObject<HTMLInputElement | null>;
+  emergencyContactNameRef: RefObject<HTMLInputElement | null>;
+  emergencyContactPhoneRef: RefObject<HTMLInputElement | null>;
 }
 
 type SignupErrors = Partial<{
@@ -169,6 +171,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     sleepAtMonasteryRef,
     termsAcceptedRef,
     companionRef,
+    emergencyContactNameRef,
+    emergencyContactPhoneRef,
   } = refs;
 
   const validateEmailNow = () => {
@@ -419,6 +423,36 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.whatsappPlaceholder")}
                   ref={phoneRef as RefObject<HTMLInputElement>}
+                  onChange={onPhoneChange}
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </FormField>
+
+              <FormField
+                label={t("signup.registrationForm.emergencyContactNameLabel")}
+                htmlFor="emergencyContactName"
+              >
+                <Input
+                  id="emergencyContactName"
+                  name="emergencyContactName"
+                  type="text"
+                  placeholder={t("signup.registrationForm.emergencyContactNamePlaceholder")}
+                  ref={emergencyContactNameRef as RefObject<HTMLInputElement>}
+                  autoComplete="name"
+                />
+              </FormField>
+
+              <FormField
+                label={t("signup.registrationForm.emergencyContactPhoneLabel")}
+                htmlFor="emergencyContactPhone"
+              >
+                <Input
+                  id="emergencyContactPhone"
+                  name="emergencyContactPhone"
+                  type="text"
+                  placeholder={t("signup.registrationForm.emergencyContactPhonePlaceholder")}
+                  ref={emergencyContactPhoneRef as RefObject<HTMLInputElement>}
                   onChange={onPhoneChange}
                   inputMode="tel"
                   autoComplete="tel"

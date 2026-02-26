@@ -190,6 +190,8 @@ const LandingController: React.FC = () => {
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
   const termsAcceptedRef = useRef<HTMLInputElement>(null);
   const companionRef = useRef<HTMLInputElement>(null);
+  const emergencyContactNameRef = useRef<HTMLInputElement>(null);
+  const emergencyContactPhoneRef = useRef<HTMLInputElement>(null);
 
   const fieldRefs: FieldRefsType = {
     name: nameRef,
@@ -206,6 +208,8 @@ const LandingController: React.FC = () => {
     sleepAtMonastery: sleepAtMonasteryRef,
     termsAccepted: termsAcceptedRef,
     companionRef: companionRef,
+    emergencyContactName: emergencyContactNameRef,
+    emergencyContactPhone: emergencyContactPhoneRef,
   };
 
   const {
@@ -520,6 +524,8 @@ const LandingController: React.FC = () => {
       sleepAtMonastery: isMonasterySlotUnavailable ? false : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
       companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
       termsAccepted: fieldRefs.termsAccepted?.current?.checked === true,
+      emergencyContactName: getFieldValue(fieldRefs.emergencyContactName?.current ?? null),
+      emergencyContactPhone: getFieldValue(fieldRefs.emergencyContactPhone?.current ?? null),
     };
 
     try {
@@ -694,6 +700,8 @@ const LandingController: React.FC = () => {
         sleepAtMonasteryRef,
         termsAcceptedRef,
         companionRef,
+        emergencyContactNameRef,
+        emergencyContactPhoneRef,
       }}
       onCheckStatus={handleCheckStatus}
       onSubmitRegistration={handleRegister}
