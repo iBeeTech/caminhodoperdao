@@ -69,6 +69,8 @@ type SignupErrors = Partial<{
   sleepAtMonastery: string;
   termsAccepted: string;
   emailUsedByOtherName: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
 }>;
 
 interface SignupSectionProps {
@@ -432,6 +434,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               <FormField
                 label={t("signup.registrationForm.emergencyContactNameLabel")}
                 htmlFor="emergencyContactName"
+                error={errors.emergencyContactName}
+                required
               >
                 <Input
                   id="emergencyContactName"
@@ -446,6 +450,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               <FormField
                 label={t("signup.registrationForm.emergencyContactPhoneLabel")}
                 htmlFor="emergencyContactPhone"
+                error={errors.emergencyContactPhone}
+                required
               >
                 <Input
                   id="emergencyContactPhone"
@@ -627,7 +633,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 variant="primary"
                 size="md"
                 type="submit"
-                disabled={isSubmittingRegistration || Boolean(errors.emailUsedByOtherName) || Boolean(errors.termsAccepted)}
+                disabled={isSubmittingRegistration || Boolean(errors.emailUsedByOtherName) || Boolean(errors.termsAccepted) || Boolean(errors.emergencyContactName) || Boolean(errors.emergencyContactPhone)}
                 loading={isSubmittingRegistration}
               >
                 {isSubmittingRegistration ? t("signup.registrationForm.loading") : t("signup.registrationForm.submit")}

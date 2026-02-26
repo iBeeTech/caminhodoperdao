@@ -119,6 +119,17 @@ export function validateRegistrationForm(
       value: getFieldValue(refs.state.current),
       message: t("signup.errors.required"),
     },
+    {
+      key: "emergencyContactName",
+      value: getFieldValue(refs.emergencyContactName?.current ?? null),
+      message: t("signup.errors.emergencyContactNameRequired"),
+    },
+    {
+      key: "emergencyContactPhone",
+      value: (getFieldValue(refs.emergencyContactPhone?.current ?? null) || "").replace(/\D/g, ""),
+      message: t("signup.errors.emergencyContactPhoneInvalid"),
+      validator: (v) => v.length === 11,
+    },
   ];
 
   requiredFields.forEach((field) => {

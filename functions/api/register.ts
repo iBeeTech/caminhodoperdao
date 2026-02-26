@@ -98,6 +98,16 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   if (termsAccepted !== true) {
     return badRequest("terms_required");
   }
+
+  const emergencyName = emergencyContactName?.trim();
+  if (!emergencyName) {
+    return badRequest("emergency_contact_name_required");
+  }
+  const emergencyPhoneDigits = (emergencyContactPhone ?? "").replace(/\D/g, "");
+  if (emergencyPhoneDigits.length !== 11) {
+    return badRequest("emergency_contact_phone_invalid");
+  }
+
   const termsAcceptedAt = new Date().toISOString();
 
   const sleepFlag = sleepAtMonastery ? 1 : 0;

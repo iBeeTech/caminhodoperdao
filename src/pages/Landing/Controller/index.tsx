@@ -575,6 +575,18 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      if (status === 400 && body?.error === "emergency_contact_name_required") {
+        setErrors((prev) => ({ ...prev, emergencyContactName: t("signup.errors.emergencyContactNameRequired") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "emergency_contact_phone_invalid") {
+        setErrors((prev) => ({ ...prev, emergencyContactPhone: t("signup.errors.emergencyContactPhoneInvalid") }));
+        setPhase("form");
+        return;
+      }
+
       // fallback (se HttpError funcionar)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
