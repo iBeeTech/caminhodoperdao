@@ -33,7 +33,31 @@
         "back": "Voltar para o início"
     },
     "responsibilityTerms": {
-        "title": "Termos de Responsabilidade da Caminho do Perdão"
+        "logoAlt": "Caminho do Perdão",
+        "title": "TERMO DE CONHECIMENTO DE RISCO E CORRESPONSABILIDADE",
+        "subtitle": "CAMINHO DO PERDÃO",
+        "introParagraphs": [
+            "O presente Termo de Conhecimento de Risco atende ao comprometimento com a política de segurança da atividade de peregrinação realizada no <strong>CAMINHO DO PERDÃO</strong>, bem como às questões legais inerentes à participação no evento religioso de caminhada de longa distância, visando a segurança e a satisfação dos participantes.",
+            "Este termo está alinhado aos critérios de segurança aplicáveis às atividades de peregrinação e turismo de caminhada, conforme princípios da <strong>ABNT NBR ISO 21101:2014 - Turismo de Aventura - Sistema de Gestão de Segurança - Requisitos.</strong>"
+        ],
+        "riskItems": [
+            "Atentar-se às condições físicas pessoais para participação em caminhada de média/longa distância, considerando preparo físico, saúde, clima, condições do terreno e esforço prolongado;",
+            "Respeitar as orientações da organização quanto ao percurso, horários, paradas, hidratação, alimentação e conduta durante todo o evento;",
+            "Manter comportamento seguro em estradas rurais, trilhas, áreas naturais e trechos com desnível ou obstáculos naturais;",
+            "Utilizar vestuário e calçados adequados à caminhada prolongada;",
+            "Manter atenção a condições climáticas adversas, insolação, desidratação, frio, chuva e variações de terreno;",
+            "Seguir as orientações sanitárias vigentes e boas práticas de saúde coletiva;",
+            "Reconhecer que a atividade envolve riscos inerentes, tais como: quedas, tropeços, torções, escoriações, bolhas nos pés, fadiga extrema, insolação, desidratação, picadas de insetos, presença de animais, mau tempo e outros eventos naturais ou físicos;",
+            "Comprometer-se com a corresponsabilidade pela própria segurança, respeitando limites pessoais e comunicando à organização qualquer condição de risco ou mal-estar."
+        ],
+        "insuranceNotice": "Para tanto, é fundamental que para o período da peregrinação no CAMINHO DO PERDÃO, seja feita a contratação de seguro pessoal para atividades de caminhada/peregrinação.",
+        "declarationTitle": "DECLARAÇÃO DO PARTICIPANTE",
+        "declarationParagraphs": [
+            "Declaro que estou fisicamente e mentalmente apto(a) a participar do CAMINHO DO PERDÃO, tendo ciência de que se trata de atividade de peregrinação com esforço físico prolongado em ambiente natural e rural.",
+            "Declaro que li atentamente este Termo, fui informado(a) sobre os riscos inerentes à atividade e aceito voluntariamente todas as condições aqui estabelecidas.",
+            "Comprometo-me a respeitar as orientações da organização, zelar pela minha segurança e pela segurança coletiva, comunicar qualquer problema de saúde ou situação de risco durante o evento e adotar condutas preventivas de saúde.",
+            "Declaro ainda que participo por livre e espontânea vontade, assumindo responsabilidade por minhas condições físicas e limitações pessoais."
+        ]
     },
     "loading": "Carregando...",
     "error": "Ocorreu um erro ao carregar os dados. Tente novamente mais tarde."

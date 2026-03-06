@@ -190,6 +190,12 @@ const LandingController: React.FC = () => {
   const sleepAtMonasteryRef = useRef<HTMLSelectElement>(null);
   const termsAcceptedRef = useRef<HTMLInputElement>(null);
   const companionRef = useRef<HTMLInputElement>(null);
+  const allergyMedicationYesRef = useRef<HTMLInputElement>(null);
+  const allergyMedicationNoRef = useRef<HTMLInputElement>(null);
+  const allergyMedicationDetailsRef = useRef<HTMLInputElement>(null);
+  const dietaryRestrictionYesRef = useRef<HTMLInputElement>(null);
+  const dietaryRestrictionNoRef = useRef<HTMLInputElement>(null);
+  const dietaryRestrictionDetailsRef = useRef<HTMLInputElement>(null);
   const emergencyContactNameRef = useRef<HTMLInputElement>(null);
   const emergencyContactPhoneRef = useRef<HTMLInputElement>(null);
 
@@ -208,6 +214,14 @@ const LandingController: React.FC = () => {
     sleepAtMonastery: sleepAtMonasteryRef,
     termsAccepted: termsAcceptedRef,
     companionRef: companionRef,
+    allergyMedicationYes: allergyMedicationYesRef,
+    allergyMedicationNo: allergyMedicationNoRef,
+    allergyMedication: allergyMedicationYesRef,
+    allergyMedicationDetails: allergyMedicationDetailsRef,
+    dietaryRestrictionYes: dietaryRestrictionYesRef,
+    dietaryRestrictionNo: dietaryRestrictionNoRef,
+    dietaryRestriction: dietaryRestrictionYesRef,
+    dietaryRestrictionDetails: dietaryRestrictionDetailsRef,
     emergencyContactName: emergencyContactNameRef,
     emergencyContactPhone: emergencyContactPhoneRef,
   };
@@ -524,6 +538,16 @@ const LandingController: React.FC = () => {
       sleepAtMonastery: isMonasterySlotUnavailable ? false : (sleepAtMonasteryRef?.current?.value ?? "") === "yes",
       companionName: getFieldValue(fieldRefs.companionRef?.current ?? null),
       termsAccepted: fieldRefs.termsAccepted?.current?.checked === true,
+      hasAllergyMedication: fieldRefs.allergyMedicationYes?.current?.checked === true,
+      allergyMedicationDetails:
+        fieldRefs.allergyMedicationYes?.current?.checked === true
+          ? getFieldValue(fieldRefs.allergyMedicationDetails?.current ?? null)
+          : "",
+      hasDietaryRestriction: fieldRefs.dietaryRestrictionYes?.current?.checked === true,
+      dietaryRestrictionDetails:
+        fieldRefs.dietaryRestrictionYes?.current?.checked === true
+          ? getFieldValue(fieldRefs.dietaryRestrictionDetails?.current ?? null)
+          : "",
       emergencyContactName: getFieldValue(fieldRefs.emergencyContactName?.current ?? null),
       emergencyContactPhone: getFieldValue(fieldRefs.emergencyContactPhone?.current ?? null),
     };
@@ -583,6 +607,30 @@ const LandingController: React.FC = () => {
 
       if (status === 400 && body?.error === "emergency_contact_phone_invalid") {
         setErrors((prev) => ({ ...prev, emergencyContactPhone: t("signup.errors.emergencyContactPhoneInvalid") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "allergy_medication_required") {
+        setErrors((prev) => ({ ...prev, allergyMedication: t("signup.errors.allergyMedicationRequired") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "allergy_medication_details_required") {
+        setErrors((prev) => ({ ...prev, allergyMedicationDetails: t("signup.errors.allergyMedicationDetailsRequired") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "dietary_restriction_required") {
+        setErrors((prev) => ({ ...prev, dietaryRestriction: t("signup.errors.dietaryRestrictionRequired") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "dietary_restriction_details_required") {
+        setErrors((prev) => ({ ...prev, dietaryRestrictionDetails: t("signup.errors.dietaryRestrictionDetailsRequired") }));
         setPhase("form");
         return;
       }
@@ -714,6 +762,12 @@ const LandingController: React.FC = () => {
         companionRef,
         emergencyContactNameRef,
         emergencyContactPhoneRef,
+        allergyMedicationYesRef,
+        allergyMedicationNoRef,
+        allergyMedicationDetailsRef,
+        dietaryRestrictionYesRef,
+        dietaryRestrictionNoRef,
+        dietaryRestrictionDetailsRef,
       }}
       onCheckStatus={handleCheckStatus}
       onSubmitRegistration={handleRegister}

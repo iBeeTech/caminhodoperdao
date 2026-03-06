@@ -23,6 +23,10 @@ export interface RegistrationStatusResponse {
   date_of_birth?: string;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  has_allergy_medication?: number;
+  allergy_medication_details?: string;
+  has_dietary_restriction?: number;
+  dietary_restriction_details?: string;
   message?: string;
 }
 
@@ -43,6 +47,10 @@ export interface RegistrationPayload {
   termsAccepted: boolean;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  hasAllergyMedication: boolean;
+  allergyMedicationDetails?: string;
+  hasDietaryRestriction: boolean;
+  dietaryRestrictionDetails?: string;
 }
 
 export interface RegistrationResponse {

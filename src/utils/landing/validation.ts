@@ -161,6 +161,30 @@ export function validateRegistrationForm(
     errors.termsAccepted = t("signup.errors.termsRequired");
   }
 
+  const hasAllergyMedicationYes = refs.allergyMedicationYes?.current?.checked === true;
+  const hasAllergyMedicationNo = refs.allergyMedicationNo?.current?.checked === true;
+  if (!hasAllergyMedicationYes && !hasAllergyMedicationNo) {
+    errors.allergyMedication = t("signup.errors.allergyMedicationRequired");
+  }
+  if (hasAllergyMedicationYes) {
+    const allergyDetails = getFieldValue(refs.allergyMedicationDetails?.current ?? null);
+    if (!allergyDetails) {
+      errors.allergyMedicationDetails = t("signup.errors.allergyMedicationDetailsRequired");
+    }
+  }
+
+  const hasDietaryRestrictionYes = refs.dietaryRestrictionYes?.current?.checked === true;
+  const hasDietaryRestrictionNo = refs.dietaryRestrictionNo?.current?.checked === true;
+  if (!hasDietaryRestrictionYes && !hasDietaryRestrictionNo) {
+    errors.dietaryRestriction = t("signup.errors.dietaryRestrictionRequired");
+  }
+  if (hasDietaryRestrictionYes) {
+    const dietaryDetails = getFieldValue(refs.dietaryRestrictionDetails?.current ?? null);
+    if (!dietaryDetails) {
+      errors.dietaryRestrictionDetails = t("signup.errors.dietaryRestrictionDetailsRequired");
+    }
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors,

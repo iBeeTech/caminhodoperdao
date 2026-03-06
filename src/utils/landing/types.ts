@@ -18,6 +18,15 @@ export type FieldRefsType = {
   state: React.RefObject<HTMLInputElement | null>;
   sleepAtMonastery: React.RefObject<HTMLSelectElement | null>;
   termsAccepted: React.RefObject<HTMLInputElement | null>;
+  companionRef: React.RefObject<HTMLInputElement | null>;
+  allergyMedicationYes: React.RefObject<HTMLInputElement | null>;
+  allergyMedicationNo: React.RefObject<HTMLInputElement | null>;
+  allergyMedication: React.RefObject<HTMLInputElement | null>;
+  allergyMedicationDetails: React.RefObject<HTMLInputElement | null>;
+  dietaryRestrictionYes: React.RefObject<HTMLInputElement | null>;
+  dietaryRestrictionNo: React.RefObject<HTMLInputElement | null>;
+  dietaryRestriction: React.RefObject<HTMLInputElement | null>;
+  dietaryRestrictionDetails: React.RefObject<HTMLInputElement | null>;
   emergencyContactName: React.RefObject<HTMLInputElement | null>;
   emergencyContactPhone: React.RefObject<HTMLInputElement | null>;
 };
@@ -42,6 +51,10 @@ export interface RegistrationFormData {
   city: string;
   state: string;
   sleepAtMonastery: boolean;
+  hasAllergyMedication: boolean;
+  allergyMedicationDetails: string;
+  hasDietaryRestriction: boolean;
+  dietaryRestrictionDetails: string;
 }
 
 export type RegistrationStatusResponse = {
@@ -64,4 +77,8 @@ export type RegistrationStatusResponse = {
   sleep_at_monastery?: 0 | 1 | number;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  has_allergy_medication?: 0 | 1 | number;
+  allergy_medication_details?: string | null;
+  has_dietary_restriction?: 0 | 1 | number;
+  dietary_restriction_details?: string | null;
 };

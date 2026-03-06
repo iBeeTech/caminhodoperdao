@@ -30,6 +30,12 @@ export const HeaderLogo = styled.div`
   margin-right: auto;
 `;
 
+export const HeaderHomeLink = styled.a`
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+`;
+
 export const HeaderTitle = styled.p`
   font-size: 1.8rem;
   font-weight: 700;

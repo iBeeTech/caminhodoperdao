@@ -48,6 +48,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     termsAccepted,
     emergencyContactName,
     emergencyContactPhone,
+    hasAllergyMedication,
+    allergyMedicationDetails,
+    hasDietaryRestriction,
+    dietaryRestrictionDetails,
   } = body as {
     name?: string;
     email?: string;
@@ -65,6 +69,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     termsAccepted?: boolean;
     emergencyContactName?: string;
     emergencyContactPhone?: string;
+    hasAllergyMedication?: boolean;
+    allergyMedicationDetails?: string;
+    hasDietaryRestriction?: boolean;
+    dietaryRestrictionDetails?: string;
   };
 
   if (!email || !isValidEmail(email)) {
@@ -106,6 +114,22 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   const emergencyPhoneDigits = (emergencyContactPhone ?? "").replace(/\D/g, "");
   if (emergencyPhoneDigits.length !== 11) {
     return badRequest("emergency_contact_phone_invalid");
+  }
+
+  if (typeof hasAllergyMedication !== "boolean") {
+    return badRequest("allergy_medication_required");
+  }
+  const allergyDetails = allergyMedicationDetails?.trim() || null;
+  if (hasAllergyMedication && !allergyDetails) {
+    return badRequest("allergy_medication_details_required");
+  }
+
+  if (typeof hasDietaryRestriction !== "boolean") {
+    return badRequest("dietary_restriction_required");
+  }
+  const dietaryDetails = dietaryRestrictionDetails?.trim() || null;
+  if (hasDietaryRestriction && !dietaryDetails) {
+    return badRequest("dietary_restriction_details_required");
   }
 
   const termsAcceptedAt = new Date().toISOString();
@@ -235,6 +259,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         terms_accepted_at: termsAcceptedAt,
         emergency_contact_name: emergencyContactName?.trim() || null,
         emergency_contact_phone: emergencyContactPhone?.trim() || null,
+        has_allergy_medication: hasAllergyMedication ? 1 : 0,
+        allergy_medication_details: hasAllergyMedication ? allergyDetails : null,
+        has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
+        dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
       });
     } else if (existing && existing.status === "PAID") {
       return conflict("registration_exists", { status: existing.status });
@@ -260,6 +288,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         terms_accepted_at: termsAcceptedAt,
         emergency_contact_name: emergencyContactName?.trim() || null,
         emergency_contact_phone: emergencyContactPhone?.trim() || null,
+        has_allergy_medication: hasAllergyMedication ? 1 : 0,
+        allergy_medication_details: hasAllergyMedication ? allergyDetails : null,
+        has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
+        dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
       });
     }
   } catch (error) {

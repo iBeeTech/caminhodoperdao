@@ -3,9 +3,10 @@ import { CalloutVariant } from "./Callout";
 
 const variantStyles: Record<CalloutVariant, ReturnType<typeof css>> = {
   warning: css`
-    border-color: #fca5a5;
-    background: #fff5f5;
-    color: #7f1d1d;
+    border-color: #facc15;
+    background: #fef9c3;
+    color: #b45309;
+    box-shadow: 0 2px 8px rgba(250, 204, 21, 0.15);
   `,
   info: css`
     border-color: #bfdbfe;
@@ -25,11 +26,14 @@ const variantStyles: Record<CalloutVariant, ReturnType<typeof css>> = {
 };
 
 export const CalloutWrapper = styled.div<{ $variant: CalloutVariant }>`
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  padding: 16px;
+  border: 1.5px solid ${({ theme }) => theme.colors.border};
+  padding: 18px 24px;
   border-radius: ${({ theme }) => theme.radius.md};
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5;
-  margin-top: 16px;
+  margin: 24px auto 16px auto;
+  max-width: 480px;
+  text-align: center;
+  font-size: 1.15rem;
   ${({ $variant }) => variantStyles[$variant]};
 `;

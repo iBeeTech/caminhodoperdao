@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS registrations (
   terms_accepted_at TEXT,
   emergency_contact_name TEXT,
   emergency_contact_phone TEXT,
+  has_allergy_medication INTEGER NOT NULL DEFAULT 0,
+  allergy_medication_details TEXT,
+  has_dietary_restriction INTEGER NOT NULL DEFAULT 0,
+  dietary_restriction_details TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );

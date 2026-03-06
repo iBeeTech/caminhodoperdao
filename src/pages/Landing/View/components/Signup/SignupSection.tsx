@@ -51,6 +51,12 @@ interface SignupRefs {
   sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
   termsAcceptedRef: RefObject<HTMLInputElement | null>;
   companionRef: RefObject<HTMLInputElement | null>;
+  allergyMedicationYesRef: RefObject<HTMLInputElement | null>;
+  allergyMedicationNoRef: RefObject<HTMLInputElement | null>;
+  allergyMedicationDetailsRef: RefObject<HTMLInputElement | null>;
+  dietaryRestrictionYesRef: RefObject<HTMLInputElement | null>;
+  dietaryRestrictionNoRef: RefObject<HTMLInputElement | null>;
+  dietaryRestrictionDetailsRef: RefObject<HTMLInputElement | null>;
   emergencyContactNameRef: RefObject<HTMLInputElement | null>;
   emergencyContactPhoneRef: RefObject<HTMLInputElement | null>;
 }
@@ -69,6 +75,10 @@ type SignupErrors = Partial<{
   sleepAtMonastery: string;
   termsAccepted: string;
   emailUsedByOtherName: string;
+  allergyMedication: string;
+  allergyMedicationDetails: string;
+  dietaryRestriction: string;
+  dietaryRestrictionDetails: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
 }>;
@@ -130,6 +140,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onTermsChange,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
+  const [hasAllergyMedication, setHasAllergyMedication] = useState<string>("");
+  const [hasDietaryRestriction, setHasDietaryRestriction] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
   const { t } = useTranslation("landing");
   const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
@@ -154,7 +166,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
       setCopiedBrcode(true);
       setTimeout(() => setCopiedBrcode(false), 2000);
     } catch (err) {
-      console.error("Erro ao copiar PIX:", err);
+      console.error(t("signup.status.copyPixErrorLog"), err);
     }
   };
 
@@ -173,9 +185,37 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     sleepAtMonasteryRef,
     termsAcceptedRef,
     companionRef,
+    allergyMedicationYesRef,
+    allergyMedicationNoRef,
+    allergyMedicationDetailsRef,
+    dietaryRestrictionYesRef,
+    dietaryRestrictionNoRef,
+    dietaryRestrictionDetailsRef,
     emergencyContactNameRef,
     emergencyContactPhoneRef,
   } = refs;
+
+  React.useEffect(() => {
+    if (!showRegistrationForm) return;
+
+    if (allergyMedicationYesRef.current?.checked) {
+      setHasAllergyMedication("yes");
+    } else if (allergyMedicationNoRef.current?.checked) {
+      setHasAllergyMedication("no");
+    }
+
+    if (dietaryRestrictionYesRef.current?.checked) {
+      setHasDietaryRestriction("yes");
+    } else if (dietaryRestrictionNoRef.current?.checked) {
+      setHasDietaryRestriction("no");
+    }
+  }, [
+    showRegistrationForm,
+    allergyMedicationYesRef,
+    allergyMedicationNoRef,
+    dietaryRestrictionYesRef,
+    dietaryRestrictionNoRef,
+  ]);
 
   const validateEmailNow = () => {
     // Dispara validação no controller/pai (ele decide setar/limpar errors.emailUsedByOtherName)
@@ -226,9 +266,25 @@ const SignupSection: React.FC<SignupSectionProps> = ({
         <SignupCard>
           <SignupHeader>
             <h2>{t("signup.title")}</h2>
-            <p style={{ color: "#b91c1c", fontWeight: 600, margin: "0 0 0.75rem 0", fontSize: "1.25rem", textAlign: "center" }}>
-              {t("signup.disclaimer")}
-            </p>
+            <Callout variant="warning" style={{ margin: "0 0 24px 0", textAlign: "center", fontSize: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 }}>
+                <SignupWarningIcon>
+                  {/* Emoji de warning, pode substituir por SVG se preferir */}
+                  <span role="img" aria-label={t("signup.warning.ariaLabel")} style={{ fontSize: "1.5rem" }}>
+                    ⚠️
+                  </span>
+                </SignupWarningIcon>
+                <span style={{ fontWeight: 700, fontSize: "1.3rem", color: "#b45309" }}>{t("signup.warning.title")}</span>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                <li style={{ color: "#b45309", fontWeight: 600, fontSize: "1.1rem", marginBottom: 8 }}>
+                  {t("signup.disclaimer")}
+                </li>
+                <li style={{ color: "#b45309", fontWeight: 600, fontSize: "1.1rem" }}>
+                  {t("signup.warning.departureTime")}
+                </li>
+              </ul>
+            </Callout>
             <SignupBullets>
               {(t("signup.bullets", { returnObjects: true }) as string[]).map((bullet, index) => (
                 <li key={index}>{bullet}</li>
@@ -237,11 +293,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
           </SignupHeader>
 
           <EnrollmentCallout />
-          {capacityCallout && <Callout variant="warning">{capacityCallout}</Callout>}
-          {hasAvailabilityError && <Callout variant="warning">{t("signup.callouts.availabilityError")}</Callout>}
-          {availability.totalFull && phase !== "status" && !capacityCallout && (
-            <Callout variant="warning">{t("signup.callouts.full")}</Callout>
-          )}
+            {capacityCallout && <Callout variant="warning">{capacityCallout}</Callout>}
+            {hasAvailabilityError && <Callout variant="error">{t("signup.callouts.availabilityError")}</Callout>}
+            {availability.totalFull && phase !== "status" && !capacityCallout && (
+              <Callout variant="warning">{t("signup.callouts.full")}</Callout>
+            )}
 
           {/* Callout para email já utilizado por outro nome */}
           {errors.emailUsedByOtherName && (
@@ -283,8 +339,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   color: "#a15c00",
                 }}
               >
-                <img src={checkAmarelo} alt="Pendente" style={{ width: 32, height: 32 }} />
-                SUA INSCRIÇÃO FOI RESERVADA!
+                <img src={checkAmarelo} alt={t("signup.status.pendingIconAlt")} style={{ width: 32, height: 32 }} />
+                {t("signup.status.pendingReservedTitle")}
               </div>
               <div
                 style={{
@@ -297,14 +353,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   fontSize: "1.18rem",
                 }}
               >
-                <div>Para finalizá-la, realize o pagamento do PIX, o qual irá se expirar em 24h.</div>
+                <div>{t("signup.status.pendingPaymentWindow")}</div>
                 <div>
-                  Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail
-                  confirmando seu pagamento.
+                  {t("signup.status.pendingProcessing")}
                 </div>
                 <div>
-                  Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o
-                  status dela a qualquer momento.
+                  {t("signup.status.pendingReloadOnly")}
                 </div>
               </div>
             </div>
@@ -569,9 +623,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   label={
                     <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
                       <img src={starIcon} alt="" style={{ width: "1rem", height: "1rem" }} />
-                      <span style={{ display: "inline" }}>Coloque</span>
-                      abaixo o nome do <strong>Grupo</strong> OU <strong>Sobrenome</strong> da Família OU{" "}
-                      <strong>Nome Completo</strong> da pessoa que irá com você:
+                      <span style={{ display: "inline" }}>{t("signup.registrationForm.companionPrefix")}</span>
+                      {t("signup.registrationForm.companionBeforeGroup")} <strong>{t("signup.registrationForm.companionGroup")}</strong>{" "}
+                      {t("signup.registrationForm.companionOr")} <strong>{t("signup.registrationForm.companionSurname")}</strong>{" "}
+                      {t("signup.registrationForm.companionFamilySuffix")} <strong>{t("signup.registrationForm.companionFullName")}</strong>{" "}
+                      {t("signup.registrationForm.companionFinalSuffix")}
                     </span>
                   }
                   htmlFor="companion"
@@ -580,12 +636,118 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     id="companion"
                     name="companion"
                     type="text"
-                    placeholder="Família Silva ou Grupo Peregrinos do Amor ou Fulano de Tal"
+                    placeholder={t("signup.registrationForm.companionPlaceholder")}
                     ref={companionRef as RefObject<HTMLInputElement>}
                     autoComplete="off"
                   />
                 </FormField>
               )}
+
+              <FormField
+                label={t("signup.registrationForm.allergyMedicationQuestion")}
+                htmlFor="allergyMedicationYes"
+                error={errors.allergyMedication}
+                required
+              >
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: hasAllergyMedication === "yes" ? "0.75rem" : 0 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      ref={allergyMedicationYesRef as RefObject<HTMLInputElement>}
+                      id="allergyMedicationYes"
+                      type="radio"
+                      name="allergyMedication"
+                      value="yes"
+                      onChange={() => setHasAllergyMedication("yes")}
+                    />
+                    {t("signup.registrationForm.yes")}
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      ref={allergyMedicationNoRef as RefObject<HTMLInputElement>}
+                      id="allergyMedicationNo"
+                      type="radio"
+                      name="allergyMedication"
+                      value="no"
+                      onChange={() => {
+                        setHasAllergyMedication("no");
+                        if (allergyMedicationDetailsRef.current) {
+                          allergyMedicationDetailsRef.current.value = "";
+                        }
+                      }}
+                    />
+                    {t("signup.registrationForm.no")}
+                  </label>
+                </div>
+                {hasAllergyMedication === "yes" && (
+                  <Input
+                    id="allergyMedicationDetails"
+                    name="allergyMedicationDetails"
+                    type="text"
+                    placeholder={t("signup.registrationForm.allergyMedicationPlaceholder")}
+                    ref={allergyMedicationDetailsRef as RefObject<HTMLInputElement>}
+                    required
+                    autoComplete="off"
+                  />
+                )}
+                {errors.allergyMedicationDetails && (
+                  <ErrorText role="alert" aria-live="assertive">
+                    {errors.allergyMedicationDetails}
+                  </ErrorText>
+                )}
+              </FormField>
+
+              <FormField
+                label={t("signup.registrationForm.dietaryRestrictionQuestion")}
+                htmlFor="dietaryRestrictionYes"
+                error={errors.dietaryRestriction}
+                required
+              >
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: hasDietaryRestriction === "yes" ? "0.75rem" : 0 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      ref={dietaryRestrictionYesRef as RefObject<HTMLInputElement>}
+                      id="dietaryRestrictionYes"
+                      type="radio"
+                      name="dietaryRestriction"
+                      value="yes"
+                      onChange={() => setHasDietaryRestriction("yes")}
+                    />
+                    {t("signup.registrationForm.yes")}
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      ref={dietaryRestrictionNoRef as RefObject<HTMLInputElement>}
+                      id="dietaryRestrictionNo"
+                      type="radio"
+                      name="dietaryRestriction"
+                      value="no"
+                      onChange={() => {
+                        setHasDietaryRestriction("no");
+                        if (dietaryRestrictionDetailsRef.current) {
+                          dietaryRestrictionDetailsRef.current.value = "";
+                        }
+                      }}
+                    />
+                    {t("signup.registrationForm.no")}
+                  </label>
+                </div>
+                {hasDietaryRestriction === "yes" && (
+                  <Input
+                    id="dietaryRestrictionDetails"
+                    name="dietaryRestrictionDetails"
+                    type="text"
+                    placeholder={t("signup.registrationForm.dietaryRestrictionPlaceholder")}
+                    ref={dietaryRestrictionDetailsRef as RefObject<HTMLInputElement>}
+                    required
+                    autoComplete="off"
+                  />
+                )}
+                {errors.dietaryRestrictionDetails && (
+                  <ErrorText role="alert" aria-live="assertive">
+                    {errors.dietaryRestrictionDetails}
+                  </ErrorText>
+                )}
+              </FormField>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label
@@ -680,12 +842,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         >
                           {name && (
                             <div style={{ marginBottom: "0.5rem" }}>
-                              <strong>Nome:</strong> {name}
+                              <strong>{t("signup.status.nameLabel")}:</strong> {name}
                             </div>
                           )}
                           {email && (
                             <div>
-                              <strong>Email:</strong> {email}
+                              <strong>{t("signup.status.emailLabel")}:</strong> {email}
                             </div>
                           )}
                         </div>
@@ -696,9 +858,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
                   <PixLabelContainer>
                     <PixLabel htmlFor={pixTextareaId}>{t("signup.status.pixCopyLabel")}</PixLabel>
-                    <CopyButton onClick={handleCopyBrcode} title="Copiar código PIX" aria-label="Copiar código PIX">
+                    <CopyButton
+                      onClick={handleCopyBrcode}
+                      title={t("signup.status.copyPixAriaLabel")}
+                      aria-label={t("signup.status.copyPixAriaLabel")}
+                    >
                       <span>{copiedBrcode ? "✓" : "📋"}</span>
-                      <span>{copiedBrcode ? "Copiado!" : "Copiar"}</span>
+                      <span>{copiedBrcode ? t("signup.status.copyCopied") : t("signup.status.copyAction")}</span>
                     </CopyButton>
                   </PixLabelContainer>
 
@@ -710,7 +876,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
                   {qrCodeImageUrl && (
                     <QRCodeContainer>
-                      <QRCodeImage src={qrCodeImageUrl} alt="QR Code PIX" />
+                      <QRCodeImage src={qrCodeImageUrl} alt={t("signup.status.qrCodeAlt")} />
                     </QRCodeContainer>
                   )}
 
@@ -732,7 +898,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
                     >
-                      Fazer nova inscrição
+                      {t("signup.status.newRegistration")}
                     </button>
                   </PixActions>
                 </PixBox>
@@ -753,12 +919,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                     <span style={{ fontSize: "1.5rem", fontWeight: "bold", textTransform: "uppercase", color: "#991b1b" }}>
-                      Inscrição cancelada
+                      {t("signup.status.canceledTitle")}
                     </span>
                   </div>
 
                   <span style={{ fontSize: "1.18rem", color: "#991b1b", textAlign: "center", fontWeight: 500 }}>
-                    Devido ao PIX ter expirado. Refaça a inscrição e pague o PIX dentro de 24h para confirmá-la.
+                    {t("signup.status.canceledDescription")}
                   </span>
 
                   <PixActions>
@@ -803,12 +969,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         >
                           {name && (
                             <div style={{ marginBottom: "0.5rem" }}>
-                              <strong>Nome:</strong> {name}
+                              <strong>{t("signup.status.nameLabel")}:</strong> {name}
                             </div>
                           )}
                           {email && (
                             <div>
-                              <strong>Email:</strong> {email}
+                              <strong>{t("signup.status.emailLabel")}:</strong> {email}
                             </div>
                           )}
                         </div>
@@ -830,7 +996,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                       <img
                         src={check}
-                        alt="Confirmado"
+                        alt={t("signup.status.confirmedIconAlt")}
                         style={{
                           width: "1.5rem",
                           height: "1.5rem",
@@ -838,11 +1004,12 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         }}
                       />
                       <span style={{ fontSize: "1.1rem", fontWeight: "bold", textTransform: "uppercase" }}>
-                        Inscrição confirmada
+                        {t("signup.status.confirmedTitle")}
                       </span>
                     </div>
 
                     <span style={{ fontSize: "1rem" }}>{t("signup.status.paidBox")}</span>
+                    <span style={{ fontSize: "0.9rem", fontStyle: "italic", textAlign: "center" }}>{t("signup.status.paidReceipt")}</span>
                   </PaidBox>
 
                   <style>{`
@@ -903,7 +1070,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
                     >
-                      Fazer nova inscrição
+                      {t("signup.status.newRegistration")}
                     </button>
                   </div>
 

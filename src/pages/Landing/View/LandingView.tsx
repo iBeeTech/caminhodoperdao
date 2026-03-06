@@ -54,6 +54,12 @@ interface LandingViewProps {
     sleepAtMonasteryRef: RefObject<HTMLSelectElement | null>;
     termsAcceptedRef: RefObject<HTMLInputElement | null>;
     companionRef: RefObject<HTMLInputElement | null>;
+    allergyMedicationYesRef: RefObject<HTMLInputElement | null>;
+    allergyMedicationNoRef: RefObject<HTMLInputElement | null>;
+    allergyMedicationDetailsRef: RefObject<HTMLInputElement | null>;
+    dietaryRestrictionYesRef: RefObject<HTMLInputElement | null>;
+    dietaryRestrictionNoRef: RefObject<HTMLInputElement | null>;
+    dietaryRestrictionDetailsRef: RefObject<HTMLInputElement | null>;
     emergencyContactNameRef: RefObject<HTMLInputElement | null>;
     emergencyContactPhoneRef: RefObject<HTMLInputElement | null>;
   };

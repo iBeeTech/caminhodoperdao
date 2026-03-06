@@ -12,35 +12,50 @@
         "description": "O Caminho do Perdão nasceu do desejo de ajudar pessoas a encontrarem paz interior, reconciliação e propósito. Combinamos práticas de autoconhecimento, espiritualidade e relações saudáveis para guiar cada participante em uma jornada de cura e transformação."
     },
     "schedule": {
-        "title": "Cronograma",
-        "note": "Lembrete: no dia do Caminho, antes de iniciá-lo, fazemos um café comunitário. Leve um bolo, pão, pão de queijo ou o que quiser para somar na refeição.",
+        "title": "CAMINHADA DO PERDÃO 2026",
+        "note": "\"Senhor, fazei-me instrumento da vossa paz.\" — São Francisco de Assis",
         "confession": {
-            "title": "Confissão - 01/08/2026 (Sábado)",
+            "title": "Preparação Espiritual",
             "items": [
-                "Disponível a partir das 14h"
+                "Recomenda-se a todos os participantes que procurem o sacramento da Confissão em sua paróquia de origem, como preparação espiritual para a caminhada."
             ]
         },
         "sleep": {
-            "title": "Para quem for dormir no Mosteiro",
+            "title": "01 de agosto de 2026 - Chegada e Preparação no Mosteiro",
             "items": [
-                "Abertura dos quartos às 17h30",
-                "Janta às 19h"
+                "17h - Chegada permitida aos participantes que irão pernoitar no Mosteiro",
+                "19h - Jantar comunitário",
+                "20h - Recolhimento para descanso"
             ]
         },
         "walk": {
-            "title": "No dia do Caminho",
+            "title": "02 de agosto de 2026 - Dia da Caminhada",
             "items": [
-                "Café Comunitário às 03h00",
-                "Alongamento e aquecimento às 04h00",
-                "Oração Inicial e saída às 04h30",
-                "Chegada prevista às 14h",
-                "Missa após a chegada",
-                "Almoço após a Missa"
+                "2h - Despertar",
+                "3h - Início do credenciamento",
+                "3h - Café da manhã",
+                "3h30 - Preparação espiritual e recolhimento em SILÊNCIO",
+                "Momento de oração e escuta das orientações da caminhada.",
+                "Solicita-se a todos manter o silêncio a partir deste horário.",
+                "4h - Saída pontual em procissão para o primeiro trecho da caminhada"
             ]
         },
         "distance": {
-            "title": "Distância e paradas",
-            "description": "Serão 25 km com várias paradas para hidratação e frutas. No meio do caminho, fazemos uma parada estratégica para repor as energias com um lanche reforçado."
+            "title": "Percurso, Chegada e Encerramento",
+            "description": "",
+            "items": [
+                "Após os primeiros 12 km, será realizada parada para oração, descanso, hidratação, alimentação e convivência fraterna.",
+                "Após 1 hora de pausa, retomaremos a caminhada no trecho final, passando pela Cruz de Ferro Peregrina e seguindo até a Capela São Francisco de Assis, às margens da Represa do Rio Grande.",
+                "Chegada e breve jejum eucarístico.",
+                "Celebração da Santa Missa.",
+                "Alimentação dos peregrinos.",
+                "Embarque para retorno a Claraval e Franca.",
+                "Retorno previsto: 16h."
+            ],
+            "closingLines": [
+                "A PAZ A TODOS.",
+                "ORGANIZAÇÃO"
+            ]
         }
     },
     "features": {
@@ -95,6 +110,11 @@
     "signup": {
         "title": "Confira sua inscrição ou Inscreva-se para o Caminho",
         "disclaimer": "A inscrição é única e intransferível",
+        "warning": {
+            "ariaLabel": "Atenção",
+            "title": "Atenção",
+            "departureTime": "Saída às 04h00 em ponto"
+        },
         "bullets": [
             "Se você já se inscreveu, verifique o status. Se ainda não se inscreveu, preencha os dados para gerar seu PIX.",
             "Se você já se inscreveu, consulte o status de sua inscrição usando exatamente o mesmo e-mail."
@@ -147,16 +167,40 @@
             "sleepYes": "Sim",
             "sleepYesFull": "Sim (sem vagas)",
             "sleepNo": "Não",
+            "yes": "Sim",
+            "no": "Não",
+            "allergyMedicationQuestion": "É alérgico ou faz uso de alguma medicação?",
+            "allergyMedicationPlaceholder": "Se sim, informe qual alergia ou medicação",
+            "dietaryRestrictionQuestion": "Tem alguma restrição alimentar ou é vegetariano/vegano?",
+            "dietaryRestrictionPlaceholder": "Se sim, informe qual restrição alimentar",
+            "companionPrefix": "Coloque",
+            "companionBeforeGroup": "abaixo o nome do",
+            "companionGroup": "Grupo",
+            "companionOr": "OU",
+            "companionSurname": "Sobrenome",
+            "companionFamilySuffix": "da Família OU",
+            "companionFullName": "Nome Completo",
+            "companionFinalSuffix": "da pessoa que irá com você:",
+            "companionPlaceholder": "Família Silva ou Grupo Peregrinos do Amor ou Fulano de Tal",
             "submit": "Verificar inscrição ou Inscrever-se",
             "loading": "Enviando...",
             "termsLabel": "Ao realizar a inscrição você concorda com os nossos",
             "termsLinkText": "Termos de Responsabilidade"
         },
         "status": {
-                        "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
+            "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
+            "pendingReloadOnly": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento.",
             "pending": "Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.",
+            "pendingProcessing": "Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.",
+            "pendingPaymentWindow": "Para finalizá-la, realize o pagamento do PIX, o qual irá se expirar em 24h.",
+            "pendingReservedTitle": "SUA INSCRIÇÃO FOI RESERVADA!",
+            "pendingIconAlt": "Pendente",
             "canceled": "Pix expirado. Edite para reenviar.",
+            "canceledTitle": "Inscrição cancelada",
+            "canceledDescription": "Devido ao PIX ter expirado. Refaça a inscrição e pague o PIX dentro de 24h para confirmá-la.",
             "paid": "Sua inscrição já está confirmada.",
+            "confirmedTitle": "Inscrição confirmada",
+            "confirmedIconAlt": "Confirmado",
             "defaultPending": "Inscrição pendente. Você pode usar o PIX abaixo.",
             "existing": "Inscrição existente.",
             "processingError": "Não foi possível processar. Tente novamente.",
@@ -165,13 +209,22 @@
             "validationError": "Preencha os campos obrigatórios.",
             "reopenError": "Não foi possível validar vagas agora.",
             "pixCopyLabel": "Copia e Cola do PIX",
+            "copyPixAriaLabel": "Copiar código PIX",
+            "copyPixErrorLog": "Erro ao copiar PIX:",
+            "copyCopied": "Copiado!",
+            "copyAction": "Copiar",
+            "nameLabel": "Nome",
+            "emailLabel": "Email",
+            "qrCodeAlt": "QR Code PIX",
             "pixExpiredLabel": "PIX expirado",
             "pixPendingPlaceholder": "Aguardando",
             "paidBox": "Pagamento confirmado. Nos vemos no evento!",
+            "paidReceipt": "Seu comprovante de pagamento foi enviado para o e-mail utilizado na inscrição. Se não encontrar, verifique a caixa de spam ou lixo eletrônico.",
             "paidWarning": "Se você quiser cancelar sua inscrição ou alterá-la, entre em contato conosco via WhatsApp.",
             "whatsappGroupButtonText": "Entrar para grupo do WhatsApp",
             "waitingPayment": "Para finaliza-la realize o pagamento do PIX, o qual irá se expirar em 24h.<br /><br />Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.<br /><br />Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento.",
-            "reopen": "Refazer inscrição"
+            "reopen": "Refazer inscrição",
+            "newRegistration": "Fazer nova inscrição"
         },
         "errors": {
             "required": "Obrigatório",
@@ -183,6 +236,10 @@
             "sleepRequired": "Selecione uma opção",
             "sleepFull": "Vagas no mosteiro esgotadas",
             "termsRequired": "Você precisa aceitar os Termos de Responsabilidade",
+            "allergyMedicationRequired": "Selecione se é alérgico ou faz uso de medicação",
+            "allergyMedicationDetailsRequired": "Informe qual alergia ou medicação",
+            "dietaryRestrictionRequired": "Selecione se possui restrição alimentar ou se é vegetariano/vegano",
+            "dietaryRestrictionDetailsRequired": "Informe qual restrição alimentar",
             "emergencyContactNameRequired": "Informe o nome do contato de emergência",
             "emergencyContactPhoneInvalid": "Informe o telefone do contato de emergência (DDD + 9 dígitos)"
         }

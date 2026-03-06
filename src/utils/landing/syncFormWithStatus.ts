@@ -34,6 +34,16 @@ export function syncFormWithStatus(
   if (refs.emergencyContactName && data.emergency_contact_name) assign(refs.emergencyContactName, data.emergency_contact_name);
   if (refs.emergencyContactPhone && data.emergency_contact_phone) assign(refs.emergencyContactPhone, data.emergency_contact_phone);
 
+  const hasAllergyMedication = data.has_allergy_medication === 1;
+  if (refs.allergyMedicationYes?.current) refs.allergyMedicationYes.current.checked = hasAllergyMedication;
+  if (refs.allergyMedicationNo?.current) refs.allergyMedicationNo.current.checked = data.has_allergy_medication === 0;
+  assign(refs.allergyMedicationDetails, data.allergy_medication_details ?? "");
+
+  const hasDietaryRestriction = data.has_dietary_restriction === 1;
+  if (refs.dietaryRestrictionYes?.current) refs.dietaryRestrictionYes.current.checked = hasDietaryRestriction;
+  if (refs.dietaryRestrictionNo?.current) refs.dietaryRestrictionNo.current.checked = data.has_dietary_restriction === 0;
+  assign(refs.dietaryRestrictionDetails, data.dietary_restriction_details ?? "");
+
   if (refs.sleepAtMonastery.current) {
     refs.sleepAtMonastery.current.value =
       data.sleep_at_monastery === 1 ? "yes" : data.sleep_at_monastery === 0 ? "no" : "";

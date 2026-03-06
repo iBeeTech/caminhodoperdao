@@ -25,6 +25,8 @@ const ScheduleSection: React.FC = () => {
   const confessionItems = t("schedule.confession.items", { returnObjects: true }) as string[];
   const sleepItems = t("schedule.sleep.items", { returnObjects: true }) as string[];
   const walkItems = t("schedule.walk.items", { returnObjects: true }) as string[];
+  const distanceItems = t("schedule.distance.items", { returnObjects: true }) as string[];
+  const distanceClosingLines = t("schedule.distance.closingLines", { returnObjects: true }) as string[];
 
   return (
     <ScheduleSectionWrapper id="schedule">
@@ -79,7 +81,24 @@ const ScheduleSection: React.FC = () => {
               <TitleIcon src={infoIcon} alt={t("schedule.distance.title") as string} />
               <span>{t("schedule.distance.title")}</span>
             </BlockSubtitle>
-            <p>{t("schedule.distance.description")}</p>
+            {Array.isArray(distanceItems) && distanceItems.length > 0 ? (
+              <>
+                <ScheduleList>
+                  {distanceItems.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ScheduleList>
+                {Array.isArray(distanceClosingLines) && distanceClosingLines.length > 0 && (
+                  <div style={{ marginTop: "12px", textAlign: "center", color: "#000", fontWeight: 700 }}>
+                    {distanceClosingLines.map((line, index) => (
+                      <div key={index}>{line}</div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p>{t("schedule.distance.description")}</p>
+            )}
           </ScheduleBlock>
         </ScheduleCard>
       </Container>

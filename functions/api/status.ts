@@ -120,6 +120,10 @@ export async function handleStatus(
     date_of_birth: registration.date_of_birth ?? undefined,
     emergency_contact_name: registration.emergency_contact_name ?? undefined,
     emergency_contact_phone: registration.emergency_contact_phone ?? undefined,
+    has_allergy_medication: registration.has_allergy_medication,
+    allergy_medication_details: registration.allergy_medication_details ?? undefined,
+    has_dietary_restriction: registration.has_dietary_restriction,
+    dietary_restriction_details: registration.dietary_restriction_details ?? undefined,
     created_at: registration.created_at,
     paid_at: registration.paid_at,
   });

@@ -5,6 +5,7 @@ import {
   HeaderWrapper,
   HeaderContainer,
   HeaderLogo,
+  HeaderHomeLink,
   HeaderTitle,
   Navigation,
   NavList,
@@ -70,7 +71,9 @@ const Header: React.FC<HeaderProps> = ({
     <HeaderWrapper onKeyDown={handleKeyDown}>
       <HeaderContainer>
         <HeaderLogo>
-          <HeaderTitle aria-label={appTitle}>{appTitle}</HeaderTitle>
+          <HeaderHomeLink href="/" aria-label={t("nav.home") as string}>
+            <HeaderTitle aria-label={appTitle}>{appTitle}</HeaderTitle>
+          </HeaderHomeLink>
         </HeaderLogo>
 
         {showNavigation && (
