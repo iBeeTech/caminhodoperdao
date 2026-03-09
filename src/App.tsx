@@ -6,11 +6,13 @@ import "./i18n";
 import SkipLink from "./components/a11y/SkipLink";
 import AutoAnalyticsListener from "./components/analytics/AutoAnalyticsListener";
 import ConsentModal from "./components/molecules/ConsentModal";
+import SeoManager from "./components/seo/SeoManager";
 
 function App() {
   return (
     <BrowserRouter>
       <AppShell>
+        <SeoManager />
         <SkipLink />
         <AutoAnalyticsListener />
         <Routes />

@@ -4,7 +4,7 @@ Allow: /
 Disallow: /error
 
 # Sitemap
-Sitemap: https://caminhodoperdao.com/sitemap.xml
+Sitemap: https://caminhodoperdao.com.br/sitemap.xml
 
 # Crawler delays
 User-agent: Googlebot

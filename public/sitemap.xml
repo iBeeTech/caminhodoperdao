@@ -1,21 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
   <!-- Landing Page (Principal) -->
   <url>
-    <loc>https://caminhodoperdao.com/</loc>
-    <lastmod>2026-01-07</lastmod>
+    <loc>https://caminhodoperdao.com.br/</loc>
+    <lastmod>2026-03-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Gallery Page -->
   <url>
-    <loc>https://caminhodoperdao.com/gallery</loc>
-    <lastmod>2026-01-07</lastmod>
+    <loc>https://caminhodoperdao.com.br/gallery</loc>
+    <lastmod>2026-03-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+
+  <!-- Terms Page -->
+  <url>
+    <loc>https://caminhodoperdao.com.br/responsabilityTerms</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 
 </urlset>

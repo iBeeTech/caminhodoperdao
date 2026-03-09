@@ -1,69 +1,37 @@
-<!-- Schema.org Structured Data -->
-<script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Caminho do Perdão",
-  "url": "https://caminhodoperdao.com",
-  "logo": "https://caminhodoperdao.com/logo.png",
-  "description": "Uma jornada de transformação pessoal através do perdão, autoconhecimento e crescimento espiritual.",
-  "sameAs": [
-    "https://www.facebook.com/caminhodoperdao",
-    "https://www.instagram.com/caminhodoperdao",
-    "https://wa.me/5511999999999"
-  ],
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "Customer Support",
-    "telephone": "+55-11-99999-9999",
-    "contactOption": "TollFree"
-  }
-}
-</script>
-
-<!-- Event Schema (Caminho do Perdão) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Event",
-  "name": "Caminho do Perdão",
-  "description": "Uma jornada espiritual de transformação pessoal através do perdão e autoconhecimento.",
-  "startDate": "2026-08-02T04:30:00-03:00",
-  "endDate": "2026-08-02T14:00:00-03:00",
-  "eventStatus": "https://schema.org/EventScheduled",
-  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-  "location": {
-    "@type": "Place",
-    "name": "São Paulo, SP",
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "BR",
-      "addressLocality": "São Paulo",
-      "addressRegion": "SP"
+  "@graph": [
+    {
+      "@type": "Organization",
+      "name": "Caminho do Perdao",
+      "url": "https://caminhodoperdao.com.br",
+      "logo": "https://caminhodoperdao.com.br/logo.png",
+      "description": "Jornada de peregrinacao e transformacao espiritual por meio do perdao, autoconhecimento e fe.",
+      "sameAs": [
+        "https://www.facebook.com/caminhodoperdao",
+        "https://www.instagram.com/caminhodoperdao"
+      ]
+    },
+    {
+      "@type": "Event",
+      "name": "Caminho do Perdao",
+      "description": "Peregrinacao espiritual para quem busca reconciliacao, cura interior e renovacao da fe.",
+      "startDate": "2026-08-02T04:30:00-03:00",
+      "endDate": "2026-08-02T14:00:00-03:00",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "location": {
+        "@type": "Place",
+        "name": "Sao Paulo, SP",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "BR",
+          "addressLocality": "Sao Paulo",
+          "addressRegion": "SP"
+        }
+      },
+      "url": "https://caminhodoperdao.com.br",
+      "image": "https://caminhodoperdao.com.br/og-image.png"
     }
-  },
-  "url": "https://caminhodoperdao.com",
-  "image": "https://caminhodoperdao.com/og-image.png"
+  ]
 }
-</script>
-
-<!-- LocalBusiness (se tiver local físico) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "Caminho do Perdão",
-  "description": "Organização focada em transformação pessoal e espiritual",
-  "image": "https://caminhodoperdao.com/logo.png",
-  "priceRange": "R$ 100 - R$ 500",
-  "telephone": "+55-11-99999-9999",
-  "url": "https://caminhodoperdao.com",
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "5",
-    "bestRating": "5",
-    "worstRating": "1",
-    "ratingCount": "10"
-  }
-}
-</script>
