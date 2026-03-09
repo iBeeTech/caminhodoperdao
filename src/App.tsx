@@ -5,6 +5,7 @@ import Routes from "./routes";
 import "./i18n";
 import SkipLink from "./components/a11y/SkipLink";
 import AutoAnalyticsListener from "./components/analytics/AutoAnalyticsListener";
+import ConsentModal from "./components/molecules/ConsentModal";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <SkipLink />
         <AutoAnalyticsListener />
         <Routes />
+        <ConsentModal />
       </AppShell>
     </BrowserRouter>
   );

@@ -6,6 +6,7 @@
  */
 
 import { sanitizeProps } from "./sanitizer";
+import { canTrackAnalytics } from "../consent";
 
 const AMPLITUDE_EVENT_NAMES = {
   PAGE_VIEWED: "page_viewed",
@@ -68,6 +69,13 @@ const ensureInit = async () => {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
+    if (!canTrackAnalytics()) {
+      if (AMPLITUDE_DEBUG) {
+        console.log("[Amplitude] Skipping init - consent not granted");
+      }
+      return;
+    }
+
     if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) {
       if (AMPLITUDE_DEBUG) {
         console.log("[Amplitude] Skipping init - enabled:", AMPLITUDE_ENABLED, "apiKey:", !!AMPLITUDE_API_KEY);
@@ -97,6 +105,13 @@ export const trackWithClient = async (
   props?: Record<string, any>
 ): Promise<void> => {
   if (typeof window === "undefined") return;
+  if (!canTrackAnalytics()) {
+    if (AMPLITUDE_DEBUG) {
+      console.log("[Amplitude] Track skipped - consent not granted");
+    }
+    return;
+  }
+
   if (!AMPLITUDE_ENABLED || !AMPLITUDE_API_KEY) {
     if (AMPLITUDE_DEBUG) {
       console.log("[Amplitude] Track skipped - enabled:", AMPLITUDE_ENABLED, "apiKey:", !!AMPLITUDE_API_KEY);

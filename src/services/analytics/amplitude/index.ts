@@ -8,6 +8,7 @@
 import { amplitudeClient } from "./client";
 import { amplitudeConfig, amplitudeInitConfig } from "./config";
 import { initAnonymousIdentity } from "../../../utils/analytics/identity";
+import { canTrackAnalytics } from "../../../utils/consent";
 import type { EventProperties, UserProperties } from "./types";
 
 /**
@@ -24,6 +25,10 @@ import type { EventProperties, UserProperties } from "./types";
 export async function initAmplitude(): Promise<void> {
   // Safety: não executar no server
   if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!canTrackAnalytics()) {
     return;
   }
 
@@ -68,6 +73,10 @@ export function trackEvent(
     return;
   }
 
+  if (!canTrackAnalytics()) {
+    return;
+  }
+
   // Se desabilitado
   if (!amplitudeConfig.enabled) {
     return;
@@ -96,6 +105,10 @@ export function trackEvent(
  */
 export function setUserId(userId: string): void {
   if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!canTrackAnalytics()) {
     return;
   }
 
@@ -131,6 +144,10 @@ export function setUserId(userId: string): void {
  */
 export function setUserProperties(userProperties: UserProperties): void {
   if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!canTrackAnalytics()) {
     return;
   }
 

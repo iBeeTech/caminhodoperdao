@@ -8,6 +8,7 @@ import { queryClient } from './query/queryClient';
 import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './styles/theme';
 import './i18n';
+import { canTrackAnalytics, CONSENT_CHANGE_EVENT } from './utils/consent';
 
 /**
  * Componente wrapper para inicializar Amplitude pós-hidratação
@@ -15,10 +16,21 @@ import './i18n';
  */
 function AnalyticsInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Lazy import para não carregar a SDK no server
-    import('./services/analytics/amplitude').then(({ initAmplitude }) => {
-      initAmplitude();
-    });
+    const initIfConsented = () => {
+      if (!canTrackAnalytics()) return;
+
+      // Lazy import para não carregar a SDK no server
+      import('./services/analytics/amplitude').then(({ initAmplitude }) => {
+        initAmplitude();
+      });
+    };
+
+    initIfConsented();
+
+    window.addEventListener(CONSENT_CHANGE_EVENT, initIfConsented);
+    return () => {
+      window.removeEventListener(CONSENT_CHANGE_EVENT, initIfConsented);
+    };
   }, []);
 
   return <>{children}</>;
