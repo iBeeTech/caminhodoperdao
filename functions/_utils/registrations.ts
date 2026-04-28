@@ -35,6 +35,14 @@ export async function getByEmail(DB: D1Database, email: string): Promise<Registr
   return (await stmt.first<Registration>()) ?? null;
 }
 
+export async function getByPhone(DB: D1Database, phone: string): Promise<Registration | null> {
+  const normalized = phone.replace(/\D/g, "");
+  const stmt = DB.prepare(
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE phone = ?"
+  ).bind(normalized);
+  return (await stmt.first<Registration>()) ?? null;
+}
+
 export async function getByPaymentRef(DB: D1Database, paymentRef: string): Promise<Registration | null> {
   const stmt = DB.prepare(
     "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE payment_ref = ?"
@@ -89,7 +97,7 @@ export async function insertRegistration(
     input.payment_ref,
     input.sleep_at_monastery,
     input.companion_name,
-    input.phone,
+    input.phone.replace(/\D/g, ""),
     input.cep,
     input.address,
     input.number,
@@ -111,7 +119,7 @@ export async function insertRegistration(
 
 export async function updateRegistration(
   DB: D1Database,
-  email: string,
+  phone: string,
   input: {
     name: string;
     status: Registration["status"];
@@ -138,7 +146,7 @@ export async function updateRegistration(
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, created_at = datetime('now'), paid_at = NULL WHERE email = ?23"
+    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, created_at = datetime('now'), paid_at = NULL WHERE phone = ?23"
   ).bind(
     input.name,
     input.status,
@@ -146,7 +154,7 @@ export async function updateRegistration(
     input.payment_ref,
     input.sleep_at_monastery,
     input.companion_name,
-    input.phone,
+    phone.replace(/\D/g, ""),
     input.cep,
     input.address,
     input.number,
@@ -162,27 +170,27 @@ export async function updateRegistration(
     input.allergy_medication_details,
     input.has_dietary_restriction,
     input.dietary_restriction_details,
-    email.toLowerCase()
+    phone.replace(/\D/g, "")
   );
   await stmt.run();
 }
 
 export async function updatePaymentRef(
   DB: D1Database,
-  email: string,
+  phone: string,
   provider: string,
   paymentRef: string
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET payment_ref = ?, payment_provider = ? WHERE email = ?"
-  ).bind(paymentRef, provider, email.toLowerCase());
+    "UPDATE registrations SET payment_ref = ?, payment_provider = ? WHERE phone = ?"
+  ).bind(paymentRef, provider, phone.replace(/\D/g, ""));
   await stmt.run();
 }
 
-export async function markAsPaid(DB: D1Database, email: string, paymentRef: string): Promise<void> {
+export async function markAsPaid(DB: D1Database, phone: string, paymentRef: string): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET status = 'PAID', paid_at = datetime('now') WHERE email = ? AND payment_ref = ?"
-  ).bind(email.toLowerCase(), paymentRef);
+    "UPDATE registrations SET status = 'PAID', paid_at = datetime('now') WHERE phone = ? AND payment_ref = ?"
+  ).bind(phone.replace(/\D/g, ""), paymentRef);
   await stmt.run();
 }
 

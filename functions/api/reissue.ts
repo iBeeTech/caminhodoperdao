@@ -1,8 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, json, notFound, serverError } from "../_utils/responses";
-import { isValidEmail } from "../_utils/validation";
+import { isValidPhone } from "../_utils/validation";
 import { getPaymentProvider } from "../_utils/payment";
-import { expirePending, getByEmail, updatePaymentRef } from "../_utils/registrations";
+import { expirePending, getByPhone, updatePaymentRef } from "../_utils/registrations";
 
 interface Env {
   DB: D1Database;
@@ -14,12 +14,12 @@ export async function handleReissue(env: Env, body: unknown): Promise<Response> 
     return badRequest("invalid_body");
   }
 
-  const { email, name } = body as { email?: string; name?: string };
-  if (!email) return badRequest("email_required");
-  if (!isValidEmail(email)) return badRequest("invalid_email");
+  const { phone, name } = body as { phone?: string; name?: string };
+  if (!phone) return badRequest("phone_required");
+  if (!isValidPhone(phone)) return badRequest("invalid_phone");
 
   await expirePending(env.DB);
-  const registration = await getByEmail(env.DB, email);
+  const registration = await getByPhone(env.DB, phone);
   if (!registration) return notFound("registration_not_found");
   if (registration.status !== "PENDING") {
     return badRequest("registration_not_pending");
@@ -27,12 +27,12 @@ export async function handleReissue(env: Env, body: unknown): Promise<Response> 
 
   const provider = getPaymentProvider(env);
   const charge = await provider.createCharge({
-    email,
+    email: registration.email,
     name: name || registration.name,
   });
 
   try {
-    await updatePaymentRef(env.DB, email, "woovi", charge.payment_ref);
+    await updatePaymentRef(env.DB, phone, "woovi", charge.payment_ref);
   } catch (error) {
     return serverError();
   }

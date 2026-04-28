@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, json } from "../_utils/responses";
-import { isValidEmail } from "../_utils/validation";
-import { expirePending, getByEmail, getByCpfEncrypted } from "../_utils/registrations";
+import { isValidPhone } from "../_utils/validation";
+import { expirePending, getByPhone, getByCpfEncrypted } from "../_utils/registrations";
 import { getPaymentByRef } from "../_utils/payments";
 import { getWooviChargeStatus } from "../_utils/woovi";
 import { encryptCpf } from "../_utils/cpfCrypto";
@@ -16,7 +16,7 @@ interface Env {
 
 export async function handleStatus(
   env: Env,
-  email: string | null,
+  phone: string | null,
   name: string | null,
   cpf: string | null
 ): Promise<Response> {
@@ -35,24 +35,23 @@ export async function handleStatus(
     }
     await expirePending(env.DB);
     registration = await getByCpfEncrypted(env.DB, cpfEncrypted);
-  } else if (email && email.trim()) {
-    if (!isValidEmail(email)) return badRequest("invalid_email");
+  } else if (phone && phone.trim()) {
+    if (!isValidPhone(phone)) return badRequest("invalid_phone");
     await expirePending(env.DB);
-    registration = await getByEmail(env.DB, email);
+    registration = await getByPhone(env.DB, phone);
   } else {
-    return badRequest("cpf_or_email_required");
+    return badRequest("cpf_or_phone_required");
   }
 
   if (!registration) {
     return json(200, { exists: false });
   }
 
-  const emailForReg = registration.email;
-  // Nome diferente na consulta por CPF
+  const phoneForReg = registration.phone;
   if (name && registration.name && registration.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
     return json(409, {
-      error: "email_used_by_other_name",
-      email: emailForReg,
+      error: "phone_used_by_other_name",
+      phone: phoneForReg,
       name: registration.name
     });
   }
@@ -64,18 +63,18 @@ export async function handleStatus(
       const appId = env.WOOVI_APP_ID;
       if (appId) {
         const wooviResponse = await getWooviChargeStatus(appId, registration.payment_ref);
-        
+
         // Se a Woovi diz que foi pago, atualizar o D1
         if (["COMPLETED", "RECEIVED"].includes(wooviResponse.charge?.status)) {
           await env.DB
-            .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE email = ?")
-            .bind(Date.now(), emailForReg.toLowerCase())
+            .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE phone = ?")
+            .bind(Date.now(), phoneForReg.replace(/\D/g, ""))
             .run();
           
           registration.status = "PAID";
           registration.paid_at = new Date(Date.now()).toISOString();
           
-          console.log(`Status atualizado via Woovi: ${emailForReg} -> PAID`);
+          console.log(`Status atualizado via Woovi: ${phoneForReg} -> PAID`);
         }
       }
     } catch (error) {
@@ -132,7 +131,7 @@ export async function handleStatus(
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url);
   const cpf = url.searchParams.get("cpf");
-  const email = url.searchParams.get("email");
+  const phone = url.searchParams.get("phone");
   const name = url.searchParams.get("name");
-  return handleStatus(context.env, email, name, cpf);
+  return handleStatus(context.env, phone, name, cpf);
 };

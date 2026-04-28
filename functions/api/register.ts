@@ -1,6 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 import { json, badRequest, conflict, serverError } from "../_utils/responses";
-import { isValidEmail } from "../_utils/validation";
+import { isValidEmail, isValidPhone } from "../_utils/validation";
 import { getPaymentProvider, parseRegistrationCostCents } from "../_utils/payment";
 import { encryptCpf } from "../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
@@ -8,7 +8,7 @@ import {
   countActive,
   countActiveSleep,
   expirePending,
-  getByEmail,
+  getByPhone,
   getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
@@ -77,6 +77,10 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   if (!email || !isValidEmail(email)) {
     return badRequest("invalid_email");
+  }
+
+  if (!phone || !isValidPhone(phone)) {
+    return badRequest("invalid_phone");
   }
 
   if (!cpf || !isValidCpf(cpf)) {
@@ -152,10 +156,9 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   await expirePending(env.DB);
 
-  const existing = await getByEmail(env.DB, email);
-  // Nova regra: email já usado por outro nome
+  const existing = await getByPhone(env.DB, phone);
   if (existing && existing.name && name && existing.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
-    return conflict("email_used_by_other_name", { email, name: existing.name });
+    return conflict("phone_used_by_other_name", { phone, name: existing.name });
   }
 
   // Inserção nova: CPF já usado por outra inscrição?
@@ -240,7 +243,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   try {
     if (existing && existing.status !== "PAID") {
-      await updateRegistration(env.DB, email, {
+      await updateRegistration(env.DB, phone, {
         name: name?.trim() ?? "",
         status: "PENDING",
         payment_provider: "woovi",
@@ -297,7 +300,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   } catch (error) {
     const message = (error as Error).message || "unknown_error";
     if (message.includes("UNIQUE constraint failed")) {
-      const current = await getByEmail(env.DB, email);
+      const current = await getByPhone(env.DB, phone);
       return conflict("registration_exists", { status: current?.status });
     }
     return serverError();
