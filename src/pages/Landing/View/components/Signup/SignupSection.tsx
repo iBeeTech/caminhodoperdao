@@ -108,6 +108,7 @@ interface SignupSectionProps {
    */
   onEmailBlur: () => void;
   onReopenRegistration: () => void;
+  onNewRegistration: () => void;
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
@@ -135,6 +136,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onCepChange,
   onEmailBlur,
   onReopenRegistration,
+  onNewRegistration,
   getNextWhatsappUrl,
   onCpfChange,
   onTermsChange,
@@ -882,7 +884,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
                   <PixActions style={{ marginTop: "1.5rem", justifyContent: "center" }}>
                     <button
-                      onClick={onReopenRegistration}
+                      onClick={onNewRegistration}
                       style={{
                         cursor: "pointer",
                         color: "#2563eb",
@@ -1054,7 +1056,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
                   <div style={{ marginTop: "1rem", textAlign: "center" }}>
                     <button
-                      onClick={onReopenRegistration}
+                      onClick={onNewRegistration}
                       style={{
                         cursor: "pointer",
                         color: "#2563eb",

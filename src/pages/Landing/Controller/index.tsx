@@ -593,6 +593,14 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      if (status === 409 && body?.error === "phone_used_by_other_name") {
+        setStatusMessage(null);
+        setStatusTone(null);
+        setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
+        setPhase("form");
+        return;
+      }
+
       if (status === 400 && body?.error === "terms_required") {
         setErrors((prev) => ({ ...prev, termsAccepted: t("signup.errors.termsRequired") }));
         setPhase("form");
@@ -607,6 +615,12 @@ const LandingController: React.FC = () => {
 
       if (status === 400 && body?.error === "emergency_contact_phone_invalid") {
         setErrors((prev) => ({ ...prev, emergencyContactPhone: t("signup.errors.emergencyContactPhoneInvalid") }));
+        setPhase("form");
+        return;
+      }
+
+      if (status === 400 && body?.error === "emergency_contact_phone_same_as_registration_phone") {
+        setErrors((prev) => ({ ...prev, emergencyContactPhone: t("signup.errors.emergencyContactPhoneSameAsRegistration") }));
         setPhase("form");
         return;
       }
@@ -640,6 +654,14 @@ const LandingController: React.FC = () => {
         const errorData = error.response?.body as any;
         if (errorData?.error === "email_used_by_other_name") {
           setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
+          setPhase("form");
+          return;
+        }
+
+        if (errorData?.error === "phone_used_by_other_name") {
+          setStatusMessage(null);
+          setStatusTone(null);
+          setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
           setPhase("form");
           return;
         }
@@ -730,6 +752,14 @@ const LandingController: React.FC = () => {
     }
   };
 
+  const handleStartNewRegistration = () => {
+    setCapacityCallout(null);
+    resetStatusState();
+    setErrors({});
+    existingDataRef.current = null;
+    setPhase("check");
+  };
+
   return (
     <LandingView
       content={landingContent}
@@ -784,6 +814,7 @@ const LandingController: React.FC = () => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}
       onReopenRegistration={handleReopenRegistration}
+      onNewRegistration={handleStartNewRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onTermsChange={clearTermsError}

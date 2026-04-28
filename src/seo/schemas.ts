@@ -43,6 +43,16 @@ export const buildEventSchema = (): JsonLd => ({
     name: "Caminho do Perdao",
     url: SEO_BASE_URL,
   },
+  performer: {
+    "@type": "Organization",
+    name: "Caminho do Perdao",
+    url: SEO_BASE_URL,
+  },
+  offers: {
+    "@type": "Offer",
+    url: SEO_BASE_URL,
+    availability: "https://schema.org/InStock",
+  },
   url: SEO_BASE_URL,
 });
 

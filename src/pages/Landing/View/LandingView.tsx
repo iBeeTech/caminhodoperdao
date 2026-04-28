@@ -72,6 +72,7 @@ interface LandingViewProps {
   onSecondaryAction: () => void;
   onCallToAction: () => void;
   onReopenRegistration: () => void;
+  onNewRegistration: () => void;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
   onCpfChange?: () => void;
   onTermsChange?: () => void;
@@ -101,6 +102,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onSecondaryAction,
   onCallToAction,
   onReopenRegistration,
+  onNewRegistration,
   getNextWhatsappUrl,
   onCpfChange,
   onTermsChange,
@@ -153,10 +155,11 @@ const LandingView: React.FC<LandingViewProps> = ({
             onCepChange={onCepChange}
             onEmailBlur={onEmailBlur}
             onReopenRegistration={onReopenRegistration}
-          getNextWhatsappUrl={getNextWhatsappUrl}
+            onNewRegistration={onNewRegistration}
+            getNextWhatsappUrl={getNextWhatsappUrl}
             onCpfChange={onCpfChange}
             onTermsChange={onTermsChange}
-        />
+          />
         </TrackSection>
 
         <TrackSection

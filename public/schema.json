@@ -30,6 +30,16 @@
           "addressRegion": "SP"
         }
       },
+      "performer": {
+        "@type": "Organization",
+        "name": "Caminho do Perdao",
+        "url": "https://caminhodoperdao.com.br"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://caminhodoperdao.com.br",
+        "availability": "https://schema.org/InStock"
+      },
       "url": "https://caminhodoperdao.com.br",
       "image": "https://caminhodoperdao.com.br/og-image.png"
     }

@@ -56,6 +56,7 @@ export function validateRegistrationForm(
 ): ValidationResult {
   const errors: ErrorMap = {};
   const phoneDigits = getFieldValue(refs.phone.current).replace(/\D/g, "");
+  const emergencyPhoneDigits = (getFieldValue(refs.emergencyContactPhone?.current ?? null) || "").replace(/\D/g, "");
   const cepDigits = getFieldValue(refs.cep.current).replace(/\D/g, "");
 
   const requiredFields: Array<{
@@ -126,7 +127,7 @@ export function validateRegistrationForm(
     },
     {
       key: "emergencyContactPhone",
-      value: (getFieldValue(refs.emergencyContactPhone?.current ?? null) || "").replace(/\D/g, ""),
+      value: emergencyPhoneDigits,
       message: t("signup.errors.emergencyContactPhoneInvalid"),
       validator: (v) => v.length === 11,
     },
@@ -138,6 +139,10 @@ export function validateRegistrationForm(
       errors[field.key] = field.message;
     }
   });
+
+  if (phoneDigits && emergencyPhoneDigits && phoneDigits === emergencyPhoneDigits) {
+    errors.emergencyContactPhone = t("signup.errors.emergencyContactPhoneSameAsRegistration");
+  }
 
   // Validar sleep at monastery
   const isMonasteryUnavailable = options?.isMonasterySlotUnavailable ?? false;

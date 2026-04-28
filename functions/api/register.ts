@@ -115,9 +115,13 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   if (!emergencyName) {
     return badRequest("emergency_contact_name_required");
   }
+  const phoneDigits = (phone ?? "").replace(/\D/g, "");
   const emergencyPhoneDigits = (emergencyContactPhone ?? "").replace(/\D/g, "");
   if (emergencyPhoneDigits.length !== 11) {
     return badRequest("emergency_contact_phone_invalid");
+  }
+  if (phoneDigits === emergencyPhoneDigits) {
+    return badRequest("emergency_contact_phone_same_as_registration_phone");
   }
 
   if (typeof hasAllergyMedication !== "boolean") {
