@@ -562,6 +562,13 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      if (status === 409 && body?.error === "registration_exists") {
+        setStatusMessage(t("signup.callouts.registrationExists"));
+        setStatusTone("warn");
+        setPhase("form");
+        return;
+      }
+
       if (status === 409 && body?.error === "cpf_already_registered") {
         setStatusMessage(t("signup.callouts.cpfAlreadyRegistered"));
         setStatusTone("error");

@@ -119,7 +119,7 @@ export async function insertRegistration(
 
 export async function updateRegistration(
   DB: D1Database,
-  phone: string,
+  id: string,
   input: {
     name: string;
     status: Registration["status"];
@@ -146,7 +146,7 @@ export async function updateRegistration(
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, created_at = datetime('now'), paid_at = NULL WHERE phone = ?23"
+    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, created_at = datetime('now'), paid_at = NULL WHERE id = ?23"
   ).bind(
     input.name,
     input.status,
@@ -170,7 +170,7 @@ export async function updateRegistration(
     input.allergy_medication_details,
     input.has_dietary_restriction,
     input.dietary_restriction_details,
-    phone.replace(/\D/g, "")
+    id
   );
   await stmt.run();
 }

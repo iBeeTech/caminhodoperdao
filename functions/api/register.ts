@@ -204,7 +204,16 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   if (!existing) {
     const existingByCpf = await getByCpfEncrypted(env.DB, cpfEncrypted);
     if (existingByCpf) {
-      return conflict("cpf_already_registered");
+      // A canceled registration by the same person can be reused (same as the email path).
+      // Only block if the record belongs to a different person or is still active.
+      if (
+        existingByCpf.status === "CANCELED" &&
+        existingByCpf.name.trim().toLowerCase() === (name ?? "").trim().toLowerCase()
+      ) {
+        existing = existingByCpf;
+      } else {
+        return conflict("cpf_already_registered");
+      }
     }
   }
 
@@ -228,6 +237,11 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     if (sleepers >= MAX_SLEEP) {
       return conflict("monastery_full");
     }
+  }
+
+  // Guard before charge creation: avoid leaking a PIX charge for already-paid registrations.
+  if (existing && existing.status === "PAID") {
+    return conflict("registration_exists", { status: existing.status });
   }
 
   let provider;
@@ -282,7 +296,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   try {
     if (existing && existing.status !== "PAID") {
-      await updateRegistration(env.DB, existing.phone, {
+      await updateRegistration(env.DB, existing.id, {
         name: name?.trim() ?? "",
         status: "PENDING",
         payment_provider: "woovi",
@@ -306,8 +320,6 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
         dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
       });
-    } else if (existing && existing.status === "PAID") {
-      return conflict("registration_exists", { status: existing.status });
     } else {
       await insertRegistration(env.DB, {
         id,
@@ -339,8 +351,14 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   } catch (error) {
     const message = (error as Error).message || "unknown_error";
     if (message.includes("UNIQUE constraint failed")) {
-      const current = await getByPhone(env.DB, phone);
-      return conflict("registration_exists", { status: current?.status });
+      if (message.includes("registrations.cpf_encrypted")) {
+        return conflict("cpf_already_registered");
+      }
+      if (message.includes("registrations.email")) {
+        const current = await getByEmail(env.DB, email);
+        return conflict("registration_exists", { status: current?.status });
+      }
+      return conflict("registration_exists", {});
     }
     return serverError();
   }
