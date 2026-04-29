@@ -9,7 +9,6 @@ import {
   countActiveSleep,
   expirePending,
   getByEmail,
-  getByPhone,
   getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
@@ -161,42 +160,22 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   await expirePending(env.DB);
 
-  let existing = await getByPhone(env.DB, phone);
-  const hasDifferentName = Boolean(
-    existing &&
+  let existing = await getByEmail(env.DB, email);
+
+  if (existing) {
+    const isDifferentNameByEmail = Boolean(
       existing.name &&
-      name &&
-      existing.name.trim().toLowerCase() !== name.trim().toLowerCase()
-  );
+        name &&
+        existing.name.trim().toLowerCase() !== name.trim().toLowerCase()
+    );
 
-  if (existing && hasDifferentName) {
-    if (existing.status === "CANCELED") {
-      // Registro antigo cancelado de outra pessoa não deve bloquear uma nova inscrição.
-      existing = null;
-    } else {
-      return conflict("phone_used_by_other_name", { phone, name: existing.name });
-    }
-  }
-
-  if (!existing) {
-    const existingByEmail = await getByEmail(env.DB, email);
-    if (existingByEmail) {
-      const isDifferentNameByEmail = Boolean(
-        existingByEmail.name &&
-          name &&
-          existingByEmail.name.trim().toLowerCase() !== name.trim().toLowerCase()
-      );
-
-      if (isDifferentNameByEmail) {
-        return conflict("email_used_by_other_name", { email, name: existingByEmail.name });
+    if (isDifferentNameByEmail) {
+      if (existing.status !== "CANCELED") {
+        return conflict("email_used_by_other_name", { email, name: existing.name });
       }
-
-      if (existingByEmail.status === "PAID") {
-        return conflict("registration_exists", { status: existingByEmail.status });
-      }
-
-      // Reaproveita cadastro pendente/cancelado da mesma pessoa, mesmo com telefone novo.
-      existing = existingByEmail;
+      // CANCELED + different name: reuse the slot (overwrite with new registrant's data).
+    } else if (existing.status === "PAID") {
+      return conflict("registration_exists", { status: existing.status });
     }
   }
 
