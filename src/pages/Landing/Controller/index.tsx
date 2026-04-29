@@ -130,6 +130,20 @@ const LandingController: React.FC = () => {
       return rest;
     });
   };
+
+  const clearEmergencyContactNameError = () => {
+    setErrors((prev) => {
+      const { emergencyContactName, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const clearEmergencyContactPhoneError = () => {
+    setErrors((prev) => {
+      const { emergencyContactPhone, ...rest } = prev;
+      return rest;
+    });
+  };
   // ---------------------------------------------------------------
 
   // Limpar sessionStorage ao fazer reload ou sair da página
@@ -818,6 +832,8 @@ const LandingController: React.FC = () => {
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onTermsChange={clearTermsError}
+      onEmergencyContactNameChange={clearEmergencyContactNameError}
+      onEmergencyContactPhoneChange={clearEmergencyContactPhoneError}
     />
   );
 };

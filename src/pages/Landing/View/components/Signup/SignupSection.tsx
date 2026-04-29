@@ -114,6 +114,10 @@ interface SignupSectionProps {
   onCpfChange?: () => void;
   /** Limpa o erro de termos ao marcar o checkbox */
   onTermsChange?: () => void;
+  /** Limpa o erro de nome do contato de emergência ao editar */
+  onEmergencyContactNameChange?: () => void;
+  /** Limpa o erro de telefone do contato de emergência ao editar */
+  onEmergencyContactPhoneChange?: () => void;
 }
 
 const SignupSection: React.FC<SignupSectionProps> = ({
@@ -140,6 +144,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   getNextWhatsappUrl,
   onCpfChange,
   onTermsChange,
+  onEmergencyContactNameChange,
+  onEmergencyContactPhoneChange,
 }) => {
   const [sleepSelected, setSleepSelected] = useState<string>("");
   const [hasAllergyMedication, setHasAllergyMedication] = useState<string>("");
@@ -499,6 +505,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.emergencyContactNamePlaceholder")}
                   ref={emergencyContactNameRef as RefObject<HTMLInputElement>}
+                  onChange={() => onEmergencyContactNameChange?.()}
                   autoComplete="name"
                 />
               </FormField>
@@ -515,7 +522,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.emergencyContactPhonePlaceholder")}
                   ref={emergencyContactPhoneRef as RefObject<HTMLInputElement>}
-                  onChange={onPhoneChange}
+                  onChange={(e) => {
+                    onPhoneChange(e);
+                    onEmergencyContactPhoneChange?.();
+                  }}
                   inputMode="tel"
                   autoComplete="tel"
                 />
@@ -818,6 +828,30 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 >
                   {statusMessage}
                 </StatusMessage>
+              )}
+
+              {statusMessage && !statusTone && currentStatus !== "PAID" && currentStatus !== "CANCELED" && currentStatus !== "PENDING" && (
+                <div style={{ marginTop: "1rem", textAlign: "center" }}>
+                  <button
+                    onClick={onNewRegistration}
+                    style={{
+                      cursor: "pointer",
+                      color: "#2563eb",
+                      textDecoration: "underline",
+                      fontSize: "0.95rem",
+                      fontWeight: "500",
+                      transition: "color 0.2s",
+                      background: "none",
+                      border: "none",
+                      padding: "0",
+                      font: "inherit",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
+                  >
+                    {t("signup.status.newRegistration")}
+                  </button>
+                </div>
               )}
 
               {currentStatus === "PENDING" && (

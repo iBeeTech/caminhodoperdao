@@ -76,6 +76,8 @@ interface LandingViewProps {
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
   onCpfChange?: () => void;
   onTermsChange?: () => void;
+  onEmergencyContactNameChange?: () => void;
+  onEmergencyContactPhoneChange?: () => void;
 }
 
 const LandingView: React.FC<LandingViewProps> = ({
@@ -106,6 +108,8 @@ const LandingView: React.FC<LandingViewProps> = ({
   getNextWhatsappUrl,
   onCpfChange,
   onTermsChange,
+  onEmergencyContactNameChange,
+  onEmergencyContactPhoneChange,
 }) => {
   const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
   return (
@@ -159,6 +163,8 @@ const LandingView: React.FC<LandingViewProps> = ({
             getNextWhatsappUrl={getNextWhatsappUrl}
             onCpfChange={onCpfChange}
             onTermsChange={onTermsChange}
+            onEmergencyContactNameChange={onEmergencyContactNameChange}
+            onEmergencyContactPhoneChange={onEmergencyContactPhoneChange}
           />
         </TrackSection>
 
