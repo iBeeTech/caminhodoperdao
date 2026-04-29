@@ -701,11 +701,9 @@ const LandingController: React.FC = () => {
           const statusData = await landingService.checkStatus(payload.cpf);
 
           if (!statusData?.exists) {
-            setStatusMessage(null);
-            setStatusTone(null);
+            setStatusMessage(t("signup.status.processingError"));
+            setStatusTone("error");
             setPhase("form");
-            setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
-            scrollToPhoneError();
             return;
           }
 
