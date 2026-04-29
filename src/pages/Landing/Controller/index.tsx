@@ -598,6 +598,7 @@ const LandingController: React.FC = () => {
       }, 100);
     } catch (error: any) {
       const { status, body } = getHttpInfo(error);
+      const bodyAsText = JSON.stringify(body ?? {}).toLowerCase();
 
       // ✅ email usado por outro nome (robusto)
       if (status === 409 && body?.error === "email_used_by_other_name") {
@@ -613,7 +614,7 @@ const LandingController: React.FC = () => {
         return;
       }
 
-      if (status === 409 && body?.error === "phone_used_by_other_name") {
+      if (status === 409 && (body?.error === "phone_used_by_other_name" || bodyAsText.includes("phone_used_by_other_name"))) {
         setStatusMessage(null);
         setStatusTone(null);
         setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
@@ -685,7 +686,16 @@ const LandingController: React.FC = () => {
         }
 
         try {
-          const statusData = await landingService.checkStatus(payload.cpf, payload.name);
+          const statusData = await landingService.checkStatus(payload.cpf);
+
+          if (!statusData?.exists) {
+            setStatusMessage(null);
+            setStatusTone(null);
+            setPhase("form");
+            setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
+            return;
+          }
+
           existingDataRef.current = statusData;
           syncFormWithStatus(statusData, fieldRefs);
 
