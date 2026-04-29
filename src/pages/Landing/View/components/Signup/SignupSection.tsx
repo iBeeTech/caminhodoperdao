@@ -112,6 +112,8 @@ interface SignupSectionProps {
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
+  /** Limpa o erro de telefone principal ao editar */
+  onPhoneChangeError?: () => void;
   /** Limpa o erro de termos ao marcar o checkbox */
   onTermsChange?: () => void;
   /** Limpa o erro de nome do contato de emergência ao editar */
@@ -143,6 +145,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onNewRegistration,
   getNextWhatsappUrl,
   onCpfChange,
+  onPhoneChangeError,
   onTermsChange,
   onEmergencyContactNameChange,
   onEmergencyContactPhoneChange,
@@ -374,7 +377,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showCheckForm && (
             <SignupForm noValidate onSubmit={handleCheckSubmit}>
-              <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name} required>
+              <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
                 <Input
                   id="name"
                   name="name"
@@ -487,7 +490,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.whatsappPlaceholder")}
                   ref={phoneRef as RefObject<HTMLInputElement>}
-                  onChange={onPhoneChange}
+                  onChange={(e) => {
+                    onPhoneChange(e);
+                    onPhoneChangeError?.();
+                  }}
                   inputMode="tel"
                   autoComplete="tel"
                 />

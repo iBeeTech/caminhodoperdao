@@ -131,6 +131,13 @@ const LandingController: React.FC = () => {
     });
   };
 
+  const clearPhoneError = () => {
+    setErrors((prev) => {
+      const { phone, ...rest } = prev;
+      return rest;
+    });
+  };
+
   const clearEmergencyContactNameError = () => {
     setErrors((prev) => {
       const { emergencyContactName, ...rest } = prev;
@@ -419,7 +426,7 @@ const LandingController: React.FC = () => {
     // limpa só o callout específico quando re-submeter
     clearEmailUsedByOtherNameError();
 
-    const validationErrors = validateCheckForm(t, { name: nameRef, cpf: cpfRef }).errors;
+    const validationErrors = validateCheckForm(t, { cpf: cpfRef }).errors;
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -432,11 +439,10 @@ const LandingController: React.FC = () => {
 
     setErrors({}); // limpa erros anteriores quando a validação passa (ex.: CPF corrigido)
     const cpf = getFieldValue(cpfRef.current);
-    const name = getFieldValue(nameRef.current);
     formSubmitted("landing", "signup_check", "pending");
 
     try {
-      const result = await checkStatusMutation.mutateAsync({ cpf, name });
+      const result = await checkStatusMutation.mutateAsync({ cpf });
       existingDataRef.current = result;
 
       if (!result.exists) {
@@ -611,7 +617,6 @@ const LandingController: React.FC = () => {
         setStatusMessage(null);
         setStatusTone(null);
         setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
-        setPhase("form");
         return;
       }
 
@@ -676,7 +681,6 @@ const LandingController: React.FC = () => {
           setStatusMessage(null);
           setStatusTone(null);
           setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
-          setPhase("form");
           return;
         }
 
@@ -831,6 +835,7 @@ const LandingController: React.FC = () => {
       onNewRegistration={handleStartNewRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
+      onPhoneChangeError={clearPhoneError}
       onTermsChange={clearTermsError}
       onEmergencyContactNameChange={clearEmergencyContactNameError}
       onEmergencyContactPhoneChange={clearEmergencyContactPhoneError}

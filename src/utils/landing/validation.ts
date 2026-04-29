@@ -10,21 +10,16 @@ import { getFieldValue } from "../dom/forms";
 import type { FieldRefsType, ValidationResult, ErrorMap } from "./types";
 
 /**
- * Valida o formulário de "Check Status" (por CPF e nome)
+ * Valida o formulário de "Check Status" (por CPF)
  */
 export function validateCheckForm(
   t: (key: string) => string,
-  refs: Pick<FieldRefsType, "name" | "cpf">
+  refs: Pick<FieldRefsType, "cpf">
 ): ValidationResult {
   const errors: ErrorMap = {};
-  
-  const name = getFieldValue(refs.name.current);
+
   const cpf = getFieldValue(refs.cpf.current);
 
-  if (!name) {
-    errors.name = t("signup.errors.required");
-  }
-  
   if (!cpf) {
     errors.cpf = t("signup.errors.required");
   } else if (!isValidCpf(cpf)) {

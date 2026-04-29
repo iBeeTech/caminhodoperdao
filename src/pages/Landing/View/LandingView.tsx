@@ -75,6 +75,7 @@ interface LandingViewProps {
   onNewRegistration: () => void;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
   onCpfChange?: () => void;
+  onPhoneChangeError?: () => void;
   onTermsChange?: () => void;
   onEmergencyContactNameChange?: () => void;
   onEmergencyContactPhoneChange?: () => void;
@@ -107,6 +108,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onNewRegistration,
   getNextWhatsappUrl,
   onCpfChange,
+  onPhoneChangeError,
   onTermsChange,
   onEmergencyContactNameChange,
   onEmergencyContactPhoneChange,
@@ -162,6 +164,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             onNewRegistration={onNewRegistration}
             getNextWhatsappUrl={getNextWhatsappUrl}
             onCpfChange={onCpfChange}
+            onPhoneChangeError={onPhoneChangeError}
             onTermsChange={onTermsChange}
             onEmergencyContactNameChange={onEmergencyContactNameChange}
             onEmergencyContactPhoneChange={onEmergencyContactPhoneChange}
