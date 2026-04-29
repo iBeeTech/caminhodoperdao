@@ -286,6 +286,16 @@ const LandingController: React.FC = () => {
     setCurrentStatus(null);
   };
 
+  const scrollToPhoneError = () => {
+    setTimeout(() => {
+      const input = phoneRef.current;
+      if (!input) return;
+
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+      input.focus({ preventScroll: true });
+    }, 0);
+  };
+
   /**
    * ✅ Agora roda no "check" e no "form"
    * ✅ Captura 409 mesmo quando `instanceof HttpError` falha (bundler/duplicação)
@@ -618,6 +628,7 @@ const LandingController: React.FC = () => {
         setStatusMessage(null);
         setStatusTone(null);
         setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
+        scrollToPhoneError();
         return;
       }
 
@@ -682,6 +693,7 @@ const LandingController: React.FC = () => {
           setStatusMessage(null);
           setStatusTone(null);
           setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
+          scrollToPhoneError();
           return;
         }
 
@@ -693,6 +705,7 @@ const LandingController: React.FC = () => {
             setStatusTone(null);
             setPhase("form");
             setErrors((prev) => ({ ...prev, phone: t("signup.errors.phoneUsedByOtherName") }));
+            scrollToPhoneError();
             return;
           }
 
