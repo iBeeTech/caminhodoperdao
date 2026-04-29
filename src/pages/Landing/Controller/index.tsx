@@ -303,64 +303,9 @@ const LandingController: React.FC = () => {
   const onEmailBlur = async () => {
     if (phase !== "form") return;
 
-    const email = getFieldValue(emailRef.current);
-    const name = getFieldValue(nameRef.current);
-
-    // Se inválido, não faz nada e limpa o callout específico
-    if (!email || !email.includes("@")) {
-      clearEmailUsedByOtherNameError();
-      return;
-    }
-
-    try {
-      const result = await checkStatusMutation.mutateAsync({ email, name });
-
-      // Se deu sucesso, não deixa o erro antigo "grudado"
-      clearEmailUsedByOtherNameError();
-
-      // Seu fluxo atual quando existe inscrição (mesmo email/nome)
-      if (result.exists) {
-        existingDataRef.current = result;
-        syncFormWithStatus(result, fieldRefs);
-
-        if (result.name) sessionStorage.setItem("landing_registration_name", result.name);
-        if (result.email) sessionStorage.setItem("landing_registration_email", result.email);
-
-        const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
-        setCurrentStatus(normalizedStatus);
-        setQrCodeText(result.qrCodeText ?? null);
-        setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
-
-        if (normalizedStatus === "PAID") {
-          setStatusMessage(result.message ?? t("signup.status.paid"));
-          setStatusTone("success");
-          setPhase("status");
-        } else if (normalizedStatus === "PENDING") {
-          setStatusMessage(t("signup.status.pending"));
-          setStatusTone("warn");
-          setPhase("status");
-        }
-      }
-    } catch (error: any) {
-      // Robusto (não depende de instanceof)
-      const { status, body } = getHttpInfo(error);
-
-      if (status === 409 && body?.error === "email_used_by_other_name") {
-        setEmailUsedByOtherNameError(body?.email, body?.name);
-        return;
-      }
-
-      // fallback (caso seu client ainda use HttpError de forma confiável)
-      if (error instanceof HttpError && error.status === 409) {
-        const errorData = error.response?.body as any;
-        if (errorData?.error === "email_used_by_other_name") {
-          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
-          return;
-        }
-      }
-
-      console.debug("Email verification on blur failed, allowing user to continue", error);
-    }
+    // A verificação definitiva de conflito por e-mail acontece no submit do registro.
+    // Aqui apenas removemos o estado de erro para permitir nova tentativa ao editar o campo.
+    clearEmailUsedByOtherNameError();
   };
 
   const onPhoneChange = (event: ChangeEvent<HTMLInputElement>) => {

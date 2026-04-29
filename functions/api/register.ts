@@ -160,9 +160,21 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   await expirePending(env.DB);
 
-  const existing = await getByPhone(env.DB, phone);
-  if (existing && existing.name && name && existing.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
-    return conflict("phone_used_by_other_name", { phone, name: existing.name });
+  let existing = await getByPhone(env.DB, phone);
+  const hasDifferentName = Boolean(
+    existing &&
+      existing.name &&
+      name &&
+      existing.name.trim().toLowerCase() !== name.trim().toLowerCase()
+  );
+
+  if (existing && hasDifferentName) {
+    if (existing.status === "CANCELED") {
+      // Registro antigo cancelado de outra pessoa não deve bloquear uma nova inscrição.
+      existing = null;
+    } else {
+      return conflict("phone_used_by_other_name", { phone, name: existing.name });
+    }
   }
 
   // Inserção nova: CPF já usado por outra inscrição?
