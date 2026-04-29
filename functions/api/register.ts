@@ -8,6 +8,7 @@ import {
   countActive,
   countActiveSleep,
   expirePending,
+  getByEmail,
   getByPhone,
   getByCpfEncrypted,
   insertRegistration,
@@ -177,6 +178,28 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     }
   }
 
+  if (!existing) {
+    const existingByEmail = await getByEmail(env.DB, email);
+    if (existingByEmail) {
+      const isDifferentNameByEmail = Boolean(
+        existingByEmail.name &&
+          name &&
+          existingByEmail.name.trim().toLowerCase() !== name.trim().toLowerCase()
+      );
+
+      if (isDifferentNameByEmail) {
+        return conflict("email_used_by_other_name", { email, name: existingByEmail.name });
+      }
+
+      if (existingByEmail.status === "PAID") {
+        return conflict("registration_exists", { status: existingByEmail.status });
+      }
+
+      // Reaproveita cadastro pendente/cancelado da mesma pessoa, mesmo com telefone novo.
+      existing = existingByEmail;
+    }
+  }
+
   // Inserção nova: CPF já usado por outra inscrição?
   if (!existing) {
     const existingByCpf = await getByCpfEncrypted(env.DB, cpfEncrypted);
@@ -259,7 +282,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   try {
     if (existing && existing.status !== "PAID") {
-      await updateRegistration(env.DB, phone, {
+      await updateRegistration(env.DB, existing.phone, {
         name: name?.trim() ?? "",
         status: "PENDING",
         payment_provider: "woovi",

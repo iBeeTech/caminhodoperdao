@@ -154,7 +154,7 @@ export async function updateRegistration(
     input.payment_ref,
     input.sleep_at_monastery,
     input.companion_name,
-    phone.replace(/\D/g, ""),
+    input.phone.replace(/\D/g, ""),
     input.cep,
     input.address,
     input.number,
