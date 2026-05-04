@@ -1079,12 +1079,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       position={LANDING_SECTIONS.REGISTRATION_FORM.position}
                       variant="primary"
                       size="md"
-                      onClick={async () => {
+                      onClick={() => {
                         if (window && (window as any).analytics) {
                           (window as any).analytics.track && (window as any).analytics.track("whatsapp_signup_button_click");
                         }
-                        const url = await getNextWhatsappUrl();
-                        window.open(url, "_blank");
+                        window.open("https://chat.whatsapp.com/FBuIFntCDpxGceChM6zNNa", "_blank");
                       }}
                       className="whatsapp-button"
                       style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
