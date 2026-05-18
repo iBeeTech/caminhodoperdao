@@ -18,6 +18,7 @@ import { syncFormWithStatus } from "../../../utils/landing/syncFormWithStatus";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
+import { isEmailValid } from "../../../utils/validators/email";
 
 const DEFAULT_WA_NUMBER = "5516982221415";
 const DEFAULT_WA_MESSAGE = "Olá! Vim pelo site e preciso de ajuda.";
@@ -82,6 +83,7 @@ const LandingController: React.FC = () => {
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
+  const [statusPollingCpf, setStatusPollingCpf] = useState<string | null>(null);
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
   const pageViewTrackedRef = useRef(false);
@@ -106,6 +108,13 @@ const LandingController: React.FC = () => {
   const clearEmailUsedByOtherNameError = () => {
     setErrors((prev) => {
       const { emailUsedByOtherName, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const clearEmailError = () => {
+    setErrors((prev) => {
+      const { email, ...rest } = prev;
       return rest;
     });
   };
@@ -173,6 +182,69 @@ const LandingController: React.FC = () => {
       pageViewTrackedRef.current = true;
     }
   }, [pageViewed]);
+
+  React.useEffect(() => {
+    const shouldPoll = phase === "status" && currentStatus === "PENDING" && Boolean(statusPollingCpf);
+    if (!shouldPoll || !statusPollingCpf) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const pollStatus = async () => {
+      try {
+        const result = await landingService.checkStatus(statusPollingCpf);
+        if (cancelled || !result?.exists) {
+          return;
+        }
+
+        if (result.name && typeof window !== "undefined") {
+          sessionStorage.setItem("landing_registration_name", result.name);
+        }
+        if (result.email && typeof window !== "undefined") {
+          sessionStorage.setItem("landing_registration_email", result.email);
+        }
+
+        const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
+        if (!normalizedStatus) {
+          return;
+        }
+
+        if (normalizedStatus === "PAID") {
+          setCurrentStatus("PAID");
+          setQrCodeText(result.qrCodeText ?? null);
+          setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+          setStatusMessage(result.message ?? t("signup.status.paid"));
+          setStatusTone("success");
+          paymentConfirmed("landing", "woovi", "pix", { status: "PAID" });
+          return;
+        }
+
+        if (normalizedStatus === "CANCELED") {
+          setCurrentStatus("CANCELED");
+          setQrCodeText(result.qrCodeText ?? null);
+          setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+          setStatusMessage(t("signup.status.canceled"));
+          setStatusTone("error");
+          return;
+        }
+
+        setCurrentStatus("PENDING");
+        setQrCodeText(result.qrCodeText ?? null);
+        setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+      } catch {
+        // Mantém a UI atual; o usuário ainda pode recarregar manualmente.
+      }
+    };
+
+    pollStatus();
+    const intervalId = window.setInterval(pollStatus, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [phase, currentStatus, statusPollingCpf, t, paymentConfirmed]);
 
   // Restaurar dados persistidos quando transicionar para form
   React.useEffect(() => {
@@ -296,16 +368,39 @@ const LandingController: React.FC = () => {
     }, 0);
   };
 
-  /**
-   * ✅ Agora roda no "check" e no "form"
-   * ✅ Captura 409 mesmo quando `instanceof HttpError` falha (bundler/duplicação)
-   */
-  const onEmailBlur = async () => {
+  const onEmailBlur = () => {
     if (phase !== "form") return;
 
-    // A verificação definitiva de conflito por e-mail acontece no submit do registro.
-    // Aqui apenas removemos o estado de erro para permitir nova tentativa ao editar o campo.
     clearEmailUsedByOtherNameError();
+
+    const email = getFieldValue(emailRef.current);
+    if (email && !isEmailValid(email)) {
+      setErrors((prev) => ({ ...prev, email: t("signup.errors.emailInvalid") }));
+      return;
+    }
+
+    clearEmailError();
+  };
+
+  const onEmailChange = (value: string) => {
+    const email = value.trim();
+
+    setErrors((prev) => {
+      if (!prev.email && !prev.emailUsedByOtherName) {
+        return prev;
+      }
+
+      const nextErrors = { ...prev };
+      delete nextErrors.emailUsedByOtherName;
+
+      if (email && !isEmailValid(email)) {
+        nextErrors.email = t("signup.errors.emailInvalid");
+      } else {
+        delete nextErrors.email;
+      }
+
+      return nextErrors;
+    });
   };
 
   const onPhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -394,6 +489,8 @@ const LandingController: React.FC = () => {
 
     setErrors({}); // limpa erros anteriores quando a validação passa (ex.: CPF corrigido)
     const cpf = getFieldValue(cpfRef.current);
+    const normalizedCpf = cpf.replace(/\D/g, "");
+    setStatusPollingCpf(normalizedCpf || null);
     formSubmitted("landing", "signup_check", "pending");
 
     try {
@@ -529,6 +626,7 @@ const LandingController: React.FC = () => {
 
     try {
       const data = await registerMutation.mutateAsync(payload);
+      setStatusPollingCpf(payload.cpf || null);
 
       setCurrentStatus(data.status ?? null);
       setQrCodeText(data.qrCodeText ?? null);
@@ -723,6 +821,7 @@ const LandingController: React.FC = () => {
   const handleReopenRegistration = async () => {
     setCapacityCallout(null);
     resetStatusState();
+    setStatusPollingCpf(null);
 
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("landing_registration_name");
@@ -736,7 +835,7 @@ const LandingController: React.FC = () => {
         setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
-      setPhase("form");
+      setPhase("check");
     } catch (error) {
       setStatusMessage(t("signup.status.reopenError"));
       setStatusTone("error");
@@ -747,6 +846,7 @@ const LandingController: React.FC = () => {
     setCapacityCallout(null);
     resetStatusState();
     setErrors({});
+    setStatusPollingCpf(null);
     existingDataRef.current = null;
     setPhase("check");
   };
@@ -795,6 +895,7 @@ const LandingController: React.FC = () => {
       onPhoneChange={onPhoneChange}
       onCepChange={onCepChange}
       onEmailBlur={onEmailBlur}
+      onEmailChange={onEmailChange}
       onPrimaryAction={() => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}

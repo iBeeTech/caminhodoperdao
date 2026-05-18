@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, RefObject, useRef, useState } from "react";
+import React, { ChangeEvent, FormEvent, RefObject, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
 import { Callout, FormField, Input, Select } from "../../../../../components";
@@ -101,12 +101,8 @@ interface SignupSectionProps {
   onSubmitRegistration: (event: FormEvent<HTMLFormElement>) => void;
   onPhoneChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  /**
-   * IMPORTANT:
-   * Esse handler precisa validar o e-mail atual (lido via emailRef.current?.value no controller/pai)
-   * e setar/limpar errors.emailUsedByOtherName de forma IMUTÁVEL.
-   */
   onEmailBlur: () => void;
+  onEmailChange: (value: string) => void;
   onReopenRegistration: () => void;
   onNewRegistration: () => void;
   getNextWhatsappUrl: () => Promise<string>;
@@ -141,6 +137,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onPhoneChange,
   onCepChange,
   onEmailBlur,
+  onEmailChange,
   onReopenRegistration,
   onNewRegistration,
   getNextWhatsappUrl,
@@ -165,9 +162,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull && enrollmentEnabled;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull && enrollmentEnabled;
   const showStatus = !hasAvailabilityError && phase === "status" && enrollmentEnabled;
-
-  // Debounce para validar email enquanto digita (sem libs novas)
-  const emailDebounceRef = useRef<number | null>(null);
 
   const handleCopyBrcode = async () => {
     if (!qrCodeText) return;
@@ -228,46 +222,16 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     dietaryRestrictionNoRef,
   ]);
 
-  const validateEmailNow = () => {
-    // Dispara validação no controller/pai (ele decide setar/limpar errors.emailUsedByOtherName)
-    onEmailBlur();
-  };
-
-  const handleEmailChangeDebounced = () => {
-    if (emailDebounceRef.current) {
-      window.clearTimeout(emailDebounceRef.current);
-    }
-    emailDebounceRef.current = window.setTimeout(() => {
-      validateEmailNow();
-    }, 450);
-  };
-
   const handleCpfChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.target.value = formatCpfBR(event.target.value);
   };
 
   const handleCheckSubmit = (event: FormEvent<HTMLFormElement>) => {
-    // Garante validação antes do submit (cobre caso sem blur)
-    validateEmailNow();
-
-    // Se já existe erro (por estado anterior), bloqueia.
-    // Obs: se a validação seta erro async no pai, o bloqueio pode acontecer no próximo submit.
-    if (errors.emailUsedByOtherName) {
-      event.preventDefault();
-      return;
-    }
-
     onCheckStatus(event);
   };
 
   const handleRegistrationSubmit = (event: FormEvent<HTMLFormElement>) => {
-    validateEmailNow();
-
-    if (errors.emailUsedByOtherName) {
-      event.preventDefault();
-      return;
-    }
-
+    onEmailBlur();
     onSubmitRegistration(event);
   };
 
@@ -462,8 +426,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="email"
                   placeholder={t("signup.registrationForm.emailPlaceholder")}
                   ref={emailRef as RefObject<HTMLInputElement>}
-                  onBlur={validateEmailNow}
-                  onChange={handleEmailChangeDebounced} // ✅ valida enquanto digita (debounced)
+                  onBlur={onEmailBlur}
+                  onChange={(event) => onEmailChange(event.target.value)}
                   autoComplete="email"
                 />
               </FormField>
