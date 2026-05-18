@@ -85,15 +85,17 @@ export interface GetPixStatusResponse {
 }
 
 export interface WooviWebhookPayload {
+  event?: string;
   charge?: {
     status: string;
-    correlationID: string;
+    correlationID?: string;
+    transactionID?: string;
     value: number;
     createdAt: string;
     updatedAt: string;
   };
   pix?: {
-    transactionID: string;
+    transactionID?: string;
     value: number;
     time: string;
     endToEndId: string;

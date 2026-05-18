@@ -1,5 +1,65 @@
 import { WooviWebhookPayload } from '../../types/woovi';
 
+function getCandidatePaymentRefs(payload: WooviWebhookPayload): string[] {
+  const refs = [
+    payload.pix?.transactionID,
+    payload.charge?.transactionID,
+    payload.charge?.correlationID,
+  ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+  return Array.from(new Set(refs));
+}
+
+async function findRegistrationByPaymentRefs(
+  db: any,
+  paymentRefs: string[]
+): Promise<{ id: string; email: string; name: string } | null> {
+  for (const ref of paymentRefs) {
+    const registration = (await db
+      .prepare('SELECT id, email, name FROM registrations WHERE payment_ref = ?')
+      .bind(ref)
+      .first()) as any;
+
+    if (registration) {
+      return registration;
+    }
+  }
+
+  // Fallback: tenta resolver via tabela payments caso registration.payment_ref esteja
+  // em um identificador diferente do recebido no webhook.
+  try {
+    for (const ref of paymentRefs) {
+      const payment = (await db
+        .prepare(
+          'SELECT correlation_id, provider_charge_id FROM payments WHERE correlation_id = ? OR provider_charge_id = ?'
+        )
+        .bind(ref, ref)
+        .first()) as any;
+
+      if (!payment) continue;
+
+      const mappedRefs = [payment.correlation_id, payment.provider_charge_id].filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      );
+
+      for (const mappedRef of mappedRefs) {
+        const registration = (await db
+          .prepare('SELECT id, email, name FROM registrations WHERE payment_ref = ?')
+          .bind(mappedRef)
+          .first()) as any;
+
+        if (registration) {
+          return registration;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Fallback via tabela payments falhou:', error);
+  }
+
+  return null;
+}
+
 /**
  * Função para gerar número de inscrição sequencial
  */
@@ -44,22 +104,25 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
       return new Response('OK', { status: 200, headers: corsHeaders });
     }
 
-    const { charge, pix } = payload;
-    const correlationId = charge.correlationID || 'unknown';
-    const transactionID = pix?.transactionID || charge.correlationID;
+    const { charge } = payload;
+    const paymentRefs = getCandidatePaymentRefs(payload);
+
+    if (!paymentRefs.length) {
+      console.warn('Webhook sem identificador de pagamento. Payload:', JSON.stringify(payload));
+      return new Response('OK', { status: 200, headers: corsHeaders });
+    }
 
     console.log('Payload recebido:', JSON.stringify(payload));
-    console.log('transactionID:', transactionID);
+    console.log('Refs candidatas de pagamento:', paymentRefs.join(', '));
 
     // ========== ATUALIZAR STATUS NO D1 ==========
     try {
+      const isPaidStatus = ['COMPLETED', 'RECEIVED'].includes(charge.status);
+
       // Se o status é COMPLETED, marcar como PAID
-      if (charge.status === 'COMPLETED') {
-        // Buscar registro na tabela registrations pelo payment_ref (que é o transactionID)
-        const registration = await context.env.DB
-          .prepare('SELECT id, email, name FROM registrations WHERE payment_ref = ?')
-          .bind(transactionID)
-          .first() as any;
+      if (isPaidStatus) {
+        // Buscar registro na tabela registrations pelo payment_ref, tentando variações de referência.
+        const registration = await findRegistrationByPaymentRefs(context.env.DB, paymentRefs);
 
         console.log('Resultado da query de busca:', registration);
 
@@ -80,13 +143,10 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
             `Registro marcado como PAID: ${registration.email} (número: ${registrationNumber})`
           );
         } else {
-          console.warn(`Registro não encontrado para transactionID: ${transactionID}`);
+          console.warn(`Registro não encontrado para refs: ${paymentRefs.join(', ')}`);
         }
       } else if (charge.status === 'EXPIRED') {
-        const registration = await context.env.DB
-          .prepare('SELECT id, email FROM registrations WHERE payment_ref = ?')
-          .bind(transactionID)
-          .first() as any;
+        const registration = await findRegistrationByPaymentRefs(context.env.DB, paymentRefs);
 
         console.log('Resultado da query de busca (expirado):', registration);
 
