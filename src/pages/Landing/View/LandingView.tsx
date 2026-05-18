@@ -69,6 +69,7 @@ interface LandingViewProps {
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onEmailBlur: () => void;
   onEmailChange: (value: string) => void;
+  onClearFieldError: (field: string) => void;
   onPrimaryAction: () => void;
   onSecondaryAction: () => void;
   onCallToAction: () => void;
@@ -103,6 +104,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onCepChange,
   onEmailBlur,
   onEmailChange,
+  onClearFieldError,
   onPrimaryAction,
   onSecondaryAction,
   onCallToAction,
@@ -163,6 +165,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             onCepChange={onCepChange}
             onEmailBlur={onEmailBlur}
             onEmailChange={onEmailChange}
+            onClearFieldError={onClearFieldError}
             onReopenRegistration={onReopenRegistration}
             onNewRegistration={onNewRegistration}
             getNextWhatsappUrl={getNextWhatsappUrl}

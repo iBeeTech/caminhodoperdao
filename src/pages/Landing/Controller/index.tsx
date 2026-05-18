@@ -105,60 +105,46 @@ const LandingController: React.FC = () => {
     return { status, body };
   };
 
-  const clearEmailUsedByOtherNameError = () => {
+  const clearFieldErrors = (...fields: string[]) => {
+    if (fields.length === 0) return;
+
     setErrors((prev) => {
-      const { emailUsedByOtherName, ...rest } = prev;
-      return rest;
+      let changed = false;
+      const nextErrors = { ...prev };
+
+      fields.forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(nextErrors, field)) {
+          delete nextErrors[field];
+          changed = true;
+        }
+      });
+
+      return changed ? nextErrors : prev;
     });
   };
 
   const clearEmailError = () => {
-    setErrors((prev) => {
-      const { email, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const setEmailUsedByOtherNameError = (email?: string, name?: string) => {
-    setErrors((prev) => ({
-      ...prev,
-      emailUsedByOtherName: `O e-mail ${email ?? ""} já foi utilizado para fazer a inscrição de ${name ?? ""}. Utilize outro e-mail.`,
-    }));
+    clearFieldErrors("email");
   };
 
   const clearCpfError = () => {
-    setErrors((prev) => {
-      const { cpf, ...rest } = prev;
-      return rest;
-    });
+    clearFieldErrors("cpf");
   };
 
   const clearTermsError = () => {
-    setErrors((prev) => {
-      const { termsAccepted, ...rest } = prev;
-      return rest;
-    });
+    clearFieldErrors("termsAccepted");
   };
 
   const clearPhoneError = () => {
-    setErrors((prev) => {
-      const { phone, ...rest } = prev;
-      return rest;
-    });
+    clearFieldErrors("phone");
   };
 
   const clearEmergencyContactNameError = () => {
-    setErrors((prev) => {
-      const { emergencyContactName, ...rest } = prev;
-      return rest;
-    });
+    clearFieldErrors("emergencyContactName");
   };
 
   const clearEmergencyContactPhoneError = () => {
-    setErrors((prev) => {
-      const { emergencyContactPhone, ...rest } = prev;
-      return rest;
-    });
+    clearFieldErrors("emergencyContactPhone");
   };
   // ---------------------------------------------------------------
 
@@ -371,8 +357,6 @@ const LandingController: React.FC = () => {
   const onEmailBlur = () => {
     if (phase !== "form") return;
 
-    clearEmailUsedByOtherNameError();
-
     const email = getFieldValue(emailRef.current);
     if (email && !isEmailValid(email)) {
       setErrors((prev) => ({ ...prev, email: t("signup.errors.emailInvalid") }));
@@ -386,20 +370,16 @@ const LandingController: React.FC = () => {
     const email = value.trim();
 
     setErrors((prev) => {
-      if (!prev.email && !prev.emailUsedByOtherName) {
+      if (!prev.email) {
         return prev;
       }
 
-      const nextErrors = { ...prev };
-      delete nextErrors.emailUsedByOtherName;
-
       if (email && !isEmailValid(email)) {
-        nextErrors.email = t("signup.errors.emailInvalid");
-      } else {
-        delete nextErrors.email;
+        return { ...prev, email: t("signup.errors.emailInvalid") };
       }
 
-      return nextErrors;
+      const { email: _emailError, ...rest } = prev;
+      return rest;
     });
   };
 
@@ -456,6 +436,7 @@ const LandingController: React.FC = () => {
   const onCepChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const masked = formatCepBR(event.target.value);
     event.target.value = masked;
+    clearFieldErrors("cep");
 
     if (masked.replace(/\D/g, "").length === 8) {
       const address = await fetchAddress(masked);
@@ -465,6 +446,7 @@ const LandingController: React.FC = () => {
         if (addressRef.current) addressRef.current.value = fullAddress;
         if (cityRef.current) cityRef.current.value = address.city;
         if (stateRef.current) stateRef.current.value = address.state;
+        clearFieldErrors("address", "city", "state");
       }
     }
   };
@@ -472,9 +454,6 @@ const LandingController: React.FC = () => {
   const handleCheckStatus = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetStatusState();
-
-    // limpa só o callout específico quando re-submeter
-    clearEmailUsedByOtherNameError();
 
     const validationErrors = validateCheckForm(t, { cpf: cpfRef }).errors;
 
@@ -538,25 +517,11 @@ const LandingController: React.FC = () => {
       // Robusto (não depende de instanceof)
       const { status, body } = getHttpInfo(error);
 
-      if (status === 409 && body?.error === "email_used_by_other_name") {
-        setEmailUsedByOtherNameError(body?.email, body?.name);
-        return; // permanece em 'check'
-      }
-
       if (status === 400 && body?.error === "invalid_cpf") {
         setErrors((prev) => ({ ...prev, cpf: t("signup.errors.cpfInvalid") }));
         setStatusMessage(null);
         setStatusTone(null);
         return;
-      }
-
-      // fallback (se HttpError funcionar)
-      if (error instanceof HttpError && error.status === 409) {
-        const errorData = error.response?.body as any;
-        if (errorData?.error === "email_used_by_other_name") {
-          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
-          return;
-        }
       }
 
       setStatusMessage(t("signup.status.checkError"));
@@ -653,13 +618,6 @@ const LandingController: React.FC = () => {
       const { status, body } = getHttpInfo(error);
       const bodyAsText = JSON.stringify(body ?? {}).toLowerCase();
 
-      // ✅ email usado por outro nome (robusto)
-      if (status === 409 && body?.error === "email_used_by_other_name") {
-        setEmailUsedByOtherNameError(body?.email, body?.name);
-        setPhase("form");
-        return;
-      }
-
       if (status === 409 && body?.error === "registration_exists") {
         setStatusMessage(t("signup.callouts.registrationExists"));
         setStatusTone("warn");
@@ -733,12 +691,6 @@ const LandingController: React.FC = () => {
       // fallback (se HttpError funcionar)
       if (error instanceof HttpError && error.status === 409) {
         const errorData = error.response?.body as any;
-        if (errorData?.error === "email_used_by_other_name") {
-          setEmailUsedByOtherNameError(errorData?.email, errorData?.name);
-          setPhase("form");
-          return;
-        }
-
         if (errorData?.error === "phone_used_by_other_name") {
           setStatusMessage(null);
           setStatusTone(null);
@@ -896,6 +848,7 @@ const LandingController: React.FC = () => {
       onCepChange={onCepChange}
       onEmailBlur={onEmailBlur}
       onEmailChange={onEmailChange}
+      onClearFieldError={(field) => clearFieldErrors(field)}
       onPrimaryAction={() => {
         document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
       }}

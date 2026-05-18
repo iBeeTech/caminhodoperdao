@@ -57,7 +57,7 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
       if (charge.status === 'COMPLETED') {
         // Buscar registro na tabela registrations pelo payment_ref (que é o transactionID)
         const registration = await context.env.DB
-          .prepare('SELECT email, name FROM registrations WHERE payment_ref = ?')
+          .prepare('SELECT id, email, name FROM registrations WHERE payment_ref = ?')
           .bind(transactionID)
           .first() as any;
 
@@ -70,9 +70,9 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           // Atualizar o registro como PAID com número de inscrição
           const updateResult = await context.env.DB
             .prepare(
-              "UPDATE registrations SET status = 'PAID', paid_at = ?, registration_number = ? WHERE email = ?"
+              "UPDATE registrations SET status = 'PAID', paid_at = ?, registration_number = ? WHERE id = ?"
             )
-            .bind(Date.now(), registrationNumber, registration.email)
+            .bind(Date.now(), registrationNumber, registration.id)
             .run();
 
           console.log('Resultado do update:', updateResult);
@@ -84,7 +84,7 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
         }
       } else if (charge.status === 'EXPIRED') {
         const registration = await context.env.DB
-          .prepare('SELECT email FROM registrations WHERE payment_ref = ?')
+          .prepare('SELECT id, email FROM registrations WHERE payment_ref = ?')
           .bind(transactionID)
           .first() as any;
 
@@ -92,8 +92,8 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
 
         if (registration) {
           const updateResult = await context.env.DB
-            .prepare("UPDATE registrations SET status = 'CANCELED' WHERE email = ?")
-            .bind(registration.email)
+            .prepare("UPDATE registrations SET status = 'CANCELED' WHERE id = ?")
+            .bind(registration.id)
             .run();
 
           console.log('Resultado do update (expirado):', updateResult);

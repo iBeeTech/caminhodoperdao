@@ -1,7 +1,7 @@
 -- D1 schema for pilgrim registrations
 CREATE TABLE IF NOT EXISTS registrations (
   id TEXT PRIMARY KEY,
-  email TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL,
   name TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL CHECK (status IN ('PENDING','PAID','CANCELED')),
   payment_provider TEXT,

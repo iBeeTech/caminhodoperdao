@@ -8,7 +8,6 @@ import {
   countActive,
   countActiveSleep,
   expirePending,
-  getByEmail,
   getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
@@ -160,39 +159,21 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   await expirePending(env.DB);
 
-  let existing = await getByEmail(env.DB, email);
+  const existing = await getByCpfEncrypted(env.DB, cpfEncrypted);
 
   if (existing) {
-    const isDifferentNameByEmail = Boolean(
+    const hasDifferentName = Boolean(
       existing.name &&
         name &&
         existing.name.trim().toLowerCase() !== name.trim().toLowerCase()
     );
 
-    if (isDifferentNameByEmail) {
-      if (existing.status !== "CANCELED") {
-        return conflict("email_used_by_other_name", { email, name: existing.name });
-      }
-      // CANCELED + different name: reuse the slot (overwrite with new registrant's data).
-    } else if (existing.status === "PAID") {
-      return conflict("registration_exists", { status: existing.status });
+    if (hasDifferentName) {
+      return conflict("cpf_already_registered");
     }
-  }
 
-  // Inserção nova: CPF já usado por outra inscrição?
-  if (!existing) {
-    const existingByCpf = await getByCpfEncrypted(env.DB, cpfEncrypted);
-    if (existingByCpf) {
-      // A canceled registration by the same person can be reused (same as the email path).
-      // Only block if the record belongs to a different person or is still active.
-      if (
-        existingByCpf.status === "CANCELED" &&
-        existingByCpf.name.trim().toLowerCase() === (name ?? "").trim().toLowerCase()
-      ) {
-        existing = existingByCpf;
-      } else {
-        return conflict("cpf_already_registered");
-      }
+    if (existing.status === "PAID") {
+      return conflict("registration_exists", { status: existing.status });
     }
   }
 
@@ -332,10 +313,6 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     if (message.includes("UNIQUE constraint failed")) {
       if (message.includes("registrations.cpf_encrypted")) {
         return conflict("cpf_already_registered");
-      }
-      if (message.includes("registrations.email")) {
-        const current = await getByEmail(env.DB, email);
-        return conflict("registration_exists", { status: current?.status });
       }
       return conflict("registration_exists", {});
     }

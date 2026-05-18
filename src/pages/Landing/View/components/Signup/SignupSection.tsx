@@ -74,7 +74,6 @@ type SignupErrors = Partial<{
   state: string;
   sleepAtMonastery: string;
   termsAccepted: string;
-  emailUsedByOtherName: string;
   allergyMedication: string;
   allergyMedicationDetails: string;
   dietaryRestriction: string;
@@ -103,6 +102,7 @@ interface SignupSectionProps {
   onCepChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onEmailBlur: () => void;
   onEmailChange: (value: string) => void;
+  onClearFieldError: (field: string) => void;
   onReopenRegistration: () => void;
   onNewRegistration: () => void;
   getNextWhatsappUrl: () => Promise<string>;
@@ -138,6 +138,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onCepChange,
   onEmailBlur,
   onEmailChange,
+  onClearFieldError,
   onReopenRegistration,
   onNewRegistration,
   getNextWhatsappUrl,
@@ -274,13 +275,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               <Callout variant="warning">{t("signup.callouts.full")}</Callout>
             )}
 
-          {/* Callout para email já utilizado por outro nome */}
-          {errors.emailUsedByOtherName && (
-            <Callout variant="warning" style={{ marginBottom: 24, textAlign: "center", fontSize: "1.1rem" }}>
-              {errors.emailUsedByOtherName}
-            </Callout>
-          )}
-
           {/* Callout principal para inscrição reservada: mostrar apenas no status pendente, não no formulário inicial */}
           {showStatus && currentStatus === "PENDING" && (
             <div
@@ -377,7 +371,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 variant="primary"
                 size="md"
                 type="submit"
-                disabled={isCheckingStatus || availability.loading || Boolean(errors.emailUsedByOtherName)}
+                disabled={isCheckingStatus || availability.loading}
                 loading={isCheckingStatus}
               >
                 {isCheckingStatus ? t("signup.checkForm.loading") : t("signup.checkForm.submit")}
@@ -508,7 +502,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.cepPlaceholder")}
                   ref={cepRef as RefObject<HTMLInputElement>}
-                  onChange={onCepChange}
+                  onChange={(event) => {
+                    onCepChange(event);
+                    onClearFieldError("cep");
+                  }}
                   inputMode="numeric"
                   autoComplete="postal-code"
                 />
@@ -521,6 +518,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.addressPlaceholder")}
                   ref={addressRef as RefObject<HTMLInputElement>}
+                  onChange={() => onClearFieldError("address")}
                   autoComplete="street-address"
                 />
               </FormField>
@@ -532,6 +530,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.numberPlaceholder")}
                   ref={numberRef as RefObject<HTMLInputElement>}
+                  onChange={() => onClearFieldError("number")}
                   inputMode="numeric"
                   autoComplete="off"
                 />
@@ -555,6 +554,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   type="text"
                   placeholder={t("signup.registrationForm.cityPlaceholder")}
                   ref={cityRef as RefObject<HTMLInputElement>}
+                  onChange={() => onClearFieldError("city")}
                   autoComplete="address-level2"
                 />
               </FormField>
@@ -567,6 +567,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   maxLength={2}
                   placeholder={t("signup.registrationForm.statePlaceholder")}
                   ref={stateRef as RefObject<HTMLInputElement>}
+                  onChange={() => onClearFieldError("state")}
                   autoComplete="address-level1"
                 />
               </FormField>
@@ -585,7 +586,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     name="sleepAtMonastery"
                     ref={sleepAtMonasteryRef as RefObject<HTMLSelectElement>}
                     defaultValue=""
-                    onChange={(e) => setSleepSelected(e.target.value)}
+                    onChange={(e) => {
+                      setSleepSelected(e.target.value);
+                      onClearFieldError("sleepAtMonastery");
+                    }}
                   >
                     <option value="" disabled>
                       {t("signup.registrationForm.sleepPlaceholder")}
@@ -639,7 +643,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       type="radio"
                       name="allergyMedication"
                       value="yes"
-                      onChange={() => setHasAllergyMedication("yes")}
+                      onChange={() => {
+                        setHasAllergyMedication("yes");
+                        onClearFieldError("allergyMedication");
+                      }}
                     />
                     {t("signup.registrationForm.yes")}
                   </label>
@@ -655,6 +662,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         if (allergyMedicationDetailsRef.current) {
                           allergyMedicationDetailsRef.current.value = "";
                         }
+                        onClearFieldError("allergyMedication");
+                        onClearFieldError("allergyMedicationDetails");
                       }}
                     />
                     {t("signup.registrationForm.no")}
@@ -667,6 +676,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     type="text"
                     placeholder={t("signup.registrationForm.allergyMedicationPlaceholder")}
                     ref={allergyMedicationDetailsRef as RefObject<HTMLInputElement>}
+                    onChange={() => onClearFieldError("allergyMedicationDetails")}
                     required
                     autoComplete="off"
                   />
@@ -692,7 +702,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       type="radio"
                       name="dietaryRestriction"
                       value="yes"
-                      onChange={() => setHasDietaryRestriction("yes")}
+                      onChange={() => {
+                        setHasDietaryRestriction("yes");
+                        onClearFieldError("dietaryRestriction");
+                      }}
                     />
                     {t("signup.registrationForm.yes")}
                   </label>
@@ -708,6 +721,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                         if (dietaryRestrictionDetailsRef.current) {
                           dietaryRestrictionDetailsRef.current.value = "";
                         }
+                        onClearFieldError("dietaryRestriction");
+                        onClearFieldError("dietaryRestrictionDetails");
                       }}
                     />
                     {t("signup.registrationForm.no")}
@@ -720,6 +735,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     type="text"
                     placeholder={t("signup.registrationForm.dietaryRestrictionPlaceholder")}
                     ref={dietaryRestrictionDetailsRef as RefObject<HTMLInputElement>}
+                    onChange={() => onClearFieldError("dietaryRestrictionDetails")}
                     required
                     autoComplete="off"
                   />
@@ -777,7 +793,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 variant="primary"
                 size="md"
                 type="submit"
-                disabled={isSubmittingRegistration || Boolean(errors.emailUsedByOtherName) || Boolean(errors.termsAccepted) || Boolean(errors.emergencyContactName) || Boolean(errors.emergencyContactPhone)}
+                disabled={isSubmittingRegistration || Boolean(errors.termsAccepted) || Boolean(errors.emergencyContactName) || Boolean(errors.emergencyContactPhone)}
                 loading={isSubmittingRegistration}
               >
                 {isSubmittingRegistration ? t("signup.registrationForm.loading") : t("signup.registrationForm.submit")}
