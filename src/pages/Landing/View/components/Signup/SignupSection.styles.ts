@@ -210,3 +210,60 @@ export const WarningNote = styled.div`
 export const SignupWarningIcon = styled.span`
   line-height: 1.2;
 `;
+
+export const ConfirmationModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+export const ConfirmationModalDialog = styled.div`
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 22px 24px;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.22);
+  border: 1px solid #dbeafe;
+  position: relative;
+  display: grid;
+  gap: 14px;
+`;
+
+export const ConfirmationModalClose = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+`;
+
+export const ConfirmationModalTitle = styled.h3`
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.3rem;
+  text-align: center;
+`;
+
+export const ConfirmationModalDescription = styled.p`
+  margin: 0;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.5;
+  font-size: 1rem;
+`;
+
+export const ConfirmationModalActions = styled.div`
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+`;

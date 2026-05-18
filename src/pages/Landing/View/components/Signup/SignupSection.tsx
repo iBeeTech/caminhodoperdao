@@ -28,6 +28,12 @@ import {
   QRCodeImage,
   SignupBullets,
   SignupCard,
+  ConfirmationModalActions,
+  ConfirmationModalClose,
+  ConfirmationModalDescription,
+  ConfirmationModalDialog,
+  ConfirmationModalOverlay,
+  ConfirmationModalTitle,
   SignupHeader,
   SignupSectionWrapper,
   SignupForm,
@@ -152,6 +158,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const [hasAllergyMedication, setHasAllergyMedication] = useState<string>("");
   const [hasDietaryRestriction, setHasDietaryRestriction] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
+  const [isPaidModalOpen, setIsPaidModalOpen] = useState(false);
   const { t } = useTranslation("landing");
   const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
 
@@ -222,6 +229,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     dietaryRestrictionYesRef,
     dietaryRestrictionNoRef,
   ]);
+
+  React.useEffect(() => {
+    setIsPaidModalOpen(currentStatus === "PAID");
+  }, [currentStatus]);
+
+  const handleWhatsappGroupClick = () => {
+    if (window && (window as any).analytics) {
+      (window as any).analytics.track && (window as any).analytics.track("whatsapp_signup_button_click");
+    }
+    window.open("https://chat.whatsapp.com/FBuIFntCDpxGceChM6zNNa", "_blank");
+  };
 
   const handleCpfChange = (event: ChangeEvent<HTMLInputElement>) => {
     event.target.value = formatCpfBR(event.target.value);
@@ -1042,37 +1060,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     }
                   `}</style>
 
-                  <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-                    <style>{`
-                      @keyframes floating {
-                        0%, 100% { transform: translateY(0px); }
-                        50% { transform: translateY(-8px); }
-                      }
-                      .whatsapp-button { animation: floating 3s ease-in-out infinite; }
-                    `}</style>
-
-                    <TrackedButton
-                      pageName="landing"
-                      ctaId={LANDING_CTAS.FORM_SUBMIT}
-                      sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
-                      sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
-                      position={LANDING_SECTIONS.REGISTRATION_FORM.position}
-                      variant="primary"
-                      size="md"
-                      onClick={() => {
-                        if (window && (window as any).analytics) {
-                          (window as any).analytics.track && (window as any).analytics.track("whatsapp_signup_button_click");
-                        }
-                        window.open("https://chat.whatsapp.com/FBuIFntCDpxGceChM6zNNa", "_blank");
-                      }}
-                      className="whatsapp-button"
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
-                    >
-                      <img src={whatsappIcon} alt="" style={{ width: "1.5rem", height: "1.5rem" }} />
-                      {t("signup.status.whatsappGroupButtonText")}
-                    </TrackedButton>
-                  </div>
-
                   <div style={{ marginTop: "1rem", textAlign: "center" }}>
                     <button
                       onClick={onNewRegistration}
@@ -1102,6 +1089,60 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </>
               )}
             </>
+          )}
+
+          {isPaidModalOpen && (
+            <ConfirmationModalOverlay onClick={() => setIsPaidModalOpen(false)}>
+              <ConfirmationModalDialog
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="paid-confirmation-modal-title"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <ConfirmationModalClose
+                  type="button"
+                  aria-label="Fechar aviso"
+                  onClick={() => setIsPaidModalOpen(false)}
+                >
+                  ×
+                </ConfirmationModalClose>
+
+                <ConfirmationModalTitle id="paid-confirmation-modal-title">
+                  Aviso importante
+                </ConfirmationModalTitle>
+
+                <ConfirmationModalDescription>
+                  A inscrição é pessoal, única e intransferível. Caso você não possa participar,
+                  sugerimos doar o valor para a evangelização.
+                </ConfirmationModalDescription>
+
+                <style>{`
+                  @keyframes floating {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-8px); }
+                  }
+                  .whatsapp-button { animation: floating 3s ease-in-out infinite; }
+                `}</style>
+
+                <ConfirmationModalActions>
+                  <TrackedButton
+                    pageName="landing"
+                    ctaId={LANDING_CTAS.FORM_SUBMIT}
+                    sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                    sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                    position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                    variant="primary"
+                    size="md"
+                    onClick={handleWhatsappGroupClick}
+                    className="whatsapp-button"
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+                  >
+                    <img src={whatsappIcon} alt="" style={{ width: "1.5rem", height: "1.5rem" }} />
+                    {t("signup.status.whatsappGroupButtonText")}
+                  </TrackedButton>
+                </ConfirmationModalActions>
+              </ConfirmationModalDialog>
+            </ConfirmationModalOverlay>
           )}
         </SignupCard>
       </Container>
