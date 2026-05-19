@@ -11,7 +11,6 @@ import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/section
 import checkAmarelo from "../../../../../assets/check-amarelo.png";
 import check from "../../../../../assets/check.png";
 import whatsappIcon from "../../../../../assets/whatsapp.png";
-import starIcon from "../../../../../assets/star.png";
 import { formatCpfBR } from "../../../../../utils/formatters/cpf";
 import { Link } from "react-router-dom";
 import {
@@ -154,7 +153,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onEmergencyContactNameChange,
   onEmergencyContactPhoneChange,
 }) => {
-  const [sleepSelected, setSleepSelected] = useState<string>("");
   const [hasAllergyMedication, setHasAllergyMedication] = useState<string>("");
   const [hasDietaryRestriction, setHasDietaryRestriction] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
@@ -197,7 +195,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     stateRef,
     sleepAtMonasteryRef,
     termsAcceptedRef,
-    companionRef,
     allergyMedicationYesRef,
     allergyMedicationNoRef,
     allergyMedicationDetailsRef,
@@ -604,8 +601,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     name="sleepAtMonastery"
                     ref={sleepAtMonasteryRef as RefObject<HTMLSelectElement>}
                     defaultValue=""
-                    onChange={(e) => {
-                      setSleepSelected(e.target.value);
+                    onChange={() => {
                       onClearFieldError("sleepAtMonastery");
                     }}
                   >
@@ -621,31 +617,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   </Select>
                 )}
               </FormField>
-
-              {showRegistrationForm && sleepSelected === "yes" && (
-                <FormField
-                  label={
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                      <img src={starIcon} alt="" style={{ width: "1rem", height: "1rem" }} />
-                      <span style={{ display: "inline" }}>{t("signup.registrationForm.companionPrefix")}</span>
-                      {t("signup.registrationForm.companionBeforeGroup")} <strong>{t("signup.registrationForm.companionGroup")}</strong>{" "}
-                      {t("signup.registrationForm.companionOr")} <strong>{t("signup.registrationForm.companionSurname")}</strong>{" "}
-                      {t("signup.registrationForm.companionFamilySuffix")} <strong>{t("signup.registrationForm.companionFullName")}</strong>{" "}
-                      {t("signup.registrationForm.companionFinalSuffix")}
-                    </span>
-                  }
-                  htmlFor="companion"
-                >
-                  <Input
-                    id="companion"
-                    name="companion"
-                    type="text"
-                    placeholder={t("signup.registrationForm.companionPlaceholder")}
-                    ref={companionRef as RefObject<HTMLInputElement>}
-                    autoComplete="off"
-                  />
-                </FormField>
-              )}
 
               <FormField
                 label={t("signup.registrationForm.allergyMedicationQuestion")}
