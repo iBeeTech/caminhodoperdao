@@ -1,26 +1,40 @@
 /// <reference types="@cloudflare/workers-types" />
 import { json, serverError } from "../_utils/responses";
+import { getCapacityLimits } from "../_utils/capacity";
 import { countActive, countActiveSleep, expirePending } from "../_utils/registrations";
 
 interface Env {
   DB: D1Database;
+  MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
+  MAX_REGISTRATIONS_WITH_SLEEP?: string;
+  // Legacy names kept for backward compatibility.
+  MAX_TOTAL?: string;
+  MAX_SLEEP?: string;
 }
-
-const MAX_TOTAL = 400;
-const MAX_SLEEP = 100;
 
 async function handleAvailability(env: Env): Promise<Response> {
   try {
+    const {
+      maxRegistrationsOverall,
+      maxRegistrationsWithoutSleep,
+      maxRegistrationsWithSleep,
+    } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
     const sleepers = await countActiveSleep(env.DB);
+    const nonSleepers = Math.max(0, total - sleepers);
+    const monasteryFull = sleepers >= maxRegistrationsWithSleep;
+    const nonSleepFull = nonSleepers >= maxRegistrationsWithoutSleep;
     return json(200, {
-      totalFull: total >= MAX_TOTAL,
-      monasteryFull: sleepers >= MAX_SLEEP,
+      totalFull: monasteryFull && nonSleepFull,
+      monasteryFull,
       total,
       sleepers,
-      totalLimit: MAX_TOTAL,
-      monasteryLimit: MAX_SLEEP,
+      totalLimit: maxRegistrationsOverall,
+      monasteryLimit: maxRegistrationsWithSleep,
+      nonSleepers,
+      nonSleepLimit: maxRegistrationsWithoutSleep,
+      nonSleepFull,
     });
   } catch (error) {
     console.error("Error in handleAvailability:", error);

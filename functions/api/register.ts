@@ -2,6 +2,7 @@
 import { json, badRequest, conflict, serverError } from "../_utils/responses";
 import { isValidEmail, isValidPhone } from "../_utils/validation";
 import { getPaymentProvider, parseRegistrationCostCents } from "../_utils/payment";
+import { getCapacityLimits } from "../_utils/capacity";
 import { encryptCpf } from "../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 import {
@@ -18,17 +19,21 @@ interface Env {
   GATEWAY_API_KEY?: string;
   REGISTRATION_COST?: string;
   REGISTRATION_COST_MONASTERY?: string;
+  MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
+  MAX_REGISTRATIONS_WITH_SLEEP?: string;
+  // Legacy names kept for backward compatibility.
+  MAX_TOTAL?: string;
+  MAX_SLEEP?: string;
   CPF_ENCRYPTION_KEY?: string;
   CPF_ENCRYPTION_IV?: string;
 }
-
-const MAX_TOTAL = 400;
-const MAX_SLEEP = 100;
 
 export async function handleRegister(env: Env, body: unknown): Promise<Response> {
   if (!body || typeof body !== "object") {
     return badRequest("invalid_body");
   }
+
+  const { maxRegistrationsWithoutSleep, maxRegistrationsWithSleep } = getCapacityLimits(env);
 
   const {
     name,
@@ -179,6 +184,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   let total = await countActive(env.DB);
   let sleepers = await countActiveSleep(env.DB);
+  let nonSleepers = Math.max(0, total - sleepers);
 
   // If updating an existing pending registration, discount it from capacity checks
   if (existing && (existing.status === "PENDING" || existing.status === "CANCELED")) {
@@ -186,16 +192,19 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       total = Math.max(0, total - 1);
       if (existing.sleep_at_monastery === 1) {
         sleepers = Math.max(0, sleepers - 1);
+      } else {
+        nonSleepers = Math.max(0, nonSleepers - 1);
       }
     }
   }
 
-  if (total >= MAX_TOTAL) {
-    return conflict("registrations_full");
-  }
   if (sleepFlag) {
-    if (sleepers >= MAX_SLEEP) {
+    if (sleepers >= maxRegistrationsWithSleep) {
       return conflict("monastery_full");
+    }
+  } else {
+    if (nonSleepers >= maxRegistrationsWithoutSleep) {
+      return conflict("registrations_full");
     }
   }
 
@@ -334,16 +343,27 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
 async function handleAvailability(env: Env): Promise<Response> {
   try {
+    const {
+      maxRegistrationsOverall,
+      maxRegistrationsWithoutSleep,
+      maxRegistrationsWithSleep,
+    } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
     const sleepers = await countActiveSleep(env.DB);
+    const nonSleepers = Math.max(0, total - sleepers);
+    const monasteryFull = sleepers >= maxRegistrationsWithSleep;
+    const nonSleepFull = nonSleepers >= maxRegistrationsWithoutSleep;
     return json(200, {
-      totalFull: total >= MAX_TOTAL,
-      monasteryFull: sleepers >= MAX_SLEEP,
+      totalFull: monasteryFull && nonSleepFull,
+      monasteryFull,
       total,
       sleepers,
-      totalLimit: MAX_TOTAL,
-      monasteryLimit: MAX_SLEEP,
+      totalLimit: maxRegistrationsOverall,
+      monasteryLimit: maxRegistrationsWithSleep,
+      nonSleepers,
+      nonSleepLimit: maxRegistrationsWithoutSleep,
+      nonSleepFull,
     });
   } catch (error) {
     console.error("Error in handleAvailability:", error);
