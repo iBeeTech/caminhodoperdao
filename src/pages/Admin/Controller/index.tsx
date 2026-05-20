@@ -226,7 +226,7 @@ const AdminController: React.FC = () => {
         downloadReport("/api/admin/reports/monastery", "planilha-mosteiro.csv")
       }
       onDownloadInscritos={() =>
-        downloadReport("/api/admin/reports/inscritos", "planilha-inscritos.csv")
+        downloadReport("/api/admin/reports/inscritos", "planilha-inscritos.xls")
       }
       onLogout={() => {
         localStorage.removeItem(STORAGE_KEY);

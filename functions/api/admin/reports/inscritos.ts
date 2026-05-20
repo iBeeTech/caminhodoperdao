@@ -15,6 +15,10 @@ interface InscritoRow {
   date_of_birth: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  has_allergy_medication: number;
+  allergy_medication_details: string | null;
+  has_dietary_restriction: number;
+  dietary_restriction_details: string | null;
 }
 
 export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
@@ -24,7 +28,21 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
   }
 
   const query = `
-    SELECT name, email, phone, sleep_at_monastery, city, state, cpf_encrypted, date_of_birth, emergency_contact_name, emergency_contact_phone
+    SELECT
+      name,
+      email,
+      phone,
+      sleep_at_monastery,
+      city,
+      state,
+      cpf_encrypted,
+      date_of_birth,
+      emergency_contact_name,
+      emergency_contact_phone,
+      has_allergy_medication,
+      allergy_medication_details,
+      has_dietary_restriction,
+      dietary_restriction_details
     FROM registrations
     WHERE status = 'PAID'
     ORDER BY name
@@ -50,12 +68,12 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
     rowsWithCpf.push({ ...row, cpfDecrypted });
   }
 
-  const csv = buildInscritosCsv(rowsWithCpf);
-  return new Response(csv, {
+  const spreadsheet = buildInscritosSpreadsheet(rowsWithCpf);
+  return new Response(spreadsheet, {
     status: 200,
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=credential-list.csv",
+      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+      "Content-Disposition": "attachment; filename=credential-list.xls",
     },
   });
 };
@@ -66,32 +84,103 @@ function formatDateOfBirth(value: string | null): string {
   return `${d}/${m}/${y}`;
 }
 
-function buildInscritosCsv(
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildInscritosSpreadsheet(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
 ): string {
-  const header =
-    "NOME,EMAIL,CPF,DATA DE NASCIMENTO,TELEFONE,CONTATO EMERGÊNCIA (NOME),CONTATO EMERGÊNCIA (TELEFONE),DORME NO MOSTEIRO,CIDADE,ESTADO,ASSINATURA RECEBIMENTO KIT\n";
+  const headerCells = [
+    "NOME",
+    "EMAIL",
+    "CPF",
+    "DATA DE NASCIMENTO",
+    "TELEFONE",
+    "CONTATO EMERGÊNCIA (NOME)",
+    "CONTATO EMERGÊNCIA (TELEFONE)",
+    "DORME NO MOSTEIRO",
+    "USA MEDICAÇÃO",
+    "QUAL MEDICAÇÃO",
+    "TEM RESTRIÇÃO ALIMENTAR",
+    "QUAL RESTRIÇÃO ALIMENTAR",
+    "CIDADE",
+    "ESTADO",
+    "ASSINATURA RECEBIMENTO KIT",
+  ];
+
+  const header = headerCells
+    .map(cell => `<th>${escapeHtml(cell)}</th>`)
+    .join("");
+
   if (!rows.length) {
-    return header;
+    return [
+      "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
+      "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
+      `<thead><tr>${header}</tr></thead>`,
+      "<tbody></tbody>",
+      "</table></body></html>",
+    ].join("");
   }
 
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
-  const body = sorted
+  const rowsHtml = sorted
     .map(row => {
-      const name = `"${(row.name || "").replace(/"/g, '""')}"`;
-      const email = `"${(row.email || "").replace(/"/g, '""')}"`;
-      const cpf = `"${(row.cpfDecrypted || "").replace(/"/g, '""')}"`;
-      const dateOfBirth = `"${formatDateOfBirth(row.date_of_birth)}"`;
-      const phone = `"${(row.phone ?? "").replace(/"/g, '""')}"`;
-      const emergencyName = `"${(row.emergency_contact_name ?? "").replace(/"/g, '""')}"`;
-      const emergencyPhone = `"${(row.emergency_contact_phone ?? "").replace(/"/g, '""')}"`;
+      const name = escapeHtml(row.name || "");
+      const email = escapeHtml(row.email || "");
+      const cpf = escapeHtml(row.cpfDecrypted || "");
+      const dateOfBirth = escapeHtml(formatDateOfBirth(row.date_of_birth));
+      const phone = escapeHtml(row.phone ?? "");
+      const emergencyName = escapeHtml(row.emergency_contact_name ?? "");
+      const emergencyPhone = escapeHtml(row.emergency_contact_phone ?? "");
       const dorme = row.sleep_at_monastery === 1 ? "Sim" : "Não";
-      const city = `"${(row.city ?? "").replace(/"/g, '""')}"`;
-      const state = `"${(row.state ?? "").replace(/"/g, '""')}"`;
-      return `${name},${email},${cpf},${dateOfBirth},${phone},${emergencyName},${emergencyPhone},${dorme},${city},${state},""`;
-    })
-    .join("\n");
+      const hasMedication = row.has_allergy_medication === 1 ? "Sim" : "Não";
+      const medicationDetails = escapeHtml((row.allergy_medication_details ?? "").trim());
+      const hasDietaryRestriction = row.has_dietary_restriction === 1 ? "Sim" : "Não";
+      const dietaryDetails = escapeHtml((row.dietary_restriction_details ?? "").trim());
+      const city = escapeHtml(row.city ?? "");
+      const state = escapeHtml(row.state ?? "");
 
-  return header + body;
+      const medicationStyle = medicationDetails
+        ? " style=\"font-weight:700;color:#c62828;\""
+        : "";
+      const dietaryStyle = dietaryDetails
+        ? " style=\"font-weight:700;color:#c62828;\""
+        : "";
+
+      return [
+        "<tr>",
+        `<td>${name}</td>`,
+        `<td>${email}</td>`,
+        `<td>${cpf}</td>`,
+        `<td>${dateOfBirth}</td>`,
+        `<td>${phone}</td>`,
+        `<td>${emergencyName}</td>`,
+        `<td>${emergencyPhone}</td>`,
+        `<td>${dorme}</td>`,
+        `<td>${hasMedication}</td>`,
+        `<td${medicationStyle}>${medicationDetails}</td>`,
+        `<td>${hasDietaryRestriction}</td>`,
+        `<td${dietaryStyle}>${dietaryDetails}</td>`,
+        `<td>${city}</td>`,
+        `<td>${state}</td>`,
+        "<td></td>",
+        "</tr>",
+      ].join("");
+    })
+    .join("");
+
+  return [
+    "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
+    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
+    `<thead><tr>${header}</tr></thead>`,
+    `<tbody>${rowsHtml}</tbody>`,
+    "</table></body></html>",
+  ].join("");
 }
 
