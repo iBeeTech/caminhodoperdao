@@ -110,31 +110,36 @@ async function encryptCpfForLookup(env: Env, cpf: string): Promise<string> {
   return encryptCpf(canonicalizeCpf(cpf), key, iv);
 }
 
+const PURCHASE_COLUMNS = `
+  id,
+  customer_name,
+  cpf_encrypted,
+  size_p_qty,
+  size_m_qty,
+  size_g_qty,
+  size_gg_qty,
+  total_quantity,
+  amount_cents,
+  status,
+  payment_provider,
+  payment_ref,
+  correlation_id,
+  provider_charge_id,
+  qr_code_text,
+  qr_code_image,
+  created_at,
+  updated_at,
+  paid_at`;
+
+// Janela para exibir avisos de pedidos cancelados (PIX expirado) ao cliente.
+const CANCELED_NOTICE_WINDOW_DAYS = 7;
+
 async function getLatestPurchaseByCpf(
   DB: D1Database,
   cpfEncrypted: string
 ): Promise<TshirtPurchaseRow | null> {
   const stmt = DB.prepare(
-    `SELECT
-       id,
-       customer_name,
-       cpf_encrypted,
-       size_p_qty,
-       size_m_qty,
-       size_g_qty,
-       size_gg_qty,
-       total_quantity,
-       amount_cents,
-       status,
-       payment_provider,
-       payment_ref,
-       correlation_id,
-       provider_charge_id,
-       qr_code_text,
-       qr_code_image,
-       created_at,
-       updated_at,
-       paid_at
+    `SELECT ${PURCHASE_COLUMNS}
      FROM tshirt_purchase
      WHERE cpf_encrypted = ?
      ORDER BY datetime(created_at) DESC
@@ -142,6 +147,74 @@ async function getLatestPurchaseByCpf(
   ).bind(cpfEncrypted);
 
   return (await stmt.first<TshirtPurchaseRow>()) ?? null;
+}
+
+async function getPendingPurchasesByCpf(
+  DB: D1Database,
+  cpfEncrypted: string
+): Promise<TshirtPurchaseRow[]> {
+  const stmt = DB.prepare(
+    `SELECT ${PURCHASE_COLUMNS}
+     FROM tshirt_purchase
+     WHERE cpf_encrypted = ? AND status = 'PENDING'
+     ORDER BY datetime(created_at) ASC`
+  ).bind(cpfEncrypted);
+
+  const result = await stmt.all<TshirtPurchaseRow>();
+  return result.results ?? [];
+}
+
+async function getRecentCanceledPurchasesByCpf(
+  DB: D1Database,
+  cpfEncrypted: string
+): Promise<TshirtPurchaseRow[]> {
+  const stmt = DB.prepare(
+    `SELECT ${PURCHASE_COLUMNS}
+     FROM tshirt_purchase
+     WHERE cpf_encrypted = ?
+       AND status = 'CANCELED'
+       AND datetime(updated_at) >= datetime('now', ?)
+     ORDER BY datetime(updated_at) DESC
+     LIMIT 10`
+  ).bind(cpfEncrypted, `-${CANCELED_NOTICE_WINDOW_DAYS} days`);
+
+  const result = await stmt.all<TshirtPurchaseRow>();
+  return result.results ?? [];
+}
+
+function toPendingPurchaseDto(row: TshirtPurchaseRow) {
+  return {
+    id: row.id,
+    paymentRef: row.payment_ref,
+    qrCodeText: row.qr_code_text,
+    qrCodeImageUrl: row.qr_code_image,
+    sizes: {
+      P: row.size_p_qty,
+      M: row.size_m_qty,
+      G: row.size_g_qty,
+      GG: row.size_gg_qty,
+    },
+    totalQuantity: row.total_quantity,
+    amountCents: row.amount_cents,
+    createdAt: row.created_at,
+  };
+}
+
+function toCanceledPurchaseDto(row: TshirtPurchaseRow) {
+  return {
+    id: row.id,
+    paymentRef: row.payment_ref,
+    sizes: {
+      P: row.size_p_qty,
+      M: row.size_m_qty,
+      G: row.size_g_qty,
+      GG: row.size_gg_qty,
+    },
+    totalQuantity: row.total_quantity,
+    amountCents: row.amount_cents,
+    createdAt: row.created_at,
+    canceledAt: row.updated_at,
+  };
 }
 
 async function getPaidTotalsByCpf(
@@ -195,6 +268,56 @@ async function updatePurchaseStatus(
     .run();
 
   return nowIso;
+}
+
+// Consulta a Woovi para cada PIX pendente do CPF e atualiza no banco os que
+// foram pagos (PAID) ou expiraram (CANCELED).
+async function refreshPendingPurchases(env: Env, cpfEncrypted: string): Promise<void> {
+  const appId = env.WOOVI_APP_ID;
+  if (!appId) return;
+
+  const pending = await getPendingPurchasesByCpf(env.DB, cpfEncrypted);
+
+  for (const row of pending) {
+    try {
+      const wooviChargeId = row.provider_charge_id || row.payment_ref;
+      const wooviResponse = await getWooviChargeStatus(appId, wooviChargeId);
+      const wooviStatus = wooviResponse.charge?.status;
+
+      if (["COMPLETED", "RECEIVED"].includes(wooviStatus)) {
+        await updatePurchaseStatus(env.DB, row.id, "PAID");
+      } else if (wooviStatus === "EXPIRED") {
+        await updatePurchaseStatus(env.DB, row.id, "CANCELED");
+      }
+    } catch (error) {
+      console.error("Erro ao consultar status Woovi da camiseta:", error);
+    }
+  }
+}
+
+// Estado consolidado de compras de um CPF: todos os PIX pendentes (com QR Code),
+// os pedidos cancelados recentes (PIX expirado) e o total ja pago.
+async function buildCpfPurchaseState(env: Env, cpfEncrypted: string, refresh: boolean) {
+  if (refresh) {
+    await refreshPendingPurchases(env, cpfEncrypted);
+  }
+
+  const pending = await getPendingPurchasesByCpf(env.DB, cpfEncrypted);
+  const canceled = await getRecentCanceledPurchasesByCpf(env.DB, cpfEncrypted);
+  const paidTotals = await getPaidTotalsByCpf(env.DB, cpfEncrypted);
+
+  return {
+    pendingPurchases: pending.map(toPendingPurchaseDto),
+    canceledPurchases: canceled.map(toCanceledPurchaseDto),
+    paidTotals: {
+      P: paidTotals.total_p,
+      M: paidTotals.total_m,
+      G: paidTotals.total_g,
+      GG: paidTotals.total_gg,
+      totalQuantity: paidTotals.total_quantity,
+      amountCents: paidTotals.total_amount_cents,
+    },
+  };
 }
 
 async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> {
@@ -324,6 +447,8 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
     return serverError("purchase_persistence_failed");
   }
 
+  const state = await buildCpfPurchaseState(env, cpfEncrypted, false);
+
   return json(200, {
     status: "PENDING",
     purchase_id: purchaseId,
@@ -334,6 +459,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
     totalQuantity,
     pricePerUnitCents: PRICE_PER_TSHIRT_CENTS,
     sizes,
+    ...state,
   });
 }
 
@@ -375,65 +501,11 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
     return conflict("cpf_used_by_other_name");
   }
 
-  let refreshedStatus = latestPurchase.status;
-  let paidAtForResponse = latestPurchase.paid_at;
-
-  if (latestPurchase.status === "PENDING") {
-    try {
-      const appId = env.WOOVI_APP_ID;
-      if (appId) {
-        const wooviChargeId = latestPurchase.provider_charge_id || latestPurchase.payment_ref;
-        const wooviResponse = await getWooviChargeStatus(appId, wooviChargeId);
-        const wooviStatus = wooviResponse.charge?.status;
-
-        if (["COMPLETED", "RECEIVED"].includes(wooviStatus)) {
-          paidAtForResponse = await updatePurchaseStatus(env.DB, latestPurchase.id, "PAID");
-          refreshedStatus = "PAID";
-        } else if (wooviStatus === "EXPIRED") {
-          await updatePurchaseStatus(env.DB, latestPurchase.id, "CANCELED");
-          refreshedStatus = "CANCELED";
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao consultar status Woovi da camiseta:", error);
-    }
-  }
-
-  const paidTotals = await getPaidTotalsByCpf(env.DB, cpfEncrypted);
+  const state = await buildCpfPurchaseState(env, cpfEncrypted, true);
 
   return json(200, {
     exists: true,
-    status: refreshedStatus,
-    message:
-      refreshedStatus === "PAID"
-        ? "Compra confirmada"
-        : refreshedStatus === "CANCELED"
-          ? "Compra cancelada"
-          : null,
-    payment_ref: latestPurchase.payment_ref,
-    qrCodeText: refreshedStatus === "PENDING" ? latestPurchase.qr_code_text : null,
-    qrCodeImageUrl: refreshedStatus === "PENDING" ? latestPurchase.qr_code_image : null,
-    latestPurchase: {
-      id: latestPurchase.id,
-      sizes: {
-        P: latestPurchase.size_p_qty,
-        M: latestPurchase.size_m_qty,
-        G: latestPurchase.size_g_qty,
-        GG: latestPurchase.size_gg_qty,
-      },
-      totalQuantity: latestPurchase.total_quantity,
-      amountCents: latestPurchase.amount_cents,
-      createdAt: latestPurchase.created_at,
-      paidAt: refreshedStatus === "PAID" ? paidAtForResponse : null,
-    },
-    paidTotals: {
-      P: paidTotals.total_p,
-      M: paidTotals.total_m,
-      G: paidTotals.total_g,
-      GG: paidTotals.total_gg,
-      totalQuantity: paidTotals.total_quantity,
-      amountCents: paidTotals.total_amount_cents,
-    },
+    ...state,
   });
 }
 

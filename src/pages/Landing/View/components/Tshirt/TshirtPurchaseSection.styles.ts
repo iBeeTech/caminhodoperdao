@@ -123,6 +123,13 @@ export const PixBox = styled.div`
   gap: 12px;
 `;
 
+export const PixOrderTitle = styled.p`
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
 export const PixLabelContainer = styled.div`
   display: flex;
   justify-content: space-between;

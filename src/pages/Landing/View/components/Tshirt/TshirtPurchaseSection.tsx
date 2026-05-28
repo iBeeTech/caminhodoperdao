@@ -1,11 +1,15 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Callout, FormField, Input } from "../../../../../components";
+import { CalloutVariant } from "../../../../../components/molecules/Callout/Callout";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
 import { ErrorText } from "../../../../../components/molecules/FormField/FormField.styles";
 import { HttpError } from "../../../../../services/http/client";
 import { landingService } from "../../../../../services/landing/landing.service";
 import {
+  TshirtCanceledPurchase,
+  TshirtPaidTotals,
+  TshirtPendingPurchase,
   TshirtPurchaseResponse,
   TshirtSizes,
   TshirtStatusResponse,
@@ -27,6 +31,7 @@ import {
   PixBox,
   PixLabel,
   PixLabelContainer,
+  PixOrderTitle,
   PixTextarea,
   QRCodeContainer,
   QRCodeImage,
@@ -57,6 +62,10 @@ function formatCurrencyBRL(valueInCents: number): string {
   }).format(valueInCents / 100);
 }
 
+function formatOrderId(id: string): string {
+  return id.slice(0, 8).toUpperCase();
+}
+
 const TshirtPurchaseSection: React.FC = () => {
   const { t } = useTranslation("landing");
 
@@ -64,14 +73,14 @@ const TshirtPurchaseSection: React.FC = () => {
   const [cpf, setCpf] = useState("");
   const [sizes, setSizes] = useState<TshirtSizes>({ P: 0, M: 0, G: 0, GG: 0 });
   const [errors, setErrors] = useState<TshirtErrors>({});
-  const [status, setStatus] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [qrCodeText, setQrCodeText] = useState<string | null>(null);
-  const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
-  const [paidTotals, setPaidTotals] = useState<TshirtStatusResponse["paidTotals"] | null>(null);
+  const [messageVariant, setMessageVariant] = useState<CalloutVariant>("warning");
+  const [pendingPurchases, setPendingPurchases] = useState<TshirtPendingPurchase[]>([]);
+  const [canceledPurchases, setCanceledPurchases] = useState<TshirtCanceledPurchase[]>([]);
+  const [paidTotals, setPaidTotals] = useState<TshirtPaidTotals | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [copiedBrcode, setCopiedBrcode] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const totalQuantity = useMemo(
     () => sizes.P + sizes.M + sizes.G + sizes.GG,
@@ -83,38 +92,32 @@ const TshirtPurchaseSection: React.FC = () => {
     [totalQuantity]
   );
 
-  const hasPendingStatus = status === "PENDING";
+  const hasPending = pendingPurchases.length > 0;
+  const hasPaidTotals = (paidTotals?.totalQuantity ?? 0) > 0;
+  const hasAnyResult = hasPending || canceledPurchases.length > 0 || hasPaidTotals;
 
-  const applyStatusResult = useCallback(
-    (result: TshirtStatusResponse) => {
-      const nextStatus = result.status ?? null;
-      setStatus(nextStatus);
-      setQrCodeText(result.qrCodeText ?? null);
-      setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+  const applyState = useCallback(
+    (result: TshirtStatusResponse | TshirtPurchaseResponse) => {
+      setPendingPurchases(result.pendingPurchases ?? []);
+      setCanceledPurchases(result.canceledPurchases ?? []);
       setPaidTotals(result.paidTotals ?? null);
-
-      if (nextStatus === "PAID") {
-        setMessage(result.message ?? t("tshirt.status.paid"));
-        return;
-      }
-
-      if (nextStatus === "CANCELED") {
-        setMessage(result.message ?? t("tshirt.status.canceled"));
-        return;
-      }
-
-      if (nextStatus === "PENDING") {
-        setMessage(result.message ?? t("tshirt.status.pending"));
-        return;
-      }
-
-      setMessage(null);
     },
-    [t]
+    []
   );
 
+  const clearResults = () => {
+    setPendingPurchases([]);
+    setCanceledPurchases([]);
+    setPaidTotals(null);
+  };
+
+  const showMessage = (text: string, variant: CalloutVariant = "warning") => {
+    setMessage(text);
+    setMessageVariant(variant);
+  };
+
   React.useEffect(() => {
-    if (!hasPendingStatus) return;
+    if (!hasPending) return;
 
     const normalizedCpf = canonicalizeCpf(cpf);
     const normalizedName = normalizeName(name);
@@ -127,7 +130,7 @@ const TshirtPurchaseSection: React.FC = () => {
         const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
         if (cancelled || !result.exists) return;
 
-        applyStatusResult(result);
+        applyState(result);
       } catch {
         // Mantem estado atual para o usuario checar manualmente
       }
@@ -140,30 +143,7 @@ const TshirtPurchaseSection: React.FC = () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [hasPendingStatus, cpf, name, applyStatusResult]);
-
-  const applyPurchaseResult = (result: TshirtPurchaseResponse) => {
-    const nextStatus = result.status ?? "PENDING";
-    setStatus(nextStatus);
-    setQrCodeText(result.qrCodeText ?? null);
-    setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
-    setMessage(
-      result.message ??
-        (nextStatus === "PENDING"
-          ? t("tshirt.status.pending")
-          : nextStatus === "PAID"
-            ? t("tshirt.status.paid")
-            : t("tshirt.status.canceled"))
-    );
-  };
-
-  const resetStatus = () => {
-    setStatus(null);
-    setMessage(null);
-    setQrCodeText(null);
-    setQrCodeImageUrl(null);
-    setPaidTotals(null);
-  };
+  }, [hasPending, cpf, name, applyState]);
 
   const validateForm = (): TshirtErrors => {
     const nextErrors: TshirtErrors = {};
@@ -188,14 +168,14 @@ const TshirtPurchaseSection: React.FC = () => {
 
   const handleApiError = (error: unknown, fallbackKey: string) => {
     if (!(error instanceof HttpError)) {
-      setMessage(t(fallbackKey));
+      showMessage(t(fallbackKey), "error");
       return;
     }
 
     const payload = (error.body as { error?: string } | undefined) ?? {};
 
     if (payload.error === "cpf_used_by_other_name") {
-      setMessage(t("tshirt.errors.cpfUsedByOtherName"));
+      showMessage(t("tshirt.errors.cpfUsedByOtherName"), "error");
       return;
     }
 
@@ -215,16 +195,16 @@ const TshirtPurchaseSection: React.FC = () => {
     }
 
     if (payload.error === "payment_provider_not_configured") {
-      setMessage(t("tshirt.status.paymentConfigError"));
+      showMessage(t("tshirt.status.paymentConfigError"), "error");
       return;
     }
 
     if (payload.error === "pix_creation_failed") {
-      setMessage(t("tshirt.status.pixError"));
+      showMessage(t("tshirt.status.pixError"), "error");
       return;
     }
 
-    setMessage(t(fallbackKey));
+    showMessage(t(fallbackKey), "error");
   };
 
   const handleQuantityChange = (size: keyof TshirtSizes, rawValue: string) => {
@@ -237,7 +217,7 @@ const TshirtPurchaseSection: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    resetStatus();
+    setMessage(null);
 
     const validationErrors = validateForm();
     setErrors(validationErrors);
@@ -255,7 +235,8 @@ const TshirtPurchaseSection: React.FC = () => {
         cpf: normalizedCpf,
         sizes,
       });
-      applyPurchaseResult(result);
+      applyState(result);
+      setSizes({ P: 0, M: 0, G: 0, GG: 0 });
     } catch (error) {
       handleApiError(error, "tshirt.status.submitError");
     } finally {
@@ -283,17 +264,18 @@ const TshirtPurchaseSection: React.FC = () => {
     }
 
     setIsChecking(true);
+    setMessage(null);
 
     try {
       const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
 
       if (!result.exists) {
-        resetStatus();
-        setMessage(t("tshirt.status.notFound"));
+        clearResults();
+        showMessage(t("tshirt.status.notFound"), "warning");
         return;
       }
 
-      applyStatusResult(result);
+      applyState(result);
     } catch (error) {
       handleApiError(error, "tshirt.status.checkError");
     } finally {
@@ -301,22 +283,22 @@ const TshirtPurchaseSection: React.FC = () => {
     }
   };
 
-  const handleCopyBrcode = async () => {
+  const handleCopyBrcode = async (qrCodeText: string | null, purchaseId: string) => {
     if (!qrCodeText) return;
 
     try {
       await navigator.clipboard.writeText(qrCodeText);
-      setCopiedBrcode(true);
-      setTimeout(() => setCopiedBrcode(false), 1800);
+      setCopiedId(purchaseId);
+      setTimeout(() => setCopiedId((current) => (current === purchaseId ? null : current)), 1800);
     } catch {
-      setMessage(t("tshirt.status.copyError"));
+      showMessage(t("tshirt.status.copyError"), "error");
     }
   };
 
   const handleStartNewPurchase = () => {
     setSizes({ P: 0, M: 0, G: 0, GG: 0 });
     setErrors({});
-    resetStatus();
+    setMessage(null);
   };
 
   return (
@@ -343,11 +325,7 @@ const TshirtPurchaseSection: React.FC = () => {
             {t("tshirt.sizeGuideLink")}
           </SizeGuideLink>
 
-          {message && (
-            <Callout variant={status === "PAID" ? "success" : status === "CANCELED" ? "error" : "warning"}>
-              {message}
-            </Callout>
-          )}
+          {message && <Callout variant={messageVariant}>{message}</Callout>}
 
           <Form noValidate onSubmit={handleSubmit}>
             <FormField label={t("tshirt.form.nameLabel")} htmlFor="tshirt-name" error={errors.name} required>
@@ -445,31 +423,61 @@ const TshirtPurchaseSection: React.FC = () => {
             </Actions>
           </Form>
 
-          {status === "PENDING" && (
-            <PixBox>
+          {pendingPurchases.length > 1 && (
+            <Callout variant="warning">
+              {t("tshirt.status.multiplePending", { count: pendingPurchases.length })}
+            </Callout>
+          )}
+
+          {pendingPurchases.map((purchase) => (
+            <PixBox key={purchase.id}>
+              <PixOrderTitle>
+                {t("tshirt.status.pendingOrderTitle", {
+                  id: formatOrderId(purchase.id),
+                  quantity: purchase.totalQuantity,
+                  amount: formatCurrencyBRL(purchase.amountCents),
+                })}
+              </PixOrderTitle>
+
               <PixLabelContainer>
-                <PixLabel htmlFor="tshirt-pix-code">{t("tshirt.status.pixCopyLabel")}</PixLabel>
-                <CopyButton type="button" onClick={handleCopyBrcode}>
-                  <span>{copiedBrcode ? "✓" : "📋"}</span>
-                  <span>{copiedBrcode ? t("tshirt.status.copyCopied") : t("tshirt.status.copyAction")}</span>
+                <PixLabel htmlFor={`tshirt-pix-code-${purchase.id}`}>
+                  {t("tshirt.status.pixCopyLabel")}
+                </PixLabel>
+                <CopyButton type="button" onClick={() => handleCopyBrcode(purchase.qrCodeText, purchase.id)}>
+                  <span>{copiedId === purchase.id ? "✓" : "📋"}</span>
+                  <span>
+                    {copiedId === purchase.id
+                      ? t("tshirt.status.copyCopied")
+                      : t("tshirt.status.copyAction")}
+                  </span>
                 </CopyButton>
               </PixLabelContainer>
 
               <PixTextarea
-                id="tshirt-pix-code"
+                id={`tshirt-pix-code-${purchase.id}`}
                 readOnly
-                value={qrCodeText ?? (t("tshirt.status.pixPendingPlaceholder") as string)}
+                value={purchase.qrCodeText ?? (t("tshirt.status.pixPendingPlaceholder") as string)}
               />
 
-              {qrCodeImageUrl && (
+              {purchase.qrCodeImageUrl && (
                 <QRCodeContainer>
-                  <QRCodeImage src={qrCodeImageUrl} alt={t("tshirt.status.qrCodeAlt")} />
+                  <QRCodeImage src={purchase.qrCodeImageUrl} alt={t("tshirt.status.qrCodeAlt")} />
                 </QRCodeContainer>
               )}
             </PixBox>
-          )}
+          ))}
 
-          {status === "PAID" && paidTotals && (
+          {canceledPurchases.map((purchase) => (
+            <Callout key={purchase.id} variant="error">
+              {t("tshirt.status.canceledNotice", {
+                id: formatOrderId(purchase.id),
+                quantity: purchase.totalQuantity,
+                amount: formatCurrencyBRL(purchase.amountCents),
+              })}
+            </Callout>
+          ))}
+
+          {hasPaidTotals && paidTotals && (
             <Callout variant="success">
               <strong>{t("tshirt.status.totalTitle")}</strong>
               <TotalsList>
@@ -487,7 +495,7 @@ const TshirtPurchaseSection: React.FC = () => {
             </Callout>
           )}
 
-          {(status === "PAID" || status === "CANCELED") && (
+          {hasAnyResult && (
             <Actions>
               <TrackedButton
                 pageName="landing"

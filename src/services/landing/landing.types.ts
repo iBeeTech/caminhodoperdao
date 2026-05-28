@@ -74,6 +74,36 @@ export interface TshirtPurchasePayload {
   sizes: TshirtSizes;
 }
 
+export interface TshirtPendingPurchase {
+  id: string;
+  paymentRef: string | null;
+  qrCodeText: string | null;
+  qrCodeImageUrl: string | null;
+  sizes: TshirtSizes;
+  totalQuantity: number;
+  amountCents: number;
+  createdAt: string;
+}
+
+export interface TshirtCanceledPurchase {
+  id: string;
+  paymentRef: string | null;
+  sizes: TshirtSizes;
+  totalQuantity: number;
+  amountCents: number;
+  createdAt: string;
+  canceledAt: string;
+}
+
+export interface TshirtPaidTotals {
+  P: number;
+  M: number;
+  G: number;
+  GG: number;
+  totalQuantity: number;
+  amountCents: number;
+}
+
 export interface TshirtPurchaseResponse {
   status?: string;
   purchase_id?: string;
@@ -85,29 +115,15 @@ export interface TshirtPurchaseResponse {
   pricePerUnitCents?: number;
   sizes?: TshirtSizes;
   message?: string;
+  pendingPurchases?: TshirtPendingPurchase[];
+  canceledPurchases?: TshirtCanceledPurchase[];
+  paidTotals?: TshirtPaidTotals;
 }
 
 export interface TshirtStatusResponse {
   exists: boolean;
-  status?: string;
   message?: string | null;
-  payment_ref?: string | null;
-  qrCodeText?: string | null;
-  qrCodeImageUrl?: string | null;
-  latestPurchase?: {
-    id: string;
-    sizes: TshirtSizes;
-    totalQuantity: number;
-    amountCents: number;
-    createdAt: string;
-    paidAt: string | null;
-  };
-  paidTotals?: {
-    P: number;
-    M: number;
-    G: number;
-    GG: number;
-    totalQuantity: number;
-    amountCents: number;
-  };
+  pendingPurchases?: TshirtPendingPurchase[];
+  canceledPurchases?: TshirtCanceledPurchase[];
+  paidTotals?: TshirtPaidTotals;
 }
