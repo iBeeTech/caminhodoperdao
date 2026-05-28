@@ -63,12 +63,32 @@ export const ImageFigure = styled.figure`
   }
 `;
 
+export const TshirtImageButton = styled.button`
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+  }
+`;
+
 export const TshirtImage = styled.img`
   width: 140px;
   max-width: 100%;
   display: block;
   object-fit: contain;
   margin: 0 auto;
+  transition: transform 0.2s ease;
+
+  ${TshirtImageButton}:hover & {
+    transform: scale(1.04);
+  }
 `;
 
 export const SizeGuideLink = styled.button`
@@ -108,14 +128,6 @@ export const SizeGuideModalContent = styled.div`
   align-items: center;
 `;
 
-export const SizeGuideImage = styled.img`
-  max-width: 320px;
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-`;
-
 export const SizeGuideClose = styled.button`
   margin-top: 12px;
   background: #1d4ed8;
@@ -126,6 +138,102 @@ export const SizeGuideClose = styled.button`
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+export const SizeTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.95rem;
+
+  caption {
+    caption-side: top;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  th,
+  td {
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    padding: 8px 12px;
+    text-align: center;
+  }
+
+  thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+  }
+
+  tbody th {
+    background: #f8fafc;
+    font-weight: 700;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: #fafafa;
+  }
+`;
+
+export const ZoomModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+`;
+
+export const ZoomModalContent = styled.div`
+  position: relative;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const ZoomImage = styled.img`
+  max-width: 95vw;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+`;
+
+export const ZoomCaption = styled.p`
+  margin: 12px 0 0;
+  color: #fff;
+  font-size: 0.95rem;
+  text-align: center;
+`;
+
+export const ZoomClose = styled.button`
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  color: #0f172a;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 640px) {
+    top: 8px;
+    right: 8px;
+  }
 `;
 
 export const Form = styled.form`

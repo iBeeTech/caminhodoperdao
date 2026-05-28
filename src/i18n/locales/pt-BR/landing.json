@@ -114,9 +114,27 @@
             "frontAlt": "Camiseta exclusiva - frente",
             "frontCaption": "Frente",
             "backAlt": "Camiseta exclusiva - costas",
-            "backCaption": "Costas"
+            "backCaption": "Costas",
+            "zoomAria": "Ampliar imagem da camiseta ({{side}})",
+            "zoomClose": "Fechar imagem ampliada"
         },
         "sizeGuideLink": "Veja as medidas de cada tamanho clicando aqui",
+        "sizeTable": {
+            "caption": "Medidas das camisetas (em cm)",
+            "close": "Fechar",
+            "columns": {
+                "size": "Tamanho",
+                "chest": "Tórax",
+                "width": "Largura",
+                "length": "Comprimento"
+            },
+            "rows": {
+                "P": { "chest": "47 cm", "width": "50 cm", "length": "70 cm" },
+                "M": { "chest": "51 cm", "width": "54 cm", "length": "74 cm" },
+                "G": { "chest": "55 cm", "width": "58 cm", "length": "78 cm" },
+                "GG": { "chest": "56 cm", "width": "61 cm", "length": "82 cm" }
+            }
+        },
         "form": {
             "nameLabel": "Nome completo",
             "namePlaceholder": "Seu nome",

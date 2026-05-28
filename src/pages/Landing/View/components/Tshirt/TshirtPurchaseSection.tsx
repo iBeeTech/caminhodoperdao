@@ -40,13 +40,19 @@ import {
   SizeGuideLink,
   SizeGuideModalOverlay,
   SizeGuideModalContent,
-  SizeGuideImage,
   SizeGuideClose,
+  SizeTable,
   Summary,
   TotalsList,
   TshirtCard,
   TshirtImage,
+  TshirtImageButton,
   TshirtSectionWrapper,
+  ZoomModalOverlay,
+  ZoomModalContent,
+  ZoomImage,
+  ZoomCaption,
+  ZoomClose,
 } from "./TshirtPurchaseSection.styles";
 
 type TshirtErrorKey = "name" | "cpf" | "quantities";
@@ -86,6 +92,7 @@ const TshirtPurchaseSection: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
 
   const totalQuantity = useMemo(
     () => sizes.P + sizes.M + sizes.G + sizes.GG,
@@ -317,14 +324,51 @@ const TshirtPurchaseSection: React.FC = () => {
 
           <ImageGrid>
             <ImageFigure>
-              <TshirtImage src={camisetaFrente} alt={t("tshirt.images.frontAlt")} loading="lazy" />
+              <TshirtImageButton
+                type="button"
+                onClick={() =>
+                  setZoomedImage({ src: camisetaFrente, alt: t("tshirt.images.frontAlt") })
+                }
+                aria-label={t("tshirt.images.zoomAria", { side: t("tshirt.images.frontCaption") })}
+              >
+                <TshirtImage src={camisetaFrente} alt={t("tshirt.images.frontAlt")} loading="lazy" />
+              </TshirtImageButton>
               <figcaption>{t("tshirt.images.frontCaption")}</figcaption>
             </ImageFigure>
             <ImageFigure>
-              <TshirtImage src={camisetaTras} alt={t("tshirt.images.backAlt")} loading="lazy" />
+              <TshirtImageButton
+                type="button"
+                onClick={() =>
+                  setZoomedImage({ src: camisetaTras, alt: t("tshirt.images.backAlt") })
+                }
+                aria-label={t("tshirt.images.zoomAria", { side: t("tshirt.images.backCaption") })}
+              >
+                <TshirtImage src={camisetaTras} alt={t("tshirt.images.backAlt")} loading="lazy" />
+              </TshirtImageButton>
               <figcaption>{t("tshirt.images.backCaption")}</figcaption>
             </ImageFigure>
           </ImageGrid>
+
+          {zoomedImage && (
+            <ZoomModalOverlay
+              role="dialog"
+              aria-modal="true"
+              aria-label={zoomedImage.alt}
+              onClick={() => setZoomedImage(null)}
+            >
+              <ZoomModalContent onClick={(e) => e.stopPropagation()}>
+                <ZoomClose
+                  type="button"
+                  aria-label={t("tshirt.images.zoomClose")}
+                  onClick={() => setZoomedImage(null)}
+                >
+                  ×
+                </ZoomClose>
+                <ZoomImage src={zoomedImage.src} alt={zoomedImage.alt} />
+                <ZoomCaption>{zoomedImage.alt}</ZoomCaption>
+              </ZoomModalContent>
+            </ZoomModalOverlay>
+          )}
 
           <SizeGuideLink type="button" onClick={() => setShowSizeGuide(true)}>
             {t("tshirt.sizeGuideLink")}
@@ -332,9 +376,31 @@ const TshirtPurchaseSection: React.FC = () => {
 
           {showSizeGuide && (
             <SizeGuideModalOverlay onClick={() => setShowSizeGuide(false)}>
-              <SizeGuideModalContent onClick={e => e.stopPropagation()}>
-                <SizeGuideImage src={require("../../../../../assets/medidas-camiseta.png")} alt="Medidas das camisetas" />
-                <SizeGuideClose onClick={() => setShowSizeGuide(false)}>Fechar</SizeGuideClose>
+              <SizeGuideModalContent onClick={(e) => e.stopPropagation()}>
+                <SizeTable>
+                  <caption>{t("tshirt.sizeTable.caption")}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">{t("tshirt.sizeTable.columns.size")}</th>
+                      <th scope="col">{t("tshirt.sizeTable.columns.chest")}</th>
+                      <th scope="col">{t("tshirt.sizeTable.columns.width")}</th>
+                      <th scope="col">{t("tshirt.sizeTable.columns.length")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SIZE_KEYS.map((sizeKey) => (
+                      <tr key={sizeKey}>
+                        <th scope="row">{sizeKey}</th>
+                        <td>{t(`tshirt.sizeTable.rows.${sizeKey}.chest`)}</td>
+                        <td>{t(`tshirt.sizeTable.rows.${sizeKey}.width`)}</td>
+                        <td>{t(`tshirt.sizeTable.rows.${sizeKey}.length`)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </SizeTable>
+                <SizeGuideClose onClick={() => setShowSizeGuide(false)}>
+                  {t("tshirt.sizeTable.close")}
+                </SizeGuideClose>
               </SizeGuideModalContent>
             </SizeGuideModalOverlay>
           )}
