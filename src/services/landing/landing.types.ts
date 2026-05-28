@@ -95,6 +95,16 @@ export interface TshirtCanceledPurchase {
   canceledAt: string;
 }
 
+export interface TshirtPaidPurchase {
+  id: string;
+  paymentRef: string | null;
+  sizes: TshirtSizes;
+  totalQuantity: number;
+  amountCents: number;
+  createdAt: string;
+  paidAt: string | null;
+}
+
 export interface TshirtPaidTotals {
   P: number;
   M: number;
@@ -117,6 +127,7 @@ export interface TshirtPurchaseResponse {
   message?: string;
   pendingPurchases?: TshirtPendingPurchase[];
   canceledPurchases?: TshirtCanceledPurchase[];
+  paidPurchases?: TshirtPaidPurchase[];
   paidTotals?: TshirtPaidTotals;
 }
 
@@ -125,5 +136,6 @@ export interface TshirtStatusResponse {
   message?: string | null;
   pendingPurchases?: TshirtPendingPurchase[];
   canceledPurchases?: TshirtCanceledPurchase[];
+  paidPurchases?: TshirtPaidPurchase[];
   paidTotals?: TshirtPaidTotals;
 }

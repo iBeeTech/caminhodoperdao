@@ -174,7 +174,24 @@
             "required": "Obrigatório",
             "invalidCpf": "CPF inválido",
             "quantityRequired": "Selecione ao menos 1 camiseta.",
-            "cpfUsedByOtherName": "Este CPF já está vinculado a outro nome nas compras de camiseta."
+            "cpfUsedByOtherName": "Este CPF já está vinculado a outro nome nas compras de camiseta.",
+            "cpfUsedByOtherNameNamed": "Este CPF já está vinculado ao nome \"{{name}}\" nas compras de camiseta. Use o mesmo nome para consultar ou comprar."
+        },
+        "orders": {
+            "titleSingular": "Seu pedido",
+            "titlePlural": "Seus pedidos ({{count}})",
+            "meta": "Pedido {{id}} · {{amount}}",
+            "shirtSingular": "camiseta",
+            "shirtPlural": "camisetas",
+            "status": {
+                "pending": "Aguardando pagamento",
+                "paid": "Pago",
+                "canceled": "Cancelado"
+            },
+            "pendingNote": "Finalize o pagamento do PIX abaixo para confirmar este pedido.",
+            "paidNote": "Pagamento confirmado. Pedido concluído!",
+            "paidNoteDated": "Pagamento confirmado em {{date}}. Pedido concluído!",
+            "canceledNote": "O PIX deste pedido expirou e ele foi cancelado. Gere um novo pedido para concluir a compra."
         }
     },
     "signup": {

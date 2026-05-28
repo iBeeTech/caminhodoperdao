@@ -8,6 +8,7 @@ import { HttpError } from "../../../../../services/http/client";
 import { landingService } from "../../../../../services/landing/landing.service";
 import {
   TshirtCanceledPurchase,
+  TshirtPaidPurchase,
   TshirtPaidTotals,
   TshirtPendingPurchase,
   TshirtPurchaseResponse,
@@ -22,16 +23,25 @@ import camisetaFrente from "../../../../../assets/camiseta-frente.png";
 import camisetaTras from "../../../../../assets/camiseta-tras.png";
 import {
   Actions,
+  Chevron,
   Container,
   CopyButton,
   Form,
   Header,
   ImageFigure,
   ImageGrid,
-  PixBox,
+  OrderBody,
+  OrderDescription,
+  OrderHeader,
+  OrderHeaderRight,
+  OrderHeaderText,
+  OrderItem,
+  OrderMeta,
+  OrderNote,
+  OrdersList,
+  OrdersTitle,
   PixLabel,
   PixLabelContainer,
-  PixOrderTitle,
   PixTextarea,
   QRCodeContainer,
   QRCodeImage,
@@ -42,6 +52,7 @@ import {
   SizeGuideModalContent,
   SizeGuideClose,
   SizeTable,
+  StatusBadge,
   Summary,
   TotalsList,
   TshirtCard,
@@ -76,6 +87,31 @@ function formatOrderId(id: string): string {
   return id.slice(0, 8).toUpperCase();
 }
 
+function formatDateBR(iso: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+type OrderStatus = "PENDING" | "PAID" | "CANCELED";
+
+interface UnifiedOrder {
+  id: string;
+  status: OrderStatus;
+  sizes: TshirtSizes;
+  totalQuantity: number;
+  amountCents: number;
+  createdAt: string;
+  statusDate: string | null;
+  qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
+}
+
 const TshirtPurchaseSection: React.FC = () => {
   const { t } = useTranslation("landing");
 
@@ -87,7 +123,9 @@ const TshirtPurchaseSection: React.FC = () => {
   const [messageVariant, setMessageVariant] = useState<CalloutVariant>("warning");
   const [pendingPurchases, setPendingPurchases] = useState<TshirtPendingPurchase[]>([]);
   const [canceledPurchases, setCanceledPurchases] = useState<TshirtCanceledPurchase[]>([]);
+  const [paidPurchases, setPaidPurchases] = useState<TshirtPaidPurchase[]>([]);
   const [paidTotals, setPaidTotals] = useState<TshirtPaidTotals | null>(null);
+  const [openOrders, setOpenOrders] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -105,14 +143,71 @@ const TshirtPurchaseSection: React.FC = () => {
   );
 
   const hasPending = pendingPurchases.length > 0;
+
+  const orders = useMemo<UnifiedOrder[]>(() => {
+    const list: UnifiedOrder[] = [
+      ...pendingPurchases.map<UnifiedOrder>((p) => ({
+        id: p.id,
+        status: "PENDING",
+        sizes: p.sizes,
+        totalQuantity: p.totalQuantity,
+        amountCents: p.amountCents,
+        createdAt: p.createdAt,
+        statusDate: null,
+        qrCodeText: p.qrCodeText,
+        qrCodeImageUrl: p.qrCodeImageUrl,
+      })),
+      ...paidPurchases.map<UnifiedOrder>((p) => ({
+        id: p.id,
+        status: "PAID",
+        sizes: p.sizes,
+        totalQuantity: p.totalQuantity,
+        amountCents: p.amountCents,
+        createdAt: p.createdAt,
+        statusDate: p.paidAt,
+      })),
+      ...canceledPurchases.map<UnifiedOrder>((p) => ({
+        id: p.id,
+        status: "CANCELED",
+        sizes: p.sizes,
+        totalQuantity: p.totalQuantity,
+        amountCents: p.amountCents,
+        createdAt: p.createdAt,
+        statusDate: p.canceledAt,
+      })),
+    ];
+    return list.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [pendingPurchases, paidPurchases, canceledPurchases]);
+
   const hasPaidTotals = (paidTotals?.totalQuantity ?? 0) > 0;
-  const hasAnyResult = hasPending || canceledPurchases.length > 0 || hasPaidTotals;
+  const hasAnyResult = orders.length > 0;
+  const isCollapsible = orders.length > 1;
 
   const applyState = useCallback(
     (result: TshirtStatusResponse | TshirtPurchaseResponse) => {
-      setPendingPurchases(result.pendingPurchases ?? []);
-      setCanceledPurchases(result.canceledPurchases ?? []);
+      const pending = result.pendingPurchases ?? [];
+      const canceled = result.canceledPurchases ?? [];
+      const paid = result.paidPurchases ?? [];
+      setPendingPurchases(pending);
+      setCanceledPurchases(canceled);
+      setPaidPurchases(paid);
       setPaidTotals(result.paidTotals ?? null);
+
+      // Define o estado de expansão apenas para pedidos novos, preservando o
+      // que o usuário já abriu/fechou manualmente entre os polls de status.
+      const isSingle = pending.length + canceled.length + paid.length === 1;
+      setOpenOrders((prev) => {
+        const next = { ...prev };
+        pending.forEach((o) => {
+          if (!(o.id in next)) next[o.id] = true;
+        });
+        [...paid, ...canceled].forEach((o) => {
+          if (!(o.id in next)) next[o.id] = isSingle;
+        });
+        return next;
+      });
     },
     []
   );
@@ -120,8 +215,27 @@ const TshirtPurchaseSection: React.FC = () => {
   const clearResults = () => {
     setPendingPurchases([]);
     setCanceledPurchases([]);
+    setPaidPurchases([]);
     setPaidTotals(null);
+    setOpenOrders({});
   };
+
+  const toggleOrder = (id: string) => {
+    if (!isCollapsible) return;
+    setOpenOrders((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const describeSizes = (sizes: TshirtSizes): string =>
+    SIZE_KEYS.filter((key) => sizes[key] > 0)
+      .map((key) => {
+        const quantity = sizes[key];
+        const noun =
+          quantity === 1
+            ? t("tshirt.orders.shirtSingular")
+            : t("tshirt.orders.shirtPlural");
+        return `${quantity} ${noun} ${key}`;
+      })
+      .join(", ");
 
   const showMessage = (text: string, variant: CalloutVariant = "warning") => {
     setMessage(text);
@@ -184,10 +298,18 @@ const TshirtPurchaseSection: React.FC = () => {
       return;
     }
 
-    const payload = (error.body as { error?: string } | undefined) ?? {};
+    const payload =
+      (error.body as { error?: string; linkedName?: string } | undefined) ?? {};
 
     if (payload.error === "cpf_used_by_other_name") {
-      showMessage(t("tshirt.errors.cpfUsedByOtherName"), "error");
+      const linkedName =
+        typeof payload.linkedName === "string" ? payload.linkedName.trim() : "";
+      showMessage(
+        linkedName
+          ? t("tshirt.errors.cpfUsedByOtherNameNamed", { name: linkedName })
+          : t("tshirt.errors.cpfUsedByOtherName"),
+        "error"
+      );
       return;
     }
 
@@ -503,61 +625,121 @@ const TshirtPurchaseSection: React.FC = () => {
             </Actions>
           </Form>
 
-          {pendingPurchases.length > 1 && (
-            <Callout variant="warning">
-              {t("tshirt.status.multiplePending", { count: pendingPurchases.length })}
-            </Callout>
+          {hasAnyResult && (
+            <>
+              <OrdersTitle>
+                {orders.length > 1
+                  ? t("tshirt.orders.titlePlural", { count: orders.length })
+                  : t("tshirt.orders.titleSingular")}
+              </OrdersTitle>
+
+              <OrdersList>
+                {orders.map((order) => {
+                  const isOpen = isCollapsible ? !!openOrders[order.id] : true;
+                  const statusVariant =
+                    order.status === "PAID"
+                      ? "paid"
+                      : order.status === "CANCELED"
+                      ? "canceled"
+                      : "pending";
+                  const bodyId = `tshirt-order-body-${order.id}`;
+
+                  return (
+                    <OrderItem key={order.id}>
+                      <OrderHeader
+                        as={isCollapsible ? "button" : "div"}
+                        type={isCollapsible ? "button" : undefined}
+                        $collapsible={isCollapsible}
+                        aria-expanded={isCollapsible ? isOpen : undefined}
+                        aria-controls={isCollapsible ? bodyId : undefined}
+                        onClick={() => toggleOrder(order.id)}
+                      >
+                        <OrderHeaderText>
+                          <OrderDescription>{describeSizes(order.sizes)}</OrderDescription>
+                          <OrderMeta>
+                            {t("tshirt.orders.meta", {
+                              id: formatOrderId(order.id),
+                              amount: formatCurrencyBRL(order.amountCents),
+                            })}
+                          </OrderMeta>
+                        </OrderHeaderText>
+
+                        <OrderHeaderRight>
+                          <StatusBadge $status={statusVariant}>
+                            {t(`tshirt.orders.status.${statusVariant}`)}
+                          </StatusBadge>
+                          {isCollapsible && <Chevron $open={isOpen}>▼</Chevron>}
+                        </OrderHeaderRight>
+                      </OrderHeader>
+
+                      {isOpen && (
+                        <OrderBody id={bodyId}>
+                          {order.status === "PENDING" && (
+                            <>
+                              <OrderNote>{t("tshirt.orders.pendingNote")}</OrderNote>
+
+                              <PixLabelContainer>
+                                <PixLabel htmlFor={`tshirt-pix-code-${order.id}`}>
+                                  {t("tshirt.status.pixCopyLabel")}
+                                </PixLabel>
+                                <CopyButton
+                                  type="button"
+                                  onClick={() =>
+                                    handleCopyBrcode(order.qrCodeText ?? null, order.id)
+                                  }
+                                >
+                                  <span>{copiedId === order.id ? "✓" : "📋"}</span>
+                                  <span>
+                                    {copiedId === order.id
+                                      ? t("tshirt.status.copyCopied")
+                                      : t("tshirt.status.copyAction")}
+                                  </span>
+                                </CopyButton>
+                              </PixLabelContainer>
+
+                              <PixTextarea
+                                id={`tshirt-pix-code-${order.id}`}
+                                readOnly
+                                value={
+                                  order.qrCodeText ??
+                                  (t("tshirt.status.pixPendingPlaceholder") as string)
+                                }
+                              />
+
+                              {order.qrCodeImageUrl && (
+                                <QRCodeContainer>
+                                  <QRCodeImage
+                                    src={order.qrCodeImageUrl}
+                                    alt={t("tshirt.status.qrCodeAlt")}
+                                  />
+                                </QRCodeContainer>
+                              )}
+                            </>
+                          )}
+
+                          {order.status === "PAID" && (
+                            <OrderNote>
+                              {order.statusDate
+                                ? t("tshirt.orders.paidNoteDated", {
+                                    date: formatDateBR(order.statusDate),
+                                  })
+                                : t("tshirt.orders.paidNote")}
+                            </OrderNote>
+                          )}
+
+                          {order.status === "CANCELED" && (
+                            <OrderNote>{t("tshirt.orders.canceledNote")}</OrderNote>
+                          )}
+                        </OrderBody>
+                      )}
+                    </OrderItem>
+                  );
+                })}
+              </OrdersList>
+            </>
           )}
 
-          {pendingPurchases.map((purchase) => (
-            <PixBox key={purchase.id}>
-              <PixOrderTitle>
-                {t("tshirt.status.pendingOrderTitle", {
-                  id: formatOrderId(purchase.id),
-                  quantity: purchase.totalQuantity,
-                  amount: formatCurrencyBRL(purchase.amountCents),
-                })}
-              </PixOrderTitle>
-
-              <PixLabelContainer>
-                <PixLabel htmlFor={`tshirt-pix-code-${purchase.id}`}>
-                  {t("tshirt.status.pixCopyLabel")}
-                </PixLabel>
-                <CopyButton type="button" onClick={() => handleCopyBrcode(purchase.qrCodeText, purchase.id)}>
-                  <span>{copiedId === purchase.id ? "✓" : "📋"}</span>
-                  <span>
-                    {copiedId === purchase.id
-                      ? t("tshirt.status.copyCopied")
-                      : t("tshirt.status.copyAction")}
-                  </span>
-                </CopyButton>
-              </PixLabelContainer>
-
-              <PixTextarea
-                id={`tshirt-pix-code-${purchase.id}`}
-                readOnly
-                value={purchase.qrCodeText ?? (t("tshirt.status.pixPendingPlaceholder") as string)}
-              />
-
-              {purchase.qrCodeImageUrl && (
-                <QRCodeContainer>
-                  <QRCodeImage src={purchase.qrCodeImageUrl} alt={t("tshirt.status.qrCodeAlt")} />
-                </QRCodeContainer>
-              )}
-            </PixBox>
-          ))}
-
-          {canceledPurchases.map((purchase) => (
-            <Callout key={purchase.id} variant="error">
-              {t("tshirt.status.canceledNotice", {
-                id: formatOrderId(purchase.id),
-                quantity: purchase.totalQuantity,
-                amount: formatCurrencyBRL(purchase.amountCents),
-              })}
-            </Callout>
-          ))}
-
-          {hasPaidTotals && paidTotals && (
+          {hasPaidTotals && paidTotals && paidPurchases.length > 1 && (
             <Callout variant="success">
               <strong>{t("tshirt.status.totalTitle")}</strong>
               <TotalsList>

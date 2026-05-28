@@ -363,3 +363,100 @@ export const TotalsList = styled.ul`
   display: grid;
   gap: 6px;
 `;
+
+export const OrdersList = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+export const OrdersTitle = styled.h3`
+  margin: 6px 0 0;
+  font-size: 1.05rem;
+`;
+
+export const OrderItem = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 10px;
+  background: #f9fafb;
+  overflow: hidden;
+`;
+
+export const OrderHeader = styled.button<{ $collapsible: boolean }>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: ${({ $collapsible }) => ($collapsible ? "pointer" : "default")};
+
+  &:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: -2px;
+  }
+`;
+
+export const OrderHeaderText = styled.div`
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+`;
+
+export const OrderDescription = styled.span`
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+export const OrderMeta = styled.span`
+  font-size: 0.82rem;
+  color: ${({ theme }) => theme.colors.muted};
+`;
+
+export const OrderHeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+`;
+
+type StatusVariant = "pending" | "paid" | "canceled";
+
+const STATUS_COLORS: Record<StatusVariant, { bg: string; fg: string }> = {
+  pending: { bg: "#fef3c7", fg: "#92400e" },
+  paid: { bg: "#dcfce7", fg: "#166534" },
+  canceled: { bg: "#fee2e2", fg: "#991b1b" },
+};
+
+export const StatusBadge = styled.span<{ $status: StatusVariant }>`
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: ${({ $status }) => STATUS_COLORS[$status].bg};
+  color: ${({ $status }) => STATUS_COLORS[$status].fg};
+`;
+
+export const Chevron = styled.span<{ $open: boolean }>`
+  display: inline-block;
+  transition: transform 0.2s ease;
+  transform: rotate(${({ $open }) => ($open ? "180deg" : "0deg")});
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.85rem;
+`;
+
+export const OrderBody = styled.div`
+  padding: 0 14px 14px;
+  display: grid;
+  gap: 12px;
+`;
+
+export const OrderNote = styled.p`
+  margin: 0;
+  font-size: 0.92rem;
+  color: ${({ theme }) => theme.colors.text};
+`;

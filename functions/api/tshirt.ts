@@ -217,6 +217,39 @@ function toCanceledPurchaseDto(row: TshirtPurchaseRow) {
   };
 }
 
+async function getPaidPurchasesByCpf(
+  DB: D1Database,
+  cpfEncrypted: string
+): Promise<TshirtPurchaseRow[]> {
+  const stmt = DB.prepare(
+    `SELECT ${PURCHASE_COLUMNS}
+     FROM tshirt_purchase
+     WHERE cpf_encrypted = ? AND status = 'PAID'
+     ORDER BY datetime(COALESCE(paid_at, updated_at)) DESC
+     LIMIT 50`
+  ).bind(cpfEncrypted);
+
+  const result = await stmt.all<TshirtPurchaseRow>();
+  return result.results ?? [];
+}
+
+function toPaidPurchaseDto(row: TshirtPurchaseRow) {
+  return {
+    id: row.id,
+    paymentRef: row.payment_ref,
+    sizes: {
+      P: row.size_p_qty,
+      M: row.size_m_qty,
+      G: row.size_g_qty,
+      GG: row.size_gg_qty,
+    },
+    totalQuantity: row.total_quantity,
+    amountCents: row.amount_cents,
+    createdAt: row.created_at,
+    paidAt: row.paid_at,
+  };
+}
+
 async function getPaidTotalsByCpf(
   DB: D1Database,
   cpfEncrypted: string
@@ -304,11 +337,13 @@ async function buildCpfPurchaseState(env: Env, cpfEncrypted: string, refresh: bo
 
   const pending = await getPendingPurchasesByCpf(env.DB, cpfEncrypted);
   const canceled = await getRecentCanceledPurchasesByCpf(env.DB, cpfEncrypted);
+  const paid = await getPaidPurchasesByCpf(env.DB, cpfEncrypted);
   const paidTotals = await getPaidTotalsByCpf(env.DB, cpfEncrypted);
 
   return {
     pendingPurchases: pending.map(toPendingPurchaseDto),
     canceledPurchases: canceled.map(toCanceledPurchaseDto),
+    paidPurchases: paid.map(toPaidPurchaseDto),
     paidTotals: {
       P: paidTotals.total_p,
       M: paidTotals.total_m,
@@ -367,7 +402,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
     latestPurchase &&
     normalizeNameForComparison(latestPurchase.customer_name) !== normalizeNameForComparison(name)
   ) {
-    return conflict("cpf_used_by_other_name");
+    return conflict("cpf_used_by_other_name", { linkedName: latestPurchase.customer_name });
   }
 
   const amountCents = totalQuantity * PRICE_PER_TSHIRT_CENTS;
@@ -498,7 +533,7 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
   }
 
   if (normalizeNameForComparison(latestPurchase.customer_name) !== normalizeNameForComparison(name)) {
-    return conflict("cpf_used_by_other_name");
+    return conflict("cpf_used_by_other_name", { linkedName: latestPurchase.customer_name });
   }
 
   const state = await buildCpfPurchaseState(env, cpfEncrypted, true);
