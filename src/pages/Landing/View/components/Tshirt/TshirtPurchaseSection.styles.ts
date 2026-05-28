@@ -54,6 +54,8 @@ export const ImageFigure = styled.figure`
   border-radius: 12px;
   overflow: hidden;
   background: #f8fafc;
+  display: flex;
+  flex-direction: column;
 
   figcaption {
     padding: 10px 12px;
@@ -64,22 +66,25 @@ export const ImageFigure = styled.figure`
 `;
 
 export const TshirtImageButton = styled.button`
-  display: block;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   border: none;
   background: none;
-  padding: 0;
+  padding: 28px;
   margin: 0;
   cursor: zoom-in;
 
   &:focus-visible {
     outline: 2px solid #1d4ed8;
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 `;
 
 export const TshirtImage = styled.img`
-  width: 140px;
+  width: 200px;
   max-width: 100%;
   display: block;
   object-fit: contain;
