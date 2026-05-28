@@ -64,16 +64,68 @@ export const ImageFigure = styled.figure`
 `;
 
 export const TshirtImage = styled.img`
-  width: 100%;
+  width: 140px;
+  max-width: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  margin: 0 auto;
 `;
 
-export const SizeGuideLink = styled.a`
+export const SizeGuideLink = styled.button`
   color: #1d4ed8;
   text-decoration: underline;
   font-weight: 600;
   width: fit-content;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+`;
+
+export const SizeGuideModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+export const SizeGuideModalContent = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 16px 16px 16px;
+  max-width: 95vw;
+  max-height: 90vh;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const SizeGuideImage = styled.img`
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+`;
+
+export const SizeGuideClose = styled.button`
+  margin-top: 12px;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
 export const Form = styled.form`

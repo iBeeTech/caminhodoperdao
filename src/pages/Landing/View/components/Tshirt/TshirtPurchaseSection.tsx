@@ -38,12 +38,17 @@ import {
   QuantityField,
   QuantityGrid,
   SizeGuideLink,
+  SizeGuideModalOverlay,
+  SizeGuideModalContent,
+  SizeGuideImage,
+  SizeGuideClose,
   Summary,
   TotalsList,
   TshirtCard,
   TshirtImage,
   TshirtSectionWrapper,
 } from "./TshirtPurchaseSection.styles";
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
 type TshirtErrorKey = "name" | "cpf" | "quantities";
 type TshirtErrors = Partial<Record<TshirtErrorKey, string>>;
@@ -321,9 +326,18 @@ const TshirtPurchaseSection: React.FC = () => {
             </ImageFigure>
           </ImageGrid>
 
-          <SizeGuideLink href="/medidas-camiseta.jpg" target="_blank" rel="noreferrer">
+          <SizeGuideLink type="button" onClick={() => setShowSizeGuide(true)}>
             {t("tshirt.sizeGuideLink")}
           </SizeGuideLink>
+
+          {showSizeGuide && (
+            <SizeGuideModalOverlay onClick={() => setShowSizeGuide(false)}>
+              <SizeGuideModalContent onClick={e => e.stopPropagation()}>
+                <SizeGuideImage src={require("../../../../../assets/medidas-camiseta.png")} alt="Medidas das camisetas" />
+                <SizeGuideClose onClick={() => setShowSizeGuide(false)}>Fechar</SizeGuideClose>
+              </SizeGuideModalContent>
+            </SizeGuideModalOverlay>
+          )}
 
           {message && <Callout variant={messageVariant}>{message}</Callout>}
 
