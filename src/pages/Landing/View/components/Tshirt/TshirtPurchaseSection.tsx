@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Callout, FormField, Input } from "../../../../../components";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
@@ -85,6 +85,34 @@ const TshirtPurchaseSection: React.FC = () => {
 
   const hasPendingStatus = status === "PENDING";
 
+  const applyStatusResult = useCallback(
+    (result: TshirtStatusResponse) => {
+      const nextStatus = result.status ?? null;
+      setStatus(nextStatus);
+      setQrCodeText(result.qrCodeText ?? null);
+      setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
+      setPaidTotals(result.paidTotals ?? null);
+
+      if (nextStatus === "PAID") {
+        setMessage(result.message ?? t("tshirt.status.paid"));
+        return;
+      }
+
+      if (nextStatus === "CANCELED") {
+        setMessage(result.message ?? t("tshirt.status.canceled"));
+        return;
+      }
+
+      if (nextStatus === "PENDING") {
+        setMessage(result.message ?? t("tshirt.status.pending"));
+        return;
+      }
+
+      setMessage(null);
+    },
+    [t]
+  );
+
   React.useEffect(() => {
     if (!hasPendingStatus) return;
 
@@ -112,7 +140,7 @@ const TshirtPurchaseSection: React.FC = () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [hasPendingStatus, cpf, name]);
+  }, [hasPendingStatus, cpf, name, applyStatusResult]);
 
   const applyPurchaseResult = (result: TshirtPurchaseResponse) => {
     const nextStatus = result.status ?? "PENDING";
@@ -127,31 +155,6 @@ const TshirtPurchaseSection: React.FC = () => {
             ? t("tshirt.status.paid")
             : t("tshirt.status.canceled"))
     );
-  };
-
-  const applyStatusResult = (result: TshirtStatusResponse) => {
-    const nextStatus = result.status ?? null;
-    setStatus(nextStatus);
-    setQrCodeText(result.qrCodeText ?? null);
-    setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
-    setPaidTotals(result.paidTotals ?? null);
-
-    if (nextStatus === "PAID") {
-      setMessage(result.message ?? t("tshirt.status.paid"));
-      return;
-    }
-
-    if (nextStatus === "CANCELED") {
-      setMessage(result.message ?? t("tshirt.status.canceled"));
-      return;
-    }
-
-    if (nextStatus === "PENDING") {
-      setMessage(result.message ?? t("tshirt.status.pending"));
-      return;
-    }
-
-    setMessage(null);
   };
 
   const resetStatus = () => {
