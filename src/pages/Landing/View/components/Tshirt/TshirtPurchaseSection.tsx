@@ -48,7 +48,6 @@ import {
   TshirtImage,
   TshirtSectionWrapper,
 } from "./TshirtPurchaseSection.styles";
-  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
 type TshirtErrorKey = "name" | "cpf" | "quantities";
 type TshirtErrors = Partial<Record<TshirtErrorKey, string>>;
@@ -86,6 +85,7 @@ const TshirtPurchaseSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   const totalQuantity = useMemo(
     () => sizes.P + sizes.M + sizes.G + sizes.GG,
