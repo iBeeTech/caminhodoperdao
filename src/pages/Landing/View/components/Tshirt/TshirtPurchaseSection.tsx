@@ -480,7 +480,7 @@ const TshirtPurchaseSection: React.FC = () => {
                 size="md"
                 type="submit"
                 loading={isSubmitting}
-                disabled={isSubmitting}
+                disabled={isSubmitting || totalQuantity <= 0}
               >
                 {isSubmitting ? t("tshirt.form.loading") : t("tshirt.form.submit")}
               </TrackedButton>
