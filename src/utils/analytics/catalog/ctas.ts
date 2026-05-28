@@ -4,6 +4,8 @@
 export const LANDING_CTAS = {
   HERO_PRIMARY: "hero_primary",
   HERO_SECONDARY: "hero_secondary",
+  TSHIRT_BUY: "tshirt_buy",
+  TSHIRT_CHECK_STATUS: "tshirt_check_status",
   NAV_GALLERY: "nav_gallery",
   FORM_CHECK_STATUS: "form_check_status",
   FORM_SUBMIT: "form_submit",

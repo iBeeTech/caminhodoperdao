@@ -12,6 +12,7 @@ import {
   HistorySection,
   ScheduleSection,
   SignupSection,
+  TshirtPurchaseSection,
   TestimonialsSection,
 } from "./components";
 import { LandingPage, MainContent } from "./LandingView.styles";
@@ -135,6 +136,16 @@ const LandingView: React.FC<LandingViewProps> = ({
             onPrimaryAction={onPrimaryAction}
             onSecondaryAction={onSecondaryAction}
           />
+        </TrackSection>
+
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
+          sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
+          position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
+          eventType="form_section"
+        >
+          <TshirtPurchaseSection />
         </TrackSection>
 
         <TrackSection

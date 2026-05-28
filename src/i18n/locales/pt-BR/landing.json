@@ -107,6 +107,55 @@
     "availability": {
         "error": "Não foi possível verificar vagas agora."
     },
+    "tshirt": {
+        "title": "Compre a Camiseta Exclusiva da Caminhada do Perdão",
+        "description": "Escolha os tamanhos, gere o PIX via Woovi e finalize sua compra. Cada camiseta custa R$100.",
+        "images": {
+            "frontAlt": "Camiseta exclusiva - frente",
+            "frontCaption": "Frente",
+            "backAlt": "Camiseta exclusiva - costas",
+            "backCaption": "Costas"
+        },
+        "sizeGuideLink": "Veja as medidas de cada tamanho clicando aqui",
+        "form": {
+            "nameLabel": "Nome completo",
+            "namePlaceholder": "Seu nome",
+            "cpfLabel": "CPF",
+            "cpfPlaceholder": "000.000.000-00",
+            "sizeLabel": "Tamanho {{size}}",
+            "summary": "Total de camisetas: {{quantity}} | Valor total: {{amount}}",
+            "submit": "Gerar PIX da Camiseta",
+            "loading": "Gerando PIX...",
+            "check": "Consultar compra",
+            "checkLoading": "Consultando...",
+            "buyMore": "Comprar mais camisetas"
+        },
+        "status": {
+            "pending": "Compra registrada. Finalize o pagamento do PIX para confirmar.",
+            "paid": "Pagamento confirmado! Sua compra de camisetas foi concluída.",
+            "canceled": "Esse PIX expirou. Gere um novo PIX para concluir a compra.",
+            "submitError": "Não foi possível gerar o PIX da camiseta agora. Tente novamente.",
+            "checkError": "Não foi possível consultar o status da compra agora.",
+            "paymentConfigError": "Pagamento da camiseta indisponível no momento. Tente novamente mais tarde.",
+            "pixError": "Falha ao gerar cobrança PIX da camiseta. Tente novamente.",
+            "copyError": "Não foi possível copiar o código PIX.",
+            "notFound": "Nenhuma compra encontrada para esse Nome e CPF.",
+            "pixCopyLabel": "Copia e Cola do PIX",
+            "copyCopied": "Copiado!",
+            "copyAction": "Copiar",
+            "pixPendingPlaceholder": "Aguardando código PIX",
+            "qrCodeAlt": "QR Code PIX da camiseta",
+            "totalTitle": "Total já confirmado para este CPF:",
+            "totalLine": "Tamanho {{size}}: {{quantity}} unidade(s)",
+            "totalAmount": "Total pago: {{quantity}} camiseta(s) | {{amount}}"
+        },
+        "errors": {
+            "required": "Obrigatório",
+            "invalidCpf": "CPF inválido",
+            "quantityRequired": "Selecione ao menos 1 camiseta.",
+            "cpfUsedByOtherName": "Este CPF já está vinculado a outro nome nas compras de camiseta."
+        }
+    },
     "signup": {
         "title": "Confira sua inscrição ou Inscreva-se para o Caminho",
         "disclaimer": "A inscrição é única e intransferível",

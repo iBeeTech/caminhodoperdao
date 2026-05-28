@@ -4,6 +4,9 @@ import {
   RegistrationPayload,
   RegistrationResponse,
   RegistrationStatusResponse,
+  TshirtPurchasePayload,
+  TshirtPurchaseResponse,
+  TshirtStatusResponse,
 } from "./landing.types";
 
 export const landingService = {
@@ -21,5 +24,14 @@ export const landingService = {
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
+  },
+
+  async purchaseTshirt(payload: TshirtPurchasePayload): Promise<TshirtPurchaseResponse> {
+    return httpClient.post<TshirtPurchaseResponse>("/api/tshirt", payload);
+  },
+
+  async checkTshirtStatus(cpf: string, name: string): Promise<TshirtStatusResponse> {
+    const url = `/api/tshirt?cpf=${encodeURIComponent(cpf)}&name=${encodeURIComponent(name)}`;
+    return httpClient.get<TshirtStatusResponse>(url);
   },
 };

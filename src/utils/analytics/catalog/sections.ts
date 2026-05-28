@@ -3,6 +3,7 @@
 
 export const LANDING_SECTIONS = {
   HERO: { id: "hero", name: "hero", position: "top" },
+  TSHIRT_PURCHASE: { id: "tshirt_purchase", name: "tshirt_purchase", position: "top" },
   REGISTRATION_FORM: { id: "registration_form", name: "registration_form", position: "top" },
   SCHEDULE: { id: "schedule", name: "schedule", position: "middle" },
   HISTORY: { id: "history", name: "history", position: "middle" },

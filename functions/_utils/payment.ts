@@ -6,10 +6,21 @@ export interface PaymentCharge {
   qrCodeText: string;
   qrCodeImageUrl?: string;
   expires_at?: string;
+  correlation_id?: string;
+  provider_charge_id?: string;
+}
+
+export interface PaymentChargeInput {
+  name: string;
+  email?: string;
+  amountCents?: number;
+  comment?: string;
+  taxId?: string;
+  additionalInfo?: Array<{ key: string; value: string }>;
 }
 
 export interface PaymentProvider {
-  createCharge(input: { name: string; email: string; amountCents?: number }): Promise<PaymentCharge>;
+  createCharge(input: PaymentChargeInput): Promise<PaymentCharge>;
 }
 
 class WooviPixProvider implements PaymentProvider {
@@ -21,20 +32,31 @@ class WooviPixProvider implements PaymentProvider {
     this.registrationCostCents = registrationCostCents;
   }
 
-  async createCharge({ name, email, amountCents }: { name: string; email: string; amountCents?: number }): Promise<PaymentCharge> {
+  async createCharge({
+    name,
+    email,
+    amountCents,
+    comment,
+    taxId,
+    additionalInfo,
+  }: PaymentChargeInput): Promise<PaymentCharge> {
     const correlationId = crypto.randomUUID();
     const expiresIn = 86400; // 24 horas em segundos
     const valueCents = amountCents ?? this.registrationCostCents;
 
+    const customer = {
+      ...(name ? { name } : {}),
+      ...(email ? { email } : {}),
+      ...(taxId ? { taxID: taxId } : {}),
+    };
+
     const payload: WooviChargePayload = {
       correlationID: correlationId,
       value: valueCents,
-      comment: 'Inscrição - Caminho do Perdão',
+      comment: comment || 'Inscrição - Caminho do Perdão',
       expiresIn,
-      customer: {
-        name: name || email.split('@')[0],
-        email,
-      },
+      customer: Object.keys(customer).length > 0 ? customer : undefined,
+      additionalInfo: additionalInfo && additionalInfo.length > 0 ? additionalInfo : undefined,
     };
 
     try {
@@ -45,6 +67,8 @@ class WooviPixProvider implements PaymentProvider {
         qrCodeText: response.charge.brCode,
         qrCodeImageUrl: response.charge.qrCodeImage,
         expires_at: response.charge.expiresDate,
+        correlation_id: response.charge.correlationID,
+        provider_charge_id: response.charge.transactionID,
       };
     } catch (error) {
       console.error('Error creating Woovi charge:', error);

@@ -60,3 +60,54 @@ export interface RegistrationResponse {
   qrCodeImageUrl?: string | null;
   message?: string;
 }
+
+export interface TshirtSizes {
+  P: number;
+  M: number;
+  G: number;
+  GG: number;
+}
+
+export interface TshirtPurchasePayload {
+  name: string;
+  cpf: string;
+  sizes: TshirtSizes;
+}
+
+export interface TshirtPurchaseResponse {
+  status?: string;
+  purchase_id?: string;
+  payment_ref?: string;
+  qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
+  amountCents?: number;
+  totalQuantity?: number;
+  pricePerUnitCents?: number;
+  sizes?: TshirtSizes;
+  message?: string;
+}
+
+export interface TshirtStatusResponse {
+  exists: boolean;
+  status?: string;
+  message?: string | null;
+  payment_ref?: string | null;
+  qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
+  latestPurchase?: {
+    id: string;
+    sizes: TshirtSizes;
+    totalQuantity: number;
+    amountCents: number;
+    createdAt: string;
+    paidAt: string | null;
+  };
+  paidTotals?: {
+    P: number;
+    M: number;
+    G: number;
+    GG: number;
+    totalQuantity: number;
+    amountCents: number;
+  };
+}

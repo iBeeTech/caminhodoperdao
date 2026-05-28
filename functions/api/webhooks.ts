@@ -60,6 +60,34 @@ async function findRegistrationByPaymentRefs(
   return null;
 }
 
+async function findTshirtPurchaseByPaymentRefs(
+  db: any,
+  paymentRefs: string[]
+): Promise<{ id: string; customer_name: string } | null> {
+  try {
+    for (const ref of paymentRefs) {
+      const purchase = (await db
+        .prepare(
+          `SELECT id, customer_name
+           FROM tshirt_purchase
+           WHERE payment_ref = ? OR correlation_id = ? OR provider_charge_id = ?
+           ORDER BY datetime(created_at) DESC
+           LIMIT 1`
+        )
+        .bind(ref, ref, ref)
+        .first()) as any;
+
+      if (purchase) {
+        return purchase;
+      }
+    }
+  } catch (error) {
+    console.warn('Busca de compra de camiseta no webhook falhou:', error);
+  }
+
+  return null;
+}
+
 /**
  * Função para gerar número de inscrição sequencial
  */
@@ -121,12 +149,16 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
 
       // Se o status é COMPLETED, marcar como PAID
       if (isPaidStatus) {
+        let matchedAny = false;
+
         // Buscar registro na tabela registrations pelo payment_ref, tentando variações de referência.
         const registration = await findRegistrationByPaymentRefs(context.env.DB, paymentRefs);
 
         console.log('Resultado da query de busca:', registration);
 
         if (registration) {
+          matchedAny = true;
+
           // Gerar número de inscrição
           const registrationNumber = await generateRegistrationNumber(context.env.DB);
 
@@ -142,15 +174,37 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           console.log(
             `Registro marcado como PAID: ${registration.email} (número: ${registrationNumber})`
           );
-        } else {
-          console.warn(`Registro não encontrado para refs: ${paymentRefs.join(', ')}`);
+        }
+
+        const tshirtPurchase = await findTshirtPurchaseByPaymentRefs(context.env.DB, paymentRefs);
+        if (tshirtPurchase) {
+          matchedAny = true;
+          const nowIso = new Date().toISOString();
+
+          const updateResult = await context.env.DB
+            .prepare(
+              "UPDATE tshirt_purchase SET status = 'PAID', paid_at = ?, updated_at = ? WHERE id = ?"
+            )
+            .bind(nowIso, nowIso, tshirtPurchase.id)
+            .run();
+
+          console.log('Resultado do update da camiseta:', updateResult);
+          console.log(`Compra de camiseta marcada como PAID: ${tshirtPurchase.customer_name}`);
+        }
+
+        if (!matchedAny) {
+          console.warn(`Nenhum registro encontrado para refs: ${paymentRefs.join(', ')}`);
         }
       } else if (charge.status === 'EXPIRED') {
+        let matchedAny = false;
+
         const registration = await findRegistrationByPaymentRefs(context.env.DB, paymentRefs);
 
         console.log('Resultado da query de busca (expirado):', registration);
 
         if (registration) {
+          matchedAny = true;
+
           const updateResult = await context.env.DB
             .prepare("UPDATE registrations SET status = 'CANCELED' WHERE id = ?")
             .bind(registration.id)
@@ -160,6 +214,24 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           console.log(
             `Registro marcado como CANCELED (expirado): ${registration.email}`
           );
+        }
+
+        const tshirtPurchase = await findTshirtPurchaseByPaymentRefs(context.env.DB, paymentRefs);
+        if (tshirtPurchase) {
+          matchedAny = true;
+          const nowIso = new Date().toISOString();
+
+          const updateResult = await context.env.DB
+            .prepare("UPDATE tshirt_purchase SET status = 'CANCELED', updated_at = ? WHERE id = ?")
+            .bind(nowIso, tshirtPurchase.id)
+            .run();
+
+          console.log('Resultado do update da camiseta (expirado):', updateResult);
+          console.log(`Compra de camiseta marcada como CANCELED (expirada): ${tshirtPurchase.customer_name}`);
+        }
+
+        if (!matchedAny) {
+          console.warn(`Nenhum registro encontrado para refs expiradas: ${paymentRefs.join(', ')}`);
         }
       }
     } catch (error) {
