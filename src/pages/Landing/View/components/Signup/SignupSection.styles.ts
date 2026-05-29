@@ -99,6 +99,23 @@ export const IntentButton = styled.button`
   }
 `;
 
+export const CancelRegistrationButton = styled.button`
+  background: none;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: #dc2626;
+    color: #fff;
+  }
+`;
+
 export const BackButton = styled.button`
   justify-self: start;
   background: none;

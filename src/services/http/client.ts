@@ -55,4 +55,17 @@ export const httpClient = {
       ...init,
     });
   },
+  del<T>(url: string, body?: unknown, init?: RequestInit) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    };
+
+    return request<T>(url, {
+      method: "DELETE",
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      ...init,
+    });
+  },
 };

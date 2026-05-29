@@ -38,12 +38,12 @@ import {
   SignupForm,
   SignupWarningIcon,
   StatusMessage,
-  WarningNote,
   IntentContainer,
   IntentTitle,
   IntentGrid,
   IntentButton,
   BackButton,
+  CancelRegistrationButton,
 } from "./SignupSection.styles";
 
 interface SignupRefs {
@@ -120,6 +120,7 @@ interface SignupSectionProps {
   onBackToIntent: () => void;
   registerIntent: boolean;
   onViewMyRegistration: () => void;
+  onCancelRegistration: () => Promise<void>;
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
@@ -161,6 +162,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onBackToIntent,
   registerIntent,
   onViewMyRegistration,
+  onCancelRegistration,
   getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
@@ -172,8 +174,37 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const [hasDietaryRestriction, setHasDietaryRestriction] = useState<string>("");
   const [copiedBrcode, setCopiedBrcode] = useState(false);
   const [isPaidModalOpen, setIsPaidModalOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [cancelWaUrl, setCancelWaUrl] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const { t } = useTranslation("landing");
   const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
+
+  const openCancelModal = async () => {
+    setCancelError(null);
+    setIsCancelOpen(true);
+    if (!cancelWaUrl) {
+      try {
+        setCancelWaUrl(await getNextWhatsappUrl());
+      } catch {
+        /* sem link de WhatsApp se falhar */
+      }
+    }
+  };
+
+  const confirmCancelRegistration = async () => {
+    setIsCanceling(true);
+    setCancelError(null);
+    try {
+      await onCancelRegistration();
+      setIsCancelOpen(false);
+    } catch {
+      setCancelError(t("cancellation.error", { ns: "common" }));
+    } finally {
+      setIsCanceling(false);
+    }
+  };
 
   const statusRole = statusTone === "error" ? "alert" : "status";
   const statusLive = statusTone === "error" ? "assertive" : "polite";
@@ -1129,12 +1160,15 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       {t("signup.status.newRegistration")}
                     </button>
                   </div>
-
-                  <WarningNote style={{ marginTop: "1.5rem" }}>
-                    <SignupWarningIcon>⚠️</SignupWarningIcon>
-                    <span>{t("signup.status.paidWarning")}</span>
-                  </WarningNote>
                 </>
+              )}
+
+              {(currentStatus === "PENDING" || currentStatus === "PAID") && (
+                <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
+                  <CancelRegistrationButton type="button" onClick={openCancelModal}>
+                    {t("signup.status.cancelRegistration")}
+                  </CancelRegistrationButton>
+                </div>
               )}
             </>
           )}
@@ -1186,6 +1220,91 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   >
                     <img src={whatsappIcon} alt="" style={{ width: "1.5rem", height: "1.5rem" }} />
                     {t("signup.status.whatsappGroupButtonText")}
+                  </TrackedButton>
+                </ConfirmationModalActions>
+              </ConfirmationModalDialog>
+            </ConfirmationModalOverlay>
+          )}
+
+          {isCancelOpen && (
+            <ConfirmationModalOverlay onClick={() => !isCanceling && setIsCancelOpen(false)}>
+              <ConfirmationModalDialog
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="cancel-registration-modal-title"
+                onClick={event => event.stopPropagation()}
+              >
+                <ConfirmationModalClose
+                  type="button"
+                  aria-label={t("cancellation.close", { ns: "common" })}
+                  onClick={() => setIsCancelOpen(false)}
+                  disabled={isCanceling}
+                >
+                  ×
+                </ConfirmationModalClose>
+
+                <ConfirmationModalTitle id="cancel-registration-modal-title">
+                  {t("cancellation.title", { ns: "common" })}
+                </ConfirmationModalTitle>
+
+                <ConfirmationModalDescription>
+                  {t("cancellation.notice", { ns: "common" })}
+                </ConfirmationModalDescription>
+
+                {cancelWaUrl && (
+                  <a
+                    href={cancelWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.5rem",
+                      background: "#25d366",
+                      color: "#fff",
+                      borderRadius: "10px",
+                      padding: "12px 16px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <img src={whatsappIcon} alt="" style={{ width: "1.25rem", height: "1.25rem" }} />
+                    {t("cancellation.whatsapp", { ns: "common" })}
+                  </a>
+                )}
+
+                {cancelError && <ErrorText role="alert">{cancelError}</ErrorText>}
+
+                <ConfirmationModalActions>
+                  <TrackedButton
+                    pageName="landing"
+                    ctaId={LANDING_CTAS.FORM_SUBMIT}
+                    sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                    sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                    position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                    variant="secondary"
+                    size="md"
+                    type="button"
+                    onClick={() => setIsCancelOpen(false)}
+                    disabled={isCanceling}
+                  >
+                    {t("cancellation.exit", { ns: "common" })}
+                  </TrackedButton>
+                  <TrackedButton
+                    pageName="landing"
+                    ctaId={LANDING_CTAS.FORM_SUBMIT}
+                    sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                    sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                    position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                    variant="primary"
+                    size="md"
+                    type="button"
+                    onClick={confirmCancelRegistration}
+                    disabled={isCanceling}
+                    loading={isCanceling}
+                  >
+                    {t("cancellation.confirm", { ns: "common" })}
                   </TrackedButton>
                 </ConfirmationModalActions>
               </ConfirmationModalDialog>

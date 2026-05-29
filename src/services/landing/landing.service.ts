@@ -23,6 +23,10 @@ export const landingService = {
     return httpClient.get<RegistrationStatusResponse>(url);
   },
 
+  async cancelRegistration(cpf: string): Promise<{ status?: string }> {
+    return httpClient.del<{ status?: string }>("/api/status", { cpf });
+  },
+
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
   },

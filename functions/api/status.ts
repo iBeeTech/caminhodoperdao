@@ -135,3 +135,42 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const name = url.searchParams.get("name");
   return handleStatus(context.env, phone, name, cpf);
 };
+
+// DELETE /api/status -> cancela a inscrição (status CANCELED) identificada pelo CPF.
+// Como a capacidade conta apenas PENDING/PAID, cancelar libera a vaga.
+export const onRequestDelete: PagesFunction<Env> = async (context) => {
+  const { env } = context;
+  let body: { cpf?: string };
+  try {
+    body = (await context.request.json()) as { cpf?: string };
+  } catch {
+    return badRequest("invalid_json");
+  }
+
+  const cpf = (body.cpf || "").trim();
+  if (!cpf || !isValidCpf(cpf)) {
+    return badRequest("invalid_cpf");
+  }
+
+  const key = env.CPF_ENCRYPTION_KEY;
+  const iv = env.CPF_ENCRYPTION_IV;
+  if (!key || !iv) return badRequest("cpf_lookup_not_configured");
+
+  let cpfEncrypted: string;
+  try {
+    cpfEncrypted = await encryptCpf(canonicalizeCpf(cpf), key, iv);
+  } catch {
+    return badRequest("cpf_lookup_failed");
+  }
+
+  const registration = await getByCpfEncrypted(env.DB, cpfEncrypted);
+  if (!registration) {
+    return json(404, { error: "registration_not_found" });
+  }
+
+  await env.DB.prepare("UPDATE registrations SET status = 'CANCELED' WHERE id = ?")
+    .bind(registration.id)
+    .run();
+
+  return json(200, { status: "canceled" });
+};

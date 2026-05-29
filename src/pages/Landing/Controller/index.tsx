@@ -862,6 +862,15 @@ const LandingController: React.FC = () => {
     setPhase("status");
   };
 
+  // Cancela a inscrição (PENDING/PAID) pelo CPF usado na consulta. Em caso de
+  // sucesso, mostra o estado de inscrição cancelada (libera a vaga no servidor).
+  const handleCancelRegistration = async () => {
+    if (!statusPollingCpf) return;
+    await landingService.cancelRegistration(statusPollingCpf);
+    setCurrentStatus("CANCELED");
+    setStatusTone("error");
+  };
+
   return (
     <LandingView
       content={landingContent}
@@ -924,6 +933,7 @@ const LandingController: React.FC = () => {
       onBackToIntent={handleBackToIntent}
       registerIntent={intent === "register"}
       onViewMyRegistration={handleViewMyRegistration}
+      onCancelRegistration={handleCancelRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onPhoneChangeError={clearPhoneError}
