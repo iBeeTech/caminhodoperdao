@@ -39,7 +39,7 @@ import {
   TermsLabel,
 } from "./Staff.styles";
 
-type Step = "intent" | "register" | "check" | "edit";
+type Step = "intent" | "registerCheck" | "register" | "check" | "edit";
 type YesNo = "" | "yes" | "no";
 
 interface FormState {
@@ -201,6 +201,35 @@ const StaffPageComponent: React.FC = () => {
       }
     } catch {
       /* segue como nova inscrição */
+    }
+  };
+
+  // Pré-check do "Quero me inscrever": valida o CPF antes de abrir o formulário
+  // completo. Se já for staff, abre a edição; se já for peregrino, bloqueia.
+  const handleRegisterPrecheck = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    const digits = canonicalizeCpf(form.cpf);
+    if (!isValidCpf(digits)) {
+      setErrors({ cpf: t("validation.invalidCpf") });
+      return;
+    }
+    setErrors({});
+    setFormError(null);
+    setIsSubmitting(true);
+    try {
+      const res = await lookupByCpf(digits);
+      if (res.found && res.data) {
+        fillFromData(res.data);
+        setStep("edit");
+      } else if (res.peregrino) {
+        setFormError(t("errors.registered_as_peregrino"));
+      } else {
+        setStep("register");
+      }
+    } catch {
+      setFormError(t("genericError"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -530,7 +559,7 @@ const StaffPageComponent: React.FC = () => {
             <>
               <IntentTitle>{t("intent.title")}</IntentTitle>
               <IntentGrid>
-                <IntentButton type="button" onClick={() => resetAll("register")}>
+                <IntentButton type="button" onClick={() => resetAll("registerCheck")}>
                   <strong>{t("intent.registerTitle")} →</strong>
                   <span>{t("intent.registerHint")}</span>
                 </IntentButton>
@@ -539,6 +568,30 @@ const StaffPageComponent: React.FC = () => {
                   <span>{t("intent.checkHint")}</span>
                 </IntentButton>
               </IntentGrid>
+            </>
+          )}
+
+          {step === "registerCheck" && (
+            <>
+              <BackButton type="button" onClick={() => resetAll("intent")}>← {t("back")}</BackButton>
+              <StaffTitle>{t("register.title")}</StaffTitle>
+              <StaffSubtitle>{tl("signup.registerCheck.subtitle")}</StaffSubtitle>
+              <SignupForm noValidate onSubmit={handleRegisterPrecheck}>
+                <FormField label={rf("nameLabel")} htmlFor="precheck-name" error={errors.name}>
+                  <Input id="precheck-name" type="text" value={form.name}
+                    placeholder={rf("namePlaceholder")}
+                    onChange={e => update("name", e.target.value)} autoComplete="name" />
+                </FormField>
+                <FormField label={rf("cpfLabel")} htmlFor="precheck-cpf" error={errors.cpf} required>
+                  <Input id="precheck-cpf" type="text" value={form.cpf}
+                    placeholder={rf("cpfPlaceholder")}
+                    onChange={e => update("cpf", formatCpfBR(e.target.value))} inputMode="numeric" />
+                </FormField>
+                {formError && <ErrorText>{formError}</ErrorText>}
+                <PrimaryButton type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? t("check.loading") : tl("signup.registerCheck.submit")}
+                </PrimaryButton>
+              </SignupForm>
             </>
           )}
 
