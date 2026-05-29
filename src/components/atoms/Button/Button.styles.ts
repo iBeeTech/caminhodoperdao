@@ -53,6 +53,12 @@ const variantStyles: Record<ButtonVariant, ReturnType<typeof css>> = {
     border: none;
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
   `,
+  outline: css`
+    background: transparent;
+    color: ${({ theme }) => theme.colors.gradientStart};
+    border: 2px solid ${({ theme }) => theme.colors.gradientStart};
+    box-shadow: none;
+  `,
 };
 
 export const StyledButton = styled.button<StyledButtonProps>`
@@ -98,6 +104,15 @@ export const StyledButton = styled.button<StyledButtonProps>`
       &:hover {
         transform: translateY(-1px);
         box-shadow: ${({ theme }) => theme.shadows.sm};
+      }
+    `}
+
+  ${({ $variant }) =>
+    $variant === "outline" &&
+    css`
+      &:hover {
+        background: ${({ theme }) => theme.colors.gradientStart};
+        color: #fff;
       }
     `}
 `;

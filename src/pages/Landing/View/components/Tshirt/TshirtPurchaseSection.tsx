@@ -613,7 +613,7 @@ const TshirtPurchaseSection: React.FC = () => {
                 sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
                 sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
                 position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
-                variant="ghost"
+                variant="outline"
                 size="md"
                 type="button"
                 loading={isChecking}
