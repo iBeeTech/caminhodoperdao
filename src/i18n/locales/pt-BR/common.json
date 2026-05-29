@@ -85,7 +85,7 @@
         "fetchError": "Erro ao buscar CEP"
     },
     "crossRegistration": {
-        "asStaff": "Você está inscrito como Staff. Cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino.",
-        "asPeregrino": "Você está inscrito como Peregrino. Cancele sua inscrição para realizar uma nova inscrição no formulário de Staff."
+        "asStaff": "Você está inscrito como Staff. Vá para a página específica ou cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino.",
+        "asPeregrino": "Você está inscrito como Peregrino. Vá para a página específica ou cancele sua inscrição para realizar uma nova inscrição no formulário de Staff."
     }
 }

@@ -248,11 +248,11 @@
             "cpfPlaceholder": "000.000.000-00",
             "dateOfBirthLabel": "Data de nascimento",
             "whatsappLabel": "WhatsApp",
-            "whatsappPlaceholder": "(DDD) 9XXXX-XXXX",
+            "whatsappPlaceholder": "(16) 9XXXX-XXXX",
             "emergencyContactNameLabel": "Contato de emergência (nome)",
             "emergencyContactNamePlaceholder": "Nome do contato",
             "emergencyContactPhoneLabel": "Contato de emergência (telefone)",
-            "emergencyContactPhonePlaceholder": "(DDD) 9XXXX-XXXX",
+            "emergencyContactPhonePlaceholder": "(16) 9XXXX-XXXX",
             "cepLabel": "CEP",
             "cepPlaceholder": "00.000-000",
             "addressLabel": "Endereço",
@@ -368,7 +368,7 @@
             "subtitle": "Informe seu nome e CPF para começar a inscrição.",
             "submit": "Continuar"
         },
-        "registeredAsStaff": "Você está inscrito como Staff. Cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino."
+        "registeredAsStaff": "Você está inscrito como Staff. Vá para a página específica ou cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino."
     },
     "verseMoment": {
         "label": "Este versículo da Bíblia foi escolhido exclusivamente para você:",
