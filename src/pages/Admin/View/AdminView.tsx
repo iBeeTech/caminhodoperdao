@@ -9,7 +9,9 @@ import {
   ErrorText,
   FieldGroup,
   Label,
+  OrangeButton,
   PrimaryButton,
+  PurpleButton,
   SecondaryButton,
   SuccessText,
 } from "./AdminView.styles";
@@ -145,15 +147,15 @@ const AdminView: React.FC<AdminViewProps> = ({
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
-            <PrimaryButton type="button" onClick={onDownloadMonastery} disabled={isDownloading}>
+            <OrangeButton type="button" onClick={onDownloadMonastery} disabled={isDownloading}>
               Gerar e Baixar Planilha Mosteiro
-            </PrimaryButton>
+            </OrangeButton>
             <SecondaryButton type="button" onClick={onDownloadInscritos} disabled={isDownloading}>
               Gerar e Baixar Planilha de Inscritos
             </SecondaryButton>
-            <SecondaryButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
+            <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
               Gerar e Baixar Planilha de Camisetas
-            </SecondaryButton>
+            </PurpleButton>
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
               Sair
             </DangerButton>

@@ -144,7 +144,7 @@
             "summary": "Total de camisetas: {{quantity}} | Valor total: {{amount}}",
             "submit": "Gerar PIX da Camiseta",
             "loading": "Gerando PIX...",
-            "check": "Consultar compra",
+            "check": "Consultar pedidos de camisetas",
             "checkLoading": "Consultando...",
             "buyMore": "Comprar mais camisetas"
         },

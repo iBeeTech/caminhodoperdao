@@ -88,3 +88,11 @@ export const DangerButton = styled(PrimaryButton)`
   background: #d32f2f;
 `;
 
+export const PurpleButton = styled(PrimaryButton)`
+  background: #a78bfa;
+`;
+
+export const OrangeButton = styled(PrimaryButton)`
+  background: #f97316;
+`;
+
