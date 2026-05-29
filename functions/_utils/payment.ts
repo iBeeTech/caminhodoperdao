@@ -77,15 +77,18 @@ class WooviPixProvider implements PaymentProvider {
   }
 }
 
+// Converte o valor das envs de inscrição (REGISTRATION_COST / REGISTRATION_COST_MONASTERY),
+// informado em reais (ex: "100" ou "99.90"), para centavos. Retorna null quando ausente ou
+// inválido, deixando o chamador aplicar o valor padrão.
 export function parseRegistrationCostCents(rawValue: unknown): number | null {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
     return null;
   }
-  const parsed = Number(rawValue);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  const reais = Number(rawValue.trim().replace(',', '.'));
+  if (!Number.isFinite(reais) || reais <= 0) {
     return null;
   }
-  return Math.trunc(parsed);
+  return Math.round(reais * 100);
 }
 
 export function getPaymentProvider(env?: any): PaymentProvider {

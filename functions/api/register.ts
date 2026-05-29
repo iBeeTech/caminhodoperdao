@@ -17,6 +17,7 @@ import {
 interface Env {
   DB: D1Database;
   GATEWAY_API_KEY?: string;
+  // Custos da inscrição em reais (ex: "100" para R$100,00). Configuráveis na Cloudflare.
   REGISTRATION_COST?: string;
   REGISTRATION_COST_MONASTERY?: string;
   MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
