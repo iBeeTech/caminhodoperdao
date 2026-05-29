@@ -1,5 +1,4 @@
 import React, { ChangeEvent, FormEvent, RefObject } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Header } from "../../../components";
 import logo from "../../../assets/logo.png";
 import { AvailabilityState, LandingContent, LandingPhase, LandingTone } from "../Model";
@@ -134,8 +133,6 @@ const LandingView: React.FC<LandingViewProps> = ({
   onEmergencyContactPhoneChange,
 }) => {
   const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
-  const [searchParams] = useSearchParams();
-  const isTshirtSectionEnabled = searchParams.get("tshirt") === "on";
   return (
     <LandingPage>
       <Header />
@@ -155,17 +152,15 @@ const LandingView: React.FC<LandingViewProps> = ({
           />
         </TrackSection>
 
-        {isTshirtSectionEnabled && (
-          <TrackSection
-            pageName="landing"
-            sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
-            sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
-            position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
-            eventType="form_section"
-          >
-            <TshirtPurchaseSection />
-          </TrackSection>
-        )}
+        <TrackSection
+          pageName="landing"
+          sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
+          sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
+          position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
+          eventType="form_section"
+        >
+          <TshirtPurchaseSection />
+        </TrackSection>
 
         <TrackSection
           pageName="landing"
