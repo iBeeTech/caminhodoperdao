@@ -16,8 +16,17 @@ interface TshirtPurchaseReportRow {
   size_gg_qty: number;
   total_quantity: number;
   amount_cents: number;
-  created_at: string;
-  paid_at: string | null;
+}
+
+interface TshirtBuyerGroup {
+  name: string;
+  cpf: string;
+  p: number;
+  m: number;
+  g: number;
+  gg: number;
+  quantity: number;
+  amount: number;
 }
 
 export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
@@ -35,9 +44,7 @@ export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
       size_g_qty,
       size_gg_qty,
       total_quantity,
-      amount_cents,
-      created_at,
-      paid_at
+      amount_cents
     FROM tshirt_purchase
     WHERE status = 'PAID'
     ORDER BY customer_name
@@ -63,7 +70,8 @@ export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
     rowsWithCpf.push({ ...row, cpfDecrypted });
   }
 
-  const spreadsheet = buildTshirtSpreadsheet(rowsWithCpf);
+  const groups = groupByBuyer(rowsWithCpf);
+  const spreadsheet = buildTshirtSpreadsheet(groups);
   return new Response(spreadsheet, {
     status: 200,
     headers: {
@@ -73,14 +81,40 @@ export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
   });
 };
 
-function formatDateBR(value: string | null): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const year = date.getUTCFullYear();
-  return `${day}/${month}/${year}`;
+// Junta todas as compras pagas de um mesmo comprador (mesmo CPF) numa unica
+// linha, somando os tamanhos, o total e o valor.
+function groupByBuyer(
+  rows: Array<TshirtPurchaseReportRow & { cpfDecrypted: string }>
+): TshirtBuyerGroup[] {
+  const map = new Map<string, TshirtBuyerGroup>();
+
+  for (const row of rows) {
+    const key = row.cpf_encrypted || row.customer_name;
+    const existing = map.get(key);
+
+    if (existing) {
+      existing.p += row.size_p_qty;
+      existing.m += row.size_m_qty;
+      existing.g += row.size_g_qty;
+      existing.gg += row.size_gg_qty;
+      existing.quantity += row.total_quantity;
+      existing.amount += row.amount_cents;
+      if (!existing.cpf && row.cpfDecrypted) existing.cpf = row.cpfDecrypted;
+    } else {
+      map.set(key, {
+        name: row.customer_name,
+        cpf: row.cpfDecrypted,
+        p: row.size_p_qty,
+        m: row.size_m_qty,
+        g: row.size_g_qty,
+        gg: row.size_gg_qty,
+        quantity: row.total_quantity,
+        amount: row.amount_cents,
+      });
+    }
+  }
+
+  return [...map.values()];
 }
 
 function formatCurrencyBRL(valueInCents: number): string {
@@ -96,57 +130,42 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function buildTshirtSpreadsheet(
-  rows: Array<TshirtPurchaseReportRow & { cpfDecrypted: string }>
-): string {
-  const headerCells = [
-    "NOME",
-    "CPF",
-    "P",
-    "M",
-    "G",
-    "GG",
-    "TOTAL",
-    "VALOR",
-    "DATA DA COMPRA",
-    "DATA DO PAGAMENTO",
-  ];
+function buildTshirtSpreadsheet(groups: TshirtBuyerGroup[]): string {
+  const headerCells = ["NOME", "CPF", "P", "M", "G", "GG", "TOTAL", "VALOR"];
 
   const header = headerCells
     .map(cell => `<th>${escapeHtml(cell)}</th>`)
     .join("");
 
-  const sorted = [...rows].sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+  const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name));
 
   const totals = sorted.reduce(
-    (acc, row) => {
-      acc.p += row.size_p_qty;
-      acc.m += row.size_m_qty;
-      acc.g += row.size_g_qty;
-      acc.gg += row.size_gg_qty;
-      acc.quantity += row.total_quantity;
-      acc.amount += row.amount_cents;
+    (acc, group) => {
+      acc.p += group.p;
+      acc.m += group.m;
+      acc.g += group.g;
+      acc.gg += group.gg;
+      acc.quantity += group.quantity;
+      acc.amount += group.amount;
       return acc;
     },
     { p: 0, m: 0, g: 0, gg: 0, quantity: 0, amount: 0 }
   );
 
   const rowsHtml = sorted
-    .map(row => {
-      const name = escapeHtml(row.customer_name || "");
-      const cpf = escapeHtml(row.cpfDecrypted || "");
+    .map(group => {
+      const name = escapeHtml(group.name || "");
+      const cpf = escapeHtml(group.cpf || "");
       return [
         "<tr>",
         `<td>${name}</td>`,
         `<td>${cpf}</td>`,
-        `<td>${row.size_p_qty}</td>`,
-        `<td>${row.size_m_qty}</td>`,
-        `<td>${row.size_g_qty}</td>`,
-        `<td>${row.size_gg_qty}</td>`,
-        `<td>${row.total_quantity}</td>`,
-        `<td>${escapeHtml(formatCurrencyBRL(row.amount_cents))}</td>`,
-        `<td>${escapeHtml(formatDateBR(row.created_at))}</td>`,
-        `<td>${escapeHtml(formatDateBR(row.paid_at))}</td>`,
+        `<td>${group.p}</td>`,
+        `<td>${group.m}</td>`,
+        `<td>${group.g}</td>`,
+        `<td>${group.gg}</td>`,
+        `<td>${group.quantity}</td>`,
+        `<td>${escapeHtml(formatCurrencyBRL(group.amount))}</td>`,
         "</tr>",
       ].join("");
     })
@@ -162,8 +181,6 @@ function buildTshirtSpreadsheet(
     `<td>${totals.gg}</td>`,
     `<td>${totals.quantity}</td>`,
     `<td>${escapeHtml(formatCurrencyBRL(totals.amount))}</td>`,
-    "<td></td>",
-    "<td></td>",
     "</tr>",
   ].join("");
 
