@@ -75,7 +75,7 @@ const LandingController: React.FC = () => {
     };
   }, [t]);
 
-  const [phase, setPhase] = useState<LandingPhase>("check");
+  const [phase, setPhase] = useState<LandingPhase>("intent");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -803,6 +803,36 @@ const LandingController: React.FC = () => {
     setPhase("check");
   };
 
+  // Seletor de intenção: "Quero me inscrever" vai direto ao formulário (limpo);
+  // "Já me inscrevi" abre o formulário de conferência.
+  const handleChooseRegister = () => {
+    setCapacityCallout(null);
+    resetStatusState();
+    setErrors({});
+    setStatusPollingCpf(null);
+    existingDataRef.current = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("landing_form_name");
+      localStorage.removeItem("landing_form_cpf");
+      localStorage.removeItem("landing_form_email");
+    }
+    setPhase("form");
+  };
+
+  const handleChooseCheck = () => {
+    setCapacityCallout(null);
+    resetStatusState();
+    setErrors({});
+    setPhase("check");
+  };
+
+  const handleBackToIntent = () => {
+    resetStatusState();
+    setErrors({});
+    setStatusPollingCpf(null);
+    setPhase("intent");
+  };
+
   return (
     <LandingView
       content={landingContent}
@@ -860,6 +890,9 @@ const LandingController: React.FC = () => {
       }}
       onReopenRegistration={handleReopenRegistration}
       onNewRegistration={handleStartNewRegistration}
+      onChooseRegister={handleChooseRegister}
+      onChooseCheck={handleChooseCheck}
+      onBackToIntent={handleBackToIntent}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onPhoneChangeError={clearPhoneError}

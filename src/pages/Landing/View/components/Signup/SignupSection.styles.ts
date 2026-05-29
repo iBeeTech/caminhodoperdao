@@ -46,6 +46,71 @@ export const SignupForm = styled.form`
   margin-top: 8px;
 `;
 
+export const IntentContainer = styled.div`
+  display: grid;
+  gap: 16px;
+  margin-top: 8px;
+`;
+
+export const IntentTitle = styled.h3`
+  margin: 0;
+  text-align: center;
+  font-size: 1.3rem;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+export const IntentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const IntentButton = styled.button`
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  background: #fff;
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+
+  strong {
+    font-size: 1.15rem;
+    color: ${({ theme }) => theme.colors.primary};
+  }
+
+  span {
+    font-size: 0.95rem;
+    color: ${({ theme }) => theme.colors.muted};
+  }
+
+  &:hover {
+    background: #f5f7fb;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+`;
+
+export const BackButton = styled.button`
+  justify-self: start;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+`;
+
 export const InfoNote = styled.p`
   color: ${({ theme }) => theme.colors.muted};
   font-size: 0.9rem;

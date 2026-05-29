@@ -39,6 +39,11 @@ import {
   SignupWarningIcon,
   StatusMessage,
   WarningNote,
+  IntentContainer,
+  IntentTitle,
+  IntentGrid,
+  IntentButton,
+  BackButton,
 } from "./SignupSection.styles";
 
 interface SignupRefs {
@@ -110,6 +115,9 @@ interface SignupSectionProps {
   onClearFieldError: (field: string) => void;
   onReopenRegistration: () => void;
   onNewRegistration: () => void;
+  onChooseRegister: () => void;
+  onChooseCheck: () => void;
+  onBackToIntent: () => void;
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
@@ -146,6 +154,9 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onClearFieldError,
   onReopenRegistration,
   onNewRegistration,
+  onChooseRegister,
+  onChooseCheck,
+  onBackToIntent,
   getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
@@ -165,6 +176,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const pixTextareaId = "pix-code";
 
   const hasAvailabilityError = Boolean(availability.error);
+  const showIntent = !hasAvailabilityError && phase === "intent" && !availability.totalFull && enrollmentEnabled;
   const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull && enrollmentEnabled;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull && enrollmentEnabled;
   const showStatus = !hasAvailabilityError && phase === "status" && enrollmentEnabled;
@@ -256,7 +268,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
       <Container>
         <SignupCard>
           <SignupHeader>
-            <h2>{t("signup.title")}</h2>
+            <h2>
+              {phase === "check"
+                ? t("signup.checkForm.title")
+                : phase === "form"
+                ? t("signup.registrationForm.title")
+                : t("signup.title")}
+            </h2>
             <Callout variant="warning" style={{ margin: "0 0 24px 0", textAlign: "center", fontSize: "1.1rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 }}>
                 <SignupWarningIcon>
@@ -348,8 +366,27 @@ const SignupSection: React.FC<SignupSectionProps> = ({
             </div>
           )}
 
+          {showIntent && (
+            <IntentContainer>
+              <IntentTitle>{t("signup.intent.title")}</IntentTitle>
+              <IntentGrid>
+                <IntentButton type="button" onClick={onChooseRegister}>
+                  <strong>{t("signup.intent.registerTitle")} →</strong>
+                  <span>{t("signup.intent.registerHint")}</span>
+                </IntentButton>
+                <IntentButton type="button" onClick={onChooseCheck}>
+                  <strong>{t("signup.intent.checkTitle")} →</strong>
+                  <span>{t("signup.intent.checkHint")}</span>
+                </IntentButton>
+              </IntentGrid>
+            </IntentContainer>
+          )}
+
           {showCheckForm && (
             <SignupForm noValidate onSubmit={handleCheckSubmit}>
+              <BackButton type="button" onClick={onBackToIntent}>
+                ← {t("signup.back")}
+              </BackButton>
               <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
                 <Input
                   id="name"
@@ -396,6 +433,9 @@ const SignupSection: React.FC<SignupSectionProps> = ({
 
           {showRegistrationForm && (
             <SignupForm noValidate onSubmit={handleRegistrationSubmit}>
+              <BackButton type="button" onClick={onBackToIntent}>
+                ← {t("signup.back")}
+              </BackButton>
               <FormField label={t("signup.registrationForm.nameLabel")} htmlFor="name-full" error={errors.name} required>
                 <Input
                   id="name-full"

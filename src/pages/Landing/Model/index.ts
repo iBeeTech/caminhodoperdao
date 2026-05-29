@@ -1,6 +1,6 @@
 import { AvailabilityResponse } from "../../../services/landing/landing.types";
 
-export type LandingPhase = "check" | "form" | "status";
+export type LandingPhase = "intent" | "check" | "form" | "status";
 
 export type LandingTone = "success" | "warn" | "error" | null;
 

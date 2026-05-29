@@ -129,10 +129,26 @@
                 "length": "Comprimento"
             },
             "rows": {
-                "P": { "chest": "47 cm", "width": "50 cm", "length": "70 cm" },
-                "M": { "chest": "51 cm", "width": "54 cm", "length": "74 cm" },
-                "G": { "chest": "55 cm", "width": "58 cm", "length": "78 cm" },
-                "GG": { "chest": "56 cm", "width": "61 cm", "length": "82 cm" }
+                "P": {
+                    "chest": "47 cm",
+                    "width": "50 cm",
+                    "length": "70 cm"
+                },
+                "M": {
+                    "chest": "51 cm",
+                    "width": "54 cm",
+                    "length": "74 cm"
+                },
+                "G": {
+                    "chest": "55 cm",
+                    "width": "58 cm",
+                    "length": "78 cm"
+                },
+                "GG": {
+                    "chest": "56 cm",
+                    "width": "61 cm",
+                    "length": "82 cm"
+                }
             }
         },
         "form": {
@@ -220,7 +236,8 @@
             "emailLabel": "Email",
             "emailPlaceholder": "seu@email.com",
             "submit": "Verificar inscrição ou Inscrever-se",
-            "loading": "Verificando..."
+            "loading": "Verificando...",
+            "title": "Conferir minha inscrição"
         },
         "registrationForm": {
             "nameLabel": "Nome completo",
@@ -272,7 +289,8 @@
             "submit": "Verificar inscrição ou Inscrever-se",
             "loading": "Enviando...",
             "termsLabel": "Ao realizar a inscrição você concorda com os nossos",
-            "termsLinkText": "Termos de Responsabilidade"
+            "termsLinkText": "Termos de Responsabilidade",
+            "title": "Fazer inscrição"
         },
         "status": {
             "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
@@ -331,6 +349,15 @@
             "emergencyContactNameRequired": "Informe o nome do contato de emergência",
             "emergencyContactPhoneInvalid": "Informe o telefone do contato de emergência (DDD + 9 dígitos)",
             "emergencyContactPhoneSameAsRegistration": "Este é o mesmo telefone usado na inscrição, utilize um telefone de outra pessoa"
-        }
+        },
+        "intent": {
+            "title": "O que você deseja fazer?",
+            "subtitle": "Escolha uma opção para continuar.",
+            "registerTitle": "Quero me inscrever",
+            "registerHint": "Faça sua inscrição no Caminho do Perdão.",
+            "checkTitle": "Já me inscrevi",
+            "checkHint": "Conferir o status da minha inscrição."
+        },
+        "back": "Voltar"
     }
 }
