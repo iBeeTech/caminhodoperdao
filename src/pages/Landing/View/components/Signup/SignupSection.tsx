@@ -279,8 +279,10 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   ]);
 
   React.useEffect(() => {
-    setIsPaidModalOpen(currentStatus === "PAID");
-  }, [currentStatus]);
+    // O modal do grupo de WhatsApp só aparece ao exibir o status de fato (peregrino pago),
+    // não no aviso "você está inscrito como Staff" nem em outros estados.
+    setIsPaidModalOpen(currentStatus === "PAID" && phase === "status");
+  }, [currentStatus, phase]);
 
   const handleWhatsappGroupClick = () => {
     if (window && (window as any).analytics) {
@@ -433,24 +435,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   ? t("signup.registeredAsStaff")
                   : t("signup.alreadyRegistered.message")}
               </Callout>
-              {registeredAsStaff ? (
-                <Link
-                  to="/staff"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#1f6feb",
-                    color: "#fff",
-                    borderRadius: "10px",
-                    padding: "12px 18px",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                  }}
-                >
-                  {t("signup.alreadyRegistered.goToStaff")}
-                </Link>
-              ) : (
+              {!registeredAsStaff && (
                 <TrackedButton
                   pageName="landing"
                   ctaId={LANDING_CTAS.FORM_CHECK_STATUS}
