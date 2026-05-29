@@ -222,11 +222,23 @@ const AdminController: React.FC = () => {
         setIsChangingPassword(prev => !prev);
       }}
       onChangePassword={handleChangePassword}
-      onDownloadMonastery={() =>
-        downloadReport("/api/admin/reports/monastery", "planilha-mosteiro.csv")
+      onDownloadPeregrinosGeral={() =>
+        downloadReport(
+          "/api/admin/reports/inscritos?staff=0&sleep=0",
+          "peregrinos-geral.xls"
+        )
       }
-      onDownloadInscritos={() =>
-        downloadReport("/api/admin/reports/inscritos", "planilha-inscritos.xls")
+      onDownloadPeregrinosMosteiro={() =>
+        downloadReport(
+          "/api/admin/reports/inscritos?staff=0&sleep=1",
+          "peregrinos-mosteiro.xls"
+        )
+      }
+      onDownloadStaffGeral={() =>
+        downloadReport("/api/admin/reports/inscritos?staff=1&sleep=0", "staff-geral.xls")
+      }
+      onDownloadStaffMosteiro={() =>
+        downloadReport("/api/admin/reports/inscritos?staff=1&sleep=1", "staff-mosteiro.xls")
       }
       onDownloadTshirt={() =>
         downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xls")

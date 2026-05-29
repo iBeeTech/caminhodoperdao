@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   allergy_medication_details TEXT,
   has_dietary_restriction INTEGER NOT NULL DEFAULT 0,
   dietary_restriction_details TEXT,
+  is_staff INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS registrations (
 CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
 CREATE INDEX IF NOT EXISTS idx_registrations_payment_ref ON registrations(payment_ref);
 CREATE INDEX IF NOT EXISTS idx_registrations_status_sleep ON registrations(status, sleep_at_monastery);
+CREATE INDEX IF NOT EXISTS idx_registrations_is_staff ON registrations(is_staff);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_cpf_encrypted ON registrations(cpf_encrypted) WHERE cpf_encrypted IS NOT NULL;
 
 -- D1 schema for t-shirt purchases (Caminhada do Perdao)

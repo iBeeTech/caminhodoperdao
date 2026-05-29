@@ -35,8 +35,10 @@ interface AdminViewProps {
   onSubmit: () => void;
   onToggleChangePassword: () => void;
   onChangePassword: () => void;
-  onDownloadMonastery: () => void;
-  onDownloadInscritos: () => void;
+  onDownloadStaffGeral: () => void;
+  onDownloadStaffMosteiro: () => void;
+  onDownloadPeregrinosGeral: () => void;
+  onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
   onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
@@ -62,8 +64,10 @@ const AdminView: React.FC<AdminViewProps> = ({
   onSubmit,
   onToggleChangePassword,
   onChangePassword,
-  onDownloadMonastery,
-  onDownloadInscritos,
+  onDownloadStaffGeral,
+  onDownloadStaffMosteiro,
+  onDownloadPeregrinosGeral,
+  onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
   onLogout,
   onNewAdminEmailChange,
@@ -147,14 +151,36 @@ const AdminView: React.FC<AdminViewProps> = ({
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
-            <OrangeButton type="button" onClick={onDownloadMonastery} disabled={isDownloading}>
-              Gerar e Baixar Planilha Mosteiro
-            </OrangeButton>
-            <SecondaryButton type="button" onClick={onDownloadInscritos} disabled={isDownloading}>
-              Gerar e Baixar Planilha de Inscritos
+            <SecondaryButton
+              type="button"
+              onClick={onDownloadPeregrinosGeral}
+              disabled={isDownloading}
+            >
+              Planilha Peregrinos - Geral
             </SecondaryButton>
+            <OrangeButton
+              type="button"
+              onClick={onDownloadPeregrinosMosteiro}
+              disabled={isDownloading}
+            >
+              Planilha Peregrinos - Mosteiro
+            </OrangeButton>
+            <SecondaryButton
+              type="button"
+              onClick={onDownloadStaffGeral}
+              disabled={isDownloading}
+            >
+              Planilha Staff - Geral
+            </SecondaryButton>
+            <OrangeButton
+              type="button"
+              onClick={onDownloadStaffMosteiro}
+              disabled={isDownloading}
+            >
+              Planilha Staff - Mosteiro
+            </OrangeButton>
             <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
-              Gerar e Baixar Planilha de Camisetas
+              Planilha de Camisetas
             </PurpleButton>
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
               Sair
