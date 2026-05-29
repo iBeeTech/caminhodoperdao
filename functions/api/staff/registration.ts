@@ -5,6 +5,7 @@ import { decryptCpf, encryptCpf } from "../../_utils/cpfCrypto";
 import {
   StaffRegistrationEnv,
   StaffRegistrationRow,
+  cancelStaffRegistration,
   getStaffRegistrationByCpfEncrypted,
   updateStaffRegistration,
 } from "../../_utils/staffRegistration";
@@ -134,4 +135,29 @@ export const onRequestPut: PagesFunction<StaffRegistrationEnv> = async context =
   }
 
   return json(200, { status: "updated" });
+};
+
+// DELETE /api/staff/registration -> cancela a inscrição de staff (libera a vaga).
+export const onRequestDelete: PagesFunction<StaffRegistrationEnv> = async context => {
+  let body: Record<string, unknown>;
+  try {
+    body = (await context.request.json()) as Record<string, unknown>;
+  } catch {
+    return badRequest("invalid_json");
+  }
+
+  const cpf = (typeof body.cpf === "string" ? body.cpf : "").trim();
+  if (!cpf || !isValidCpf(cpf)) {
+    return badRequest("invalid_cpf");
+  }
+
+  const resolved = await resolveByCpf(context.env, cpf);
+  if (!resolved.ok) return resolved.response;
+
+  const result = await cancelStaffRegistration(context.env.DB, resolved.registration.id);
+  if (!result.ok) {
+    return json(result.status, { error: result.error });
+  }
+
+  return json(200, { status: "canceled" });
 };

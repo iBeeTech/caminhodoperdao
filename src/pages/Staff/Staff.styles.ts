@@ -141,3 +141,116 @@ export const PrimaryButton = styled.button`
 export const SecondaryButton = styled(PrimaryButton)`
   background: #6b7280;
 `;
+
+export const DangerButton = styled(PrimaryButton)`
+  background: #c62828;
+`;
+
+export const IntentTitle = styled.h2`
+  margin: 0;
+  font-size: 1.3rem;
+  text-align: center;
+  color: ${theme.colors.text};
+`;
+
+export const IntentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const IntentButton = styled.button`
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  background: #fff;
+  border: 2px solid ${theme.colors.primary};
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  strong {
+    font-size: 1.1rem;
+    color: ${theme.colors.primary};
+  }
+  span {
+    font-size: 0.92rem;
+    color: #6b7280;
+  }
+  &:hover {
+    background: #f5f7fb;
+  }
+`;
+
+export const BackButton = styled.button`
+  justify-self: start;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: ${theme.colors.primary};
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+`;
+
+export const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+`;
+
+export const ModalDialog = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 460px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+`;
+
+export const ModalTitle = styled.h3`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${theme.colors.text};
+`;
+
+export const ModalText = styled.p`
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #374151;
+`;
+
+export const ModalActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const WhatsappLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #25d366;
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+`;

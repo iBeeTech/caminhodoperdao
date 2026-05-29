@@ -334,6 +334,25 @@ export async function createStaffRegistration(
   }
 }
 
+// Cancela uma inscrição de staff (status CANCELED). Como a capacidade conta apenas
+// PENDING/PAID, cancelar libera a vaga automaticamente para outra pessoa.
+export async function cancelStaffRegistration(
+  DB: D1Database,
+  registrationId: string
+): Promise<StaffUpdateResult> {
+  try {
+    await DB.prepare(
+      "UPDATE registrations SET status = 'CANCELED' WHERE id = ? AND is_staff = 1"
+    )
+      .bind(registrationId)
+      .run();
+    return { ok: true };
+  } catch (error) {
+    console.error("Erro ao cancelar inscrição de staff:", (error as Error).message);
+    return fail(500, "staff_cancel_failed");
+  }
+}
+
 export interface StaffRegistrationRow {
   id: string;
   email: string;

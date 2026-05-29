@@ -1112,19 +1112,18 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               >
                 <ConfirmationModalClose
                   type="button"
-                  aria-label="Fechar aviso"
+                  aria-label={t("cancellation.close", { ns: "common" })}
                   onClick={() => setIsPaidModalOpen(false)}
                 >
                   ×
                 </ConfirmationModalClose>
 
                 <ConfirmationModalTitle id="paid-confirmation-modal-title">
-                  Aviso importante
+                  {t("cancellation.title", { ns: "common" })}
                 </ConfirmationModalTitle>
 
                 <ConfirmationModalDescription>
-                  A inscrição é pessoal, única e intransferível. Caso você não possa participar,
-                  sugerimos doar o valor para a evangelização.
+                  {t("cancellation.notice", { ns: "common" })}
                 </ConfirmationModalDescription>
 
                 <style>{`

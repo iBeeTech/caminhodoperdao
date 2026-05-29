@@ -1,0 +1,68 @@
+{
+    "banner": "Essa página é apenas para Staff",
+    "back": "Voltar",
+    "intent": {
+        "title": "O que você deseja fazer?",
+        "registerTitle": "Quero me inscrever",
+        "registerHint": "Faça sua inscrição gratuita de staff.",
+        "checkTitle": "Já me inscrevi",
+        "checkHint": "Conferir, editar ou cancelar minha inscrição."
+    },
+    "register": {
+        "title": "Inscrição de Staff (gratuita)",
+        "subtitle": "Preencha seus dados para concluir a inscrição.",
+        "submit": "Concluir inscrição gratuita",
+        "loading": "Enviando...",
+        "success": "Inscrição concluída com sucesso."
+    },
+    "check": {
+        "title": "Conferir minha inscrição",
+        "subtitle": "Informe seu CPF para localizar sua inscrição de staff.",
+        "submit": "Conferir",
+        "loading": "Buscando...",
+        "notFound": "Nenhuma inscrição de staff encontrada para este CPF."
+    },
+    "edit": {
+        "successTitle": "Inscrição realizada com sucesso",
+        "subtitle": "Confira seus dados abaixo. Você pode editar e salvar as alterações (email e CPF não podem ser alterados).",
+        "save": "Salvar alterações",
+        "saving": "Salvando...",
+        "saved": "Alterações salvas com sucesso.",
+        "cancel": "Cancelar inscrição",
+        "newRegistration": "Nova inscrição"
+    },
+    "termsLabel": "Li e aceito os termos de participação",
+    "validation": {
+        "required": "Obrigatório",
+        "invalidCpf": "CPF inválido",
+        "invalidPhone": "Telefone inválido",
+        "select": "Selecione",
+        "describe": "Descreva",
+        "acceptTerms": "Aceite os termos"
+    },
+    "genericError": "Não foi possível enviar. Tente novamente.",
+    "errors": {
+        "invalid_email": "Email inválido.",
+        "invalid_phone": "Telefone inválido.",
+        "invalid_cpf": "CPF inválido.",
+        "name_required": "Informe o nome completo.",
+        "date_of_birth_required": "Informe a data de nascimento.",
+        "invalid_date_of_birth": "Data de nascimento inválida.",
+        "date_of_birth_future": "Data de nascimento não pode ser no futuro.",
+        "date_of_birth_invalid_range": "Data de nascimento fora do intervalo válido.",
+        "terms_required": "É necessário aceitar os termos.",
+        "emergency_contact_name_required": "Informe o nome do contato de emergência.",
+        "emergency_contact_phone_invalid": "Telefone de emergência inválido (11 dígitos).",
+        "emergency_contact_phone_same_as_registration_phone": "O telefone de emergência deve ser diferente do seu telefone.",
+        "allergy_medication_details_required": "Descreva a medicação/alergia.",
+        "dietary_restriction_details_required": "Descreva a restrição alimentar.",
+        "cpf_already_registered": "Este CPF já está inscrito com outro nome.",
+        "registration_exists": "Este CPF já possui inscrição confirmada.",
+        "monastery_full": "As vagas do mosteiro estão esgotadas.",
+        "registrations_full": "As vagas estão esgotadas.",
+        "registration_not_found": "Inscrição não encontrada.",
+        "cpf_encryption_not_configured": "Erro de configuração no servidor. Avise a organização.",
+        "staff_registration_failed": "Não foi possível concluir a inscrição. Tente novamente.",
+        "staff_update_failed": "Não foi possível salvar as alterações. Tente novamente."
+    }
+}

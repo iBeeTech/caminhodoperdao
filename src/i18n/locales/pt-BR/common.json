@@ -60,5 +60,16 @@
         ]
     },
     "loading": "Carregando...",
-    "error": "Ocorreu um erro ao carregar os dados. Tente novamente mais tarde."
+    "error": "Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.",
+    "cancellation": {
+        "title": "Aviso importante",
+        "notice": "A inscrição é pessoal, única e intransferível. Caso você não possa participar, sugerimos doar o valor para a evangelização. Qualquer dúvida consulte-nos via WhatsApp.",
+        "close": "Fechar aviso",
+        "exit": "Sair",
+        "confirm": "Confirmar Cancelamento",
+        "whatsapp": "Falar no WhatsApp",
+        "success": "Inscrição cancelada com sucesso. A vaga foi liberada para outra pessoa.",
+        "error": "Não foi possível cancelar a inscrição. Tente novamente.",
+        "whatsappMessage": "Olá! Sou staff e preciso de ajuda com a minha inscrição."
+    }
 }
