@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Callout, FormField, Input } from "../../../../../components";
 import { CalloutVariant } from "../../../../../components/molecules/Callout/Callout";
@@ -131,6 +131,7 @@ const TshirtPurchaseSection: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const totalQuantity = useMemo(
     () => sizes.P + sizes.M + sizes.G + sizes.GG,
@@ -197,13 +198,11 @@ const TshirtPurchaseSection: React.FC = () => {
 
       // Define o estado de expansão apenas para pedidos novos, preservando o
       // que o usuário já abriu/fechou manualmente entre os polls de status.
+      // Com mais de um pedido, todos começam fechados.
       const isSingle = pending.length + canceled.length + paid.length === 1;
       setOpenOrders((prev) => {
         const next = { ...prev };
-        pending.forEach((o) => {
-          if (!(o.id in next)) next[o.id] = true;
-        });
-        [...paid, ...canceled].forEach((o) => {
+        [...pending, ...paid, ...canceled].forEach((o) => {
           if (!(o.id in next)) next[o.id] = isSingle;
         });
         return next;
@@ -433,10 +432,11 @@ const TshirtPurchaseSection: React.FC = () => {
     setSizes({ P: 0, M: 0, G: 0, GG: 0 });
     setErrors({});
     setMessage(null);
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
-    <TshirtSectionWrapper id="tshirt-purchase">
+    <TshirtSectionWrapper id="tshirt-purchase" ref={sectionRef}>
       <Container>
         <TshirtCard>
           <Header>
