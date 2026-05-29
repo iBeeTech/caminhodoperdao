@@ -31,6 +31,40 @@ export const StaffBanner = styled.div`
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 `;
 
+export const MotivationCard = styled.section`
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 18px 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #fff;
+`;
+
+export const MotivationMessage = styled.p`
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+`;
+
+export const MotivationVerse = styled.p`
+  margin: 0;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.5;
+  opacity: 0.95;
+`;
+
+export const MotivationVerseRef = styled.span`
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0.9;
+`;
+
 export const StaffCard = styled.section`
   background: #ffffff;
   border-radius: 16px;

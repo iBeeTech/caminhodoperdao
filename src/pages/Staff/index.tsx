@@ -19,6 +19,10 @@ import {
   ModalOverlay,
   ModalText,
   ModalTitle,
+  MotivationCard,
+  MotivationMessage,
+  MotivationVerse,
+  MotivationVerseRef,
   PrimaryButton,
   RadioRow,
   SecondaryButton,
@@ -497,6 +501,12 @@ const StaffPageComponent: React.FC = () => {
     <StaffPage>
       <StaffContainer>
         <StaffBanner>{t("banner")}</StaffBanner>
+
+        <MotivationCard>
+          <MotivationMessage>{t("thanks.message")}</MotivationMessage>
+          <MotivationVerse>{t("thanks.verse")}</MotivationVerse>
+          <MotivationVerseRef>{t("thanks.verseRef")}</MotivationVerseRef>
+        </MotivationCard>
 
         <StaffCard>
           {topMessage && step === "intent" && <SuccessBanner>{topMessage}</SuccessBanner>}

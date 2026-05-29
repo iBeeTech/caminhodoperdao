@@ -1,17 +1,22 @@
 {
     "banner": "Essa página é apenas para Staff",
     "back": "Voltar",
+    "thanks": {
+        "message": "Obrigado por dedicar seu tempo e seu coração a esta missão. Servir aqui é servir à obra de Deus.",
+        "verse": "“Porque Deus não é injusto para se esquecer da vossa obra e do amor que demonstrastes para com o seu nome, ao servirdes aos santos.”",
+        "verseRef": "Hebreus 6:10"
+    },
     "intent": {
         "title": "O que você deseja fazer?",
         "registerTitle": "Quero me inscrever",
-        "registerHint": "Faça sua inscrição gratuita de staff.",
+        "registerHint": "Faça sua inscrição de staff.",
         "checkTitle": "Já me inscrevi",
         "checkHint": "Conferir, editar ou cancelar minha inscrição."
     },
     "register": {
-        "title": "Inscrição de Staff (gratuita)",
+        "title": "Inscrição de Staff",
         "subtitle": "Preencha seus dados para concluir a inscrição.",
-        "submit": "Concluir inscrição gratuita",
+        "submit": "Concluir inscrição",
         "loading": "Enviando...",
         "success": "Inscrição concluída com sucesso."
     },
