@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Callout, FormField, Input } from "../../../../../components";
 import { CalloutVariant } from "../../../../../components/molecules/Callout/Callout";
@@ -69,7 +69,7 @@ import {
 type TshirtErrorKey = "name" | "cpf" | "quantities";
 type TshirtErrors = Partial<Record<TshirtErrorKey, string>>;
 
-const PRICE_PER_TSHIRT_CENTS = 10_000;
+const DEFAULT_PRICE_PER_TSHIRT_CENTS = 10_000;
 const SIZE_KEYS: Array<keyof TshirtSizes> = ["P", "M", "G", "GG"];
 
 function normalizeName(value: string): string {
@@ -118,6 +118,9 @@ const TshirtPurchaseSection: React.FC = () => {
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
   const [sizes, setSizes] = useState<TshirtSizes>({ P: 0, M: 0, G: 0, GG: 0 });
+  const [pricePerUnitCents, setPricePerUnitCents] = useState<number>(
+    DEFAULT_PRICE_PER_TSHIRT_CENTS
+  );
   const [errors, setErrors] = useState<TshirtErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [messageVariant, setMessageVariant] = useState<CalloutVariant>("warning");
@@ -139,9 +142,28 @@ const TshirtPurchaseSection: React.FC = () => {
   );
 
   const totalAmountCents = useMemo(
-    () => totalQuantity * PRICE_PER_TSHIRT_CENTS,
-    [totalQuantity]
+    () => totalQuantity * pricePerUnitCents,
+    [totalQuantity, pricePerUnitCents]
   );
+
+  // Busca o preço unitário configurado no backend (env TSHIRT_COST). Mantém o
+  // valor padrão caso a requisição falhe.
+  useEffect(() => {
+    let active = true;
+    landingService
+      .getTshirtConfig()
+      .then((config) => {
+        if (active && typeof config.pricePerUnitCents === "number") {
+          setPricePerUnitCents(config.pricePerUnitCents);
+        }
+      })
+      .catch(() => {
+        /* mantém o valor padrão */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const hasPending = pendingPurchases.length > 0;
 
@@ -188,6 +210,10 @@ const TshirtPurchaseSection: React.FC = () => {
 
   const applyState = useCallback(
     (result: TshirtStatusResponse | TshirtPurchaseResponse) => {
+      if (typeof result.pricePerUnitCents === "number") {
+        setPricePerUnitCents(result.pricePerUnitCents);
+      }
+
       const pending = result.pendingPurchases ?? [];
       const canceled = result.canceledPurchases ?? [];
       const paid = result.paidPurchases ?? [];

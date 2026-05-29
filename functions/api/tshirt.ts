@@ -10,6 +10,8 @@ interface Env {
   WOOVI_APP_ID?: string;
   CPF_ENCRYPTION_KEY?: string;
   CPF_ENCRYPTION_IV?: string;
+  // Preço unitário da camiseta em reais (ex: "100" ou "99.90"). Configurável na Cloudflare.
+  TSHIRT_COST?: string;
 }
 
 interface TshirtSizes {
@@ -50,7 +52,22 @@ interface TshirtPaidTotalsRow {
   total_amount_cents: number;
 }
 
-const PRICE_PER_TSHIRT_CENTS = 10_000;
+const DEFAULT_PRICE_PER_TSHIRT_CENTS = 10_000;
+
+// Lê o preço unitário da camiseta a partir da env TSHIRT_COST (valor em reais, ex: "100" ou
+// "99.90"). Retorna o valor em centavos. Cai no padrão caso a env esteja ausente ou inválida.
+function getPricePerTshirtCents(env: Env): number {
+  const raw = env.TSHIRT_COST?.trim();
+  if (!raw) return DEFAULT_PRICE_PER_TSHIRT_CENTS;
+
+  const reais = Number(raw.replace(",", "."));
+  if (!Number.isFinite(reais) || reais <= 0) {
+    console.warn(`TSHIRT_COST inválido ("${raw}"), usando valor padrão.`);
+    return DEFAULT_PRICE_PER_TSHIRT_CENTS;
+  }
+
+  return Math.round(reais * 100);
+}
 
 function normalizeName(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -405,7 +422,8 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
     return conflict("cpf_used_by_other_name", { linkedName: latestPurchase.customer_name });
   }
 
-  const amountCents = totalQuantity * PRICE_PER_TSHIRT_CENTS;
+  const pricePerUnitCents = getPricePerTshirtCents(env);
+  const amountCents = totalQuantity * pricePerUnitCents;
 
   let provider;
   try {
@@ -492,7 +510,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
     qrCodeImageUrl: charge.qrCodeImageUrl || null,
     amountCents,
     totalQuantity,
-    pricePerUnitCents: PRICE_PER_TSHIRT_CENTS,
+    pricePerUnitCents,
     sizes,
     ...state,
   });
@@ -503,6 +521,14 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
   const cpf = url.searchParams.get("cpf") || "";
   const rawName = url.searchParams.get("name") || "";
   const name = normalizeName(rawName);
+
+  const pricePerUnitCents = getPricePerTshirtCents(env);
+
+  // Requisição apenas de configuração (sem CPF/nome): retorna o preço unitário atual,
+  // usado pelo frontend para exibir o valor antes de o usuário informar os dados.
+  if (!cpf && !name) {
+    return json(200, { pricePerUnitCents });
+  }
 
   if (!cpf) {
     return badRequest("cpf_required");
@@ -529,7 +555,7 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
   const latestPurchase = await getLatestPurchaseByCpf(env.DB, cpfEncrypted);
 
   if (!latestPurchase) {
-    return json(200, { exists: false });
+    return json(200, { exists: false, pricePerUnitCents });
   }
 
   if (normalizeNameForComparison(latestPurchase.customer_name) !== normalizeNameForComparison(name)) {
@@ -540,6 +566,7 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
 
   return json(200, {
     exists: true,
+    pricePerUnitCents,
     ...state,
   });
 }

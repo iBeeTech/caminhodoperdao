@@ -4,6 +4,7 @@ import {
   RegistrationPayload,
   RegistrationResponse,
   RegistrationStatusResponse,
+  TshirtConfigResponse,
   TshirtPurchasePayload,
   TshirtPurchaseResponse,
   TshirtStatusResponse,
@@ -24,6 +25,10 @@ export const landingService = {
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
+  },
+
+  async getTshirtConfig(): Promise<TshirtConfigResponse> {
+    return httpClient.get<TshirtConfigResponse>("/api/tshirt");
   },
 
   async purchaseTshirt(payload: TshirtPurchasePayload): Promise<TshirtPurchaseResponse> {

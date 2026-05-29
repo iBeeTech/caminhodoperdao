@@ -134,8 +134,13 @@ export interface TshirtPurchaseResponse {
 export interface TshirtStatusResponse {
   exists: boolean;
   message?: string | null;
+  pricePerUnitCents?: number;
   pendingPurchases?: TshirtPendingPurchase[];
   canceledPurchases?: TshirtCanceledPurchase[];
   paidPurchases?: TshirtPaidPurchase[];
   paidTotals?: TshirtPaidTotals;
+}
+
+export interface TshirtConfigResponse {
+  pricePerUnitCents: number;
 }
