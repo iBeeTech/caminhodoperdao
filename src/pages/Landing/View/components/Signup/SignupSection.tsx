@@ -457,16 +457,20 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               {registerIntent && (
                 <p style={{ margin: 0, color: "#4b5563" }}>{t("signup.registerCheck.subtitle")}</p>
               )}
-              <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder={t("signup.checkForm.namePlaceholder")}
-                  ref={nameRef as RefObject<HTMLInputElement>}
-                  autoComplete="name"
-                />
-              </FormField>
+              {/* "Já me inscrevi" confere apenas pelo CPF; o nome só é pedido no
+                  fluxo de inscrição (para pré-preencher o formulário). */}
+              {registerIntent && (
+                <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder={t("signup.checkForm.namePlaceholder")}
+                    ref={nameRef as RefObject<HTMLInputElement>}
+                    autoComplete="name"
+                  />
+                </FormField>
+              )}
 
               <FormField label={t("signup.checkForm.cpfLabel")} htmlFor="cpf" error={errors.cpf} required>
                 <Input
