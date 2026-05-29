@@ -4,6 +4,7 @@ import common from "./locales/pt-BR/common.json";
 import landing from "./locales/pt-BR/landing.json";
 import gallery from "./locales/pt-BR/gallery.json";
 import staff from "./locales/pt-BR/staff.json";
+import admin from "./locales/pt-BR/admin.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -12,6 +13,7 @@ i18n.use(initReactI18next).init({
       landing,
       gallery,
       staff,
+      admin,
     },
   },
   lng: "pt-BR",
@@ -20,7 +22,7 @@ i18n.use(initReactI18next).init({
     escapeValue: false,
   },
   defaultNS: "common",
-  ns: ["common", "landing", "gallery", "staff"],
+  ns: ["common", "landing", "gallery", "staff", "admin"],
 });
 
 export default i18n;

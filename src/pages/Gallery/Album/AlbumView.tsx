@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlbumContainer,
   AlbumGrid,
@@ -23,27 +24,28 @@ interface AlbumViewProps {
 }
 
 const AlbumView: React.FC<AlbumViewProps> = ({ year, photos, onBack }) => {
+  const { t } = useTranslation("gallery");
   const [selectedPhoto, setSelectedPhoto] = React.useState<GalleryPhoto | null>(null);
 
   return (
     <AlbumPage>
       <AlbumContainer>
         <AlbumHeader>
-          <AlbumTitle>{`Fotos ${year}`}</AlbumTitle>
+          <AlbumTitle>{t("album.title", { year })}</AlbumTitle>
           <BackButton type="button" onClick={onBack}>
-            Voltar
+            {t("album.back")}
           </BackButton>
         </AlbumHeader>
 
         {photos.length === 0 ? (
-          <EmptyState>Em breve.</EmptyState>
+          <EmptyState>{t("album.empty")}</EmptyState>
         ) : (
           <AlbumGrid>
             {photos.map((photo, index) => (
               <PhotoCard key={`${photo.url}-${index}`} onClick={() => setSelectedPhoto(photo)}>
                 <PhotoImage
                   src={photo.url}
-                  alt={photo.alt ?? `Foto ${index + 1} do álbum ${year}`}
+                  alt={photo.alt ?? t("album.photoAlt", { index: index + 1, year })}
                   loading="lazy"
                 />
               </PhotoCard>
@@ -60,7 +62,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({ year, photos, onBack }) => {
             </ModalClose>
             <ModalImage
               src={selectedPhoto.url}
-              alt={selectedPhoto.alt ?? `Foto do álbum ${year}`}
+              alt={selectedPhoto.alt ?? t("album.modalAlt", { year })}
             />
           </ModalContent>
         </ModalOverlay>

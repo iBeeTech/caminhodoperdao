@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import { hasStoredConsent, saveConsent } from "../../utils/consent";
 
 const ConsentModal: React.FC = () => {
+  const { t } = useTranslation("common");
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -25,17 +27,14 @@ const ConsentModal: React.FC = () => {
   return (
     <BannerContainer>
       <Dialog role="dialog" aria-live="polite" aria-labelledby="consent-title">
-        <Title id="consent-title">Privacidade e cookies</Title>
-        <Description>
-          Nos utilizamos cookies para garantir que voce tenha a melhor experiencia em nosso site.
-          Se voce continua a usar este site, assumimos que voce esta satisfeito.
-        </Description>
+        <Title id="consent-title">{t("consent.title")}</Title>
+        <Description>{t("consent.description")}</Description>
         <Actions>
           <SecondaryButton type="button" onClick={() => handleChoice(false)}>
-            RECUSAR
+            {t("consent.refuse")}
           </SecondaryButton>
           <PrimaryButton type="button" onClick={() => handleChoice(true)}>
-            ACEITAR
+            {t("consent.accept")}
           </PrimaryButton>
         </Actions>
       </Dialog>

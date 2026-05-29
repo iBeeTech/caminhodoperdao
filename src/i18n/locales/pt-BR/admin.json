@@ -1,0 +1,46 @@
+{
+    "loading": "Carregando...",
+    "login": {
+        "title": "Administração",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Seu email",
+        "passwordLabel": "Senha",
+        "passwordPlaceholder": "Sua senha",
+        "newPasswordLabel": "Nova senha",
+        "newPasswordPlaceholder": "Nova senha",
+        "submit": "Entrar",
+        "submitting": "Entrando...",
+        "changePasswordSubmit": "Atualizar senha",
+        "changePasswordSubmitting": "Atualizando...",
+        "toggleChangePassword": "Trocar senha",
+        "backToLogin": "Voltar ao login"
+    },
+    "panel": {
+        "title": "Central de Planilhas",
+        "reportPeregrinosGeral": "Planilha Peregrinos - Geral",
+        "reportPeregrinosMosteiro": "Planilha Peregrinos - Mosteiro",
+        "reportStaffGeral": "Planilha Staff - Geral",
+        "reportStaffMosteiro": "Planilha Staff - Mosteiro",
+        "reportTshirt": "Planilha de Camisetas",
+        "logout": "Sair",
+        "addAdminLabel": "Adicionar admin",
+        "addAdminPlaceholder": "email@dominio.com",
+        "addAdmin": "Adicionar",
+        "addingAdmin": "Adicionando..."
+    },
+    "messages": {
+        "fillEmailPassword": "Preencha email e senha.",
+        "invalidCredentials": "Credenciais inválidas.",
+        "serverError": "Erro no servidor. Verifique a migração do admin.",
+        "loginError": "Não foi possível entrar.",
+        "fillChangePassword": "Preencha email, senha atual e nova senha.",
+        "passwordUpdated": "Senha atualizada com sucesso.",
+        "changePasswordError": "Não foi possível trocar a senha.",
+        "reauth": "Você precisa entrar novamente.",
+        "addAdminEmailRequired": "Informe o email do novo admin.",
+        "addAdminNoPermission": "Sem permissão para adicionar admin.",
+        "addAdminError": "Não foi possível adicionar admin.",
+        "addAdminSuccess": "Admin adicionado com sucesso.",
+        "downloadError": "Não foi possível gerar a planilha. Tente novamente."
+    }
+}

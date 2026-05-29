@@ -11,5 +11,12 @@
     "actions": {
         "viewAlbum": "Ver fotos do álbum",
         "openAlbum": "Abrir fotos do álbum {{year}}. Integrar com DB por ano."
+    },
+    "album": {
+        "title": "Fotos {{year}}",
+        "back": "Voltar",
+        "empty": "Em breve.",
+        "photoAlt": "Foto {{index}} do álbum {{year}}",
+        "modalAlt": "Foto do álbum {{year}}"
     }
 }

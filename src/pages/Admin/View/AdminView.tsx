@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   AdminCard,
   AdminContainer,
@@ -73,12 +74,13 @@ const AdminView: React.FC<AdminViewProps> = ({
   onNewAdminEmailChange,
   onAddAdmin,
 }) => {
+  const { t } = useTranslation("admin");
   if (status === "loading") {
     return (
       <AdminPage>
         <AdminContainer>
           <AdminCard>
-            <AdminTitle>Carregando...</AdminTitle>
+            <AdminTitle>{t("loading")}</AdminTitle>
           </AdminCard>
         </AdminContainer>
       </AdminPage>
@@ -90,36 +92,36 @@ const AdminView: React.FC<AdminViewProps> = ({
       <AdminPage>
         <AdminContainer>
           <AdminCard>
-            <AdminTitle>Administração</AdminTitle>
+            <AdminTitle>{t("login.title")}</AdminTitle>
             <FieldGroup>
-              <Label htmlFor="admin-email">Email</Label>
+              <Label htmlFor="admin-email">{t("login.emailLabel")}</Label>
               <input
                 id="admin-email"
                 type="email"
                 value={email}
                 onChange={event => onEmailChange(event.target.value)}
-                placeholder="Seu email"
+                placeholder={t("login.emailPlaceholder")}
               />
             </FieldGroup>
             <FieldGroup>
-              <Label htmlFor="admin-password">Senha</Label>
+              <Label htmlFor="admin-password">{t("login.passwordLabel")}</Label>
               <input
                 id="admin-password"
                 type="password"
                 value={password}
                 onChange={event => onPasswordChange(event.target.value)}
-                placeholder="Sua senha"
+                placeholder={t("login.passwordPlaceholder")}
               />
             </FieldGroup>
             {isChangingPassword && (
               <FieldGroup>
-                <Label htmlFor="admin-new-password">Nova senha</Label>
+                <Label htmlFor="admin-new-password">{t("login.newPasswordLabel")}</Label>
                 <input
                   id="admin-new-password"
                   type="password"
                   value={newPassword}
                   onChange={event => onNewPasswordChange(event.target.value)}
-                  placeholder="Nova senha"
+                  placeholder={t("login.newPasswordPlaceholder")}
                 />
               </FieldGroup>
             )}
@@ -127,15 +129,15 @@ const AdminView: React.FC<AdminViewProps> = ({
             {success && <SuccessText>{success}</SuccessText>}
             {isChangingPassword ? (
               <PrimaryButton type="button" onClick={onChangePassword} disabled={isSubmitting}>
-                {isSubmitting ? "Atualizando..." : "Atualizar senha"}
+                {isSubmitting ? t("login.changePasswordSubmitting") : t("login.changePasswordSubmit")}
               </PrimaryButton>
             ) : (
               <PrimaryButton type="button" onClick={onSubmit} disabled={isSubmitting}>
-                {isSubmitting ? "Entrando..." : "Entrar"}
+                {isSubmitting ? t("login.submitting") : t("login.submit")}
               </PrimaryButton>
             )}
             <SecondaryButton type="button" onClick={onToggleChangePassword} disabled={isSubmitting}>
-              {isChangingPassword ? "Voltar ao login" : "Trocar senha"}
+              {isChangingPassword ? t("login.backToLogin") : t("login.toggleChangePassword")}
             </SecondaryButton>
           </AdminCard>
         </AdminContainer>
@@ -147,7 +149,7 @@ const AdminView: React.FC<AdminViewProps> = ({
     <AdminPage>
       <AdminContainer>
         <AdminCard>
-          <AdminTitle>Central de Planilhas</AdminTitle>
+          <AdminTitle>{t("panel.title")}</AdminTitle>
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
@@ -156,48 +158,48 @@ const AdminView: React.FC<AdminViewProps> = ({
               onClick={onDownloadPeregrinosGeral}
               disabled={isDownloading}
             >
-              Planilha Peregrinos - Geral
+              {t("panel.reportPeregrinosGeral")}
             </SecondaryButton>
             <OrangeButton
               type="button"
               onClick={onDownloadPeregrinosMosteiro}
               disabled={isDownloading}
             >
-              Planilha Peregrinos - Mosteiro
+              {t("panel.reportPeregrinosMosteiro")}
             </OrangeButton>
             <SecondaryButton
               type="button"
               onClick={onDownloadStaffGeral}
               disabled={isDownloading}
             >
-              Planilha Staff - Geral
+              {t("panel.reportStaffGeral")}
             </SecondaryButton>
             <OrangeButton
               type="button"
               onClick={onDownloadStaffMosteiro}
               disabled={isDownloading}
             >
-              Planilha Staff - Mosteiro
+              {t("panel.reportStaffMosteiro")}
             </OrangeButton>
             <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
-              Planilha de Camisetas
+              {t("panel.reportTshirt")}
             </PurpleButton>
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
-              Sair
+              {t("panel.logout")}
             </DangerButton>
           </ButtonRow>
           {canManageAdmins && (
             <FieldGroup>
-              <Label htmlFor="admin-new-email">Adicionar admin</Label>
+              <Label htmlFor="admin-new-email">{t("panel.addAdminLabel")}</Label>
               <input
                 id="admin-new-email"
                 type="email"
                 value={newAdminEmail}
                 onChange={event => onNewAdminEmailChange(event.target.value)}
-                placeholder="email@dominio.com"
+                placeholder={t("panel.addAdminPlaceholder")}
               />
               <PrimaryButton type="button" onClick={onAddAdmin} disabled={isAddingAdmin}>
-                {isAddingAdmin ? "Adicionando..." : "Adicionar"}
+                {isAddingAdmin ? t("panel.addingAdmin") : t("panel.addAdmin")}
               </PrimaryButton>
             </FieldGroup>
           )}

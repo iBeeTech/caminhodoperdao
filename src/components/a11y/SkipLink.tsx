@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 
 const SkipLinkAnchor = styled.a`
@@ -19,8 +20,9 @@ const SkipLinkAnchor = styled.a`
   }
 `;
 
-const SkipLink: React.FC = () => (
-  <SkipLinkAnchor href="#main-content">Pular para o conteúdo</SkipLinkAnchor>
-);
+const SkipLink: React.FC = () => {
+  const { t } = useTranslation("common");
+  return <SkipLinkAnchor href="#main-content">{t("skipLink")}</SkipLinkAnchor>;
+};
 
 export default SkipLink;

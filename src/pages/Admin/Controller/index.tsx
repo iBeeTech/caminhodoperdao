@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import AdminView from "../View/AdminView";
 
 type AuthStatus = "loading" | "unauthenticated" | "authenticated";
@@ -7,6 +8,7 @@ const STORAGE_KEY = "admin_jwt";
 const DEFAULT_EMAIL = "cassiotakarada7@gmail.com";
 
 const AdminController: React.FC = () => {
+  const { t } = useTranslation("admin");
   const [status, setStatus] = React.useState<AuthStatus>("loading");
   const [token, setToken] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
@@ -52,7 +54,7 @@ const AdminController: React.FC = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError("Preencha email e senha.");
+      setError(t("messages.fillEmailPassword"));
       return;
     }
     setIsSubmitting(true);
@@ -67,11 +69,11 @@ const AdminController: React.FC = () => {
       if (!response.ok) {
         const apiError = await readApiError(response);
         if (response.status === 401) {
-          setError("Credenciais inválidas.");
+          setError(t("messages.invalidCredentials"));
         } else if (response.status === 500) {
-          setError("Erro no servidor. Verifique a migração do admin.");
+          setError(t("messages.serverError"));
         } else {
-          setError(apiError || "Não foi possível entrar.");
+          setError(apiError || t("messages.loginError"));
         }
         setStatus("unauthenticated");
         return;
@@ -83,7 +85,7 @@ const AdminController: React.FC = () => {
       setStatus("authenticated");
       setPassword("");
     } catch {
-      setError("Não foi possível entrar.");
+      setError(t("messages.loginError"));
       setStatus("unauthenticated");
     } finally {
       setIsSubmitting(false);
@@ -92,7 +94,7 @@ const AdminController: React.FC = () => {
 
   const handleChangePassword = async () => {
     if (!email || !password || !newPassword) {
-      setError("Preencha email, senha atual e nova senha.");
+      setError(t("messages.fillChangePassword"));
       return;
     }
     setIsSubmitting(true);
@@ -111,20 +113,20 @@ const AdminController: React.FC = () => {
       if (!response.ok) {
         const apiError = await readApiError(response);
         if (response.status === 401) {
-          setError("Credenciais inválidas.");
+          setError(t("messages.invalidCredentials"));
         } else if (response.status === 500) {
-          setError("Erro no servidor. Verifique a migração do admin.");
+          setError(t("messages.serverError"));
         } else {
-          setError(apiError || "Não foi possível trocar a senha.");
+          setError(apiError || t("messages.changePasswordError"));
         }
         return;
       }
-      setSuccess("Senha atualizada com sucesso.");
+      setSuccess(t("messages.passwordUpdated"));
       setPassword("");
       setNewPassword("");
       setIsChangingPassword(false);
     } catch {
-      setError("Não foi possível trocar a senha.");
+      setError(t("messages.changePasswordError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -132,12 +134,12 @@ const AdminController: React.FC = () => {
 
   const handleAddAdmin = async () => {
     if (!token) {
-      setError("Você precisa entrar novamente.");
+      setError(t("messages.reauth"));
       setStatus("unauthenticated");
       return;
     }
     if (!newAdminEmail) {
-      setError("Informe o email do novo admin.");
+      setError(t("messages.addAdminEmailRequired"));
       return;
     }
     setIsAddingAdmin(true);
@@ -155,16 +157,16 @@ const AdminController: React.FC = () => {
       if (!response.ok) {
         const apiError = await readApiError(response);
         if (response.status === 403) {
-          setError("Sem permissão para adicionar admin.");
+          setError(t("messages.addAdminNoPermission"));
         } else {
-          setError(apiError || "Não foi possível adicionar admin.");
+          setError(apiError || t("messages.addAdminError"));
         }
         return;
       }
-      setSuccess("Admin adicionado com sucesso.");
+      setSuccess(t("messages.addAdminSuccess"));
       setNewAdminEmail("");
     } catch {
-      setError("Não foi possível adicionar admin.");
+      setError(t("messages.addAdminError"));
     } finally {
       setIsAddingAdmin(false);
     }
@@ -172,7 +174,7 @@ const AdminController: React.FC = () => {
 
   const downloadReport = async (endpoint: string, filename: string) => {
     if (!token) {
-      setError("Você precisa entrar novamente.");
+      setError(t("messages.reauth"));
       setStatus("unauthenticated");
       return;
     }
@@ -195,7 +197,7 @@ const AdminController: React.FC = () => {
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setError("Não foi possível gerar a planilha. Tente novamente.");
+      setError(t("messages.downloadError"));
     } finally {
       setIsDownloading(false);
     }

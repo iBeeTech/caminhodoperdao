@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   VerseContainer,
   VerseCitation,
@@ -17,39 +18,40 @@ interface Verse {
 }
 
 const VerseMoment = () => {
+  const { t } = useTranslation(["landing", "common"]);
   const [verse, setVerse] = useState<Verse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar versículo do dia ao montar
-  useEffect(() => {
-    fetchDailyVerse();
-  }, []);
-
-  const fetchDailyVerse = async () => {
+  const fetchDailyVerse = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch("/api/verse/random");
-      
+
       if (!response.ok) {
         throw new Error("Erro ao buscar versículo");
       }
 
-      const data = await response.json() as Verse;
+      const data = (await response.json()) as Verse;
       setVerse(data);
     } catch (err) {
       console.error("Erro:", err);
-      setError("Não foi possível carregar o versículo");
+      setError(t("landing:verseMoment.error"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  // Buscar versículo do dia ao montar
+  useEffect(() => {
+    fetchDailyVerse();
+  }, [fetchDailyVerse]);
 
   if (error) {
     return (
       <VerseContainer>
-        <VerseLabel>Este versículo da Bíblia foi escolhido exclusivamente para você:</VerseLabel>
+        <VerseLabel>{t("landing:verseMoment.label")}</VerseLabel>
         <VerseText style={{ fontSize: "14px" }}>{error}</VerseText>
       </VerseContainer>
     );
@@ -58,15 +60,15 @@ const VerseMoment = () => {
   if (loading || !verse) {
     return (
       <VerseContainer>
-        <VerseLabel>Este versículo da Bíblia foi escolhido exclusivamente para você:</VerseLabel>
-        <VerseText>Carregando...</VerseText>
+        <VerseLabel>{t("landing:verseMoment.label")}</VerseLabel>
+        <VerseText>{t("common:loading")}</VerseText>
       </VerseContainer>
     );
   }
 
   return (
     <VerseContainer>
-      <VerseLabel>Este versículo da Bíblia foi escolhido exclusivamente para você:</VerseLabel>
+      <VerseLabel>{t("landing:verseMoment.label")}</VerseLabel>
       <VerseWrapper>
         <VerseText>"{verse.text}"</VerseText>
         <VerseCitation>— {verse.reference}</VerseCitation>

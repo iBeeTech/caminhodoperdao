@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "../../../hooks/useFeatureFlags";
 import { BlockingCalloutWrapper, CalloutContent } from "./EnrollmentCallout.styles";
 
 const EnrollmentCallout: React.FC = () => {
+  const { t } = useTranslation("landing");
   const { isEnabled, loading } = useFeatureFlags("enrollment");
 
   // Only show the blocking callout when enrollment is disabled
@@ -14,9 +16,9 @@ const EnrollmentCallout: React.FC = () => {
     <BlockingCalloutWrapper>
       <CalloutContent>
         <div>
-          <strong>Atenção!</strong>
+          <strong>{t("enrollmentCallout.title")}</strong>
           <br />
-          As inscrições abrirão em breve
+          {t("enrollmentCallout.message")}
         </div>
       </CalloutContent>
     </BlockingCalloutWrapper>

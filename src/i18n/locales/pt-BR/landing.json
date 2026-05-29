@@ -359,5 +359,13 @@
             "checkHint": "Conferir o status da minha inscrição."
         },
         "back": "Voltar"
+    },
+    "verseMoment": {
+        "label": "Este versículo da Bíblia foi escolhido exclusivamente para você:",
+        "error": "Não foi possível carregar o versículo"
+    },
+    "enrollmentCallout": {
+        "title": "Atenção!",
+        "message": "As inscrições abrirão em breve"
     }
 }
