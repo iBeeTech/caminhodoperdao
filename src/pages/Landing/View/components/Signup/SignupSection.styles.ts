@@ -345,7 +345,6 @@ export const ConfirmationModalDescription = styled.p`
 `;
 
 export const ConfirmationModalActions = styled.div`
-  margin-top: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
