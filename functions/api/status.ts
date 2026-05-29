@@ -101,6 +101,7 @@ export async function handleStatus(
   return json(200, {
     exists: true,
     status: registration.status,
+    is_staff: registration.is_staff,
     message,
     expired,
     name: registration.name,

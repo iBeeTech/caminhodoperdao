@@ -8,6 +8,7 @@ export interface RegistrationStatusResponse {
   email?: string;
   name?: string;
   status?: string;
+  is_staff?: number;
   expired?: boolean;
   qrCodeText?: string | null;
   qrCodeImageUrl?: string | null;

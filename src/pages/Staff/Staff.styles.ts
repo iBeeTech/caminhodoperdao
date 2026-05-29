@@ -121,12 +121,22 @@ export const RadioRow = styled.div`
 
 export const TermsLabel = styled.label`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   cursor: pointer;
-  flex-wrap: wrap;
   font-weight: 600;
   color: #333;
+
+  input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+  }
+
+  span {
+    flex: 1;
+  }
 
   a {
     color: inherit;

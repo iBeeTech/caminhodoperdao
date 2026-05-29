@@ -79,6 +79,9 @@ const LandingController: React.FC = () => {
   // Intenção escolhida no seletor: "register" (Quero me inscrever) faz o pré-check
   // de CPF e bloqueia quem já tem inscrição ativa; "check" (Já me inscrevi) mostra o status.
   const [intent, setIntent] = useState<"register" | "check">("check");
+  // No pré-check de inscrição, indica que o CPF já pertence a uma inscrição de staff
+  // (impede inscrição como peregrino; mostra mensagem orientando a cancelar).
+  const [registeredAsStaff, setRegisteredAsStaff] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -517,6 +520,7 @@ const LandingController: React.FC = () => {
       // se a anterior expirou/cancelou, permite refazer a inscrição.
       if (intent === "register") {
         if (hasActiveRegistration) {
+          setRegisteredAsStaff(result.is_staff === 1);
           setPhase("alreadyRegistered");
         } else {
           const currentName = getFieldValue(nameRef.current);
@@ -932,6 +936,7 @@ const LandingController: React.FC = () => {
       onChooseCheck={handleChooseCheck}
       onBackToIntent={handleBackToIntent}
       registerIntent={intent === "register"}
+      registeredAsStaff={registeredAsStaff}
       onViewMyRegistration={handleViewMyRegistration}
       onCancelRegistration={handleCancelRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}

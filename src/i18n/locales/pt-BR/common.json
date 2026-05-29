@@ -70,7 +70,8 @@
         "whatsapp": "Falar no WhatsApp",
         "success": "Inscrição cancelada com sucesso. A vaga foi liberada para outra pessoa.",
         "error": "Não foi possível cancelar a inscrição. Tente novamente.",
-        "whatsappMessage": "Olá! Sou staff e preciso de ajuda com a minha inscrição."
+        "whatsappMessage": "Olá! Sou staff e preciso de ajuda com a minha inscrição.",
+        "confirmQuestion": "Tem certeza que deseja cancelar sua inscrição? A vaga será liberada para outra pessoa."
     },
     "consent": {
         "title": "Privacidade e cookies",
@@ -82,5 +83,9 @@
     "addressCep": {
         "notFound": "CEP não encontrado",
         "fetchError": "Erro ao buscar CEP"
+    },
+    "crossRegistration": {
+        "asStaff": "Você está inscrito como Staff. Cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino.",
+        "asPeregrino": "Você está inscrito como Peregrino. Cancele sua inscrição para realizar uma nova inscrição no formulário de Staff."
     }
 }

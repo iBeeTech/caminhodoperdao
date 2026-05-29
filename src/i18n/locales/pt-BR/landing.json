@@ -366,7 +366,8 @@
         "registerCheck": {
             "subtitle": "Informe seu nome e CPF para começar a inscrição.",
             "submit": "Continuar"
-        }
+        },
+        "registeredAsStaff": "Você está inscrito como Staff. Cancele sua inscrição para realizar uma nova inscrição no formulário de Peregrino."
     },
     "verseMoment": {
         "label": "Este versículo da Bíblia foi escolhido exclusivamente para você:",

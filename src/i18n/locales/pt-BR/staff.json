@@ -68,6 +68,7 @@
         "registration_not_found": "Inscrição não encontrada.",
         "cpf_encryption_not_configured": "Erro de configuração no servidor. Avise a organização.",
         "staff_registration_failed": "Não foi possível concluir a inscrição. Tente novamente.",
-        "staff_update_failed": "Não foi possível salvar as alterações. Tente novamente."
+        "staff_update_failed": "Não foi possível salvar as alterações. Tente novamente.",
+        "registered_as_peregrino": "Você está inscrito como Peregrino. Cancele sua inscrição para realizar uma nova inscrição no formulário de Staff."
     }
 }

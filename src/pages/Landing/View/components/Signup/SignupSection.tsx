@@ -119,6 +119,7 @@ interface SignupSectionProps {
   onChooseCheck: () => void;
   onBackToIntent: () => void;
   registerIntent: boolean;
+  registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
   onCancelRegistration: () => Promise<void>;
   getNextWhatsappUrl: () => Promise<string>;
@@ -161,6 +162,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onChooseCheck,
   onBackToIntent,
   registerIntent,
+  registeredAsStaff,
   onViewMyRegistration,
   onCancelRegistration,
   getNextWhatsappUrl,
@@ -426,7 +428,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
               <BackButton type="button" onClick={onBackToIntent}>
                 ← {t("signup.back")}
               </BackButton>
-              <Callout variant="warning">{t("signup.alreadyRegistered.message")}</Callout>
+              <Callout variant="warning">
+                {registeredAsStaff
+                  ? t("signup.registeredAsStaff")
+                  : t("signup.alreadyRegistered.message")}
+              </Callout>
               <TrackedButton
                 pageName="landing"
                 ctaId={LANDING_CTAS.FORM_CHECK_STATUS}

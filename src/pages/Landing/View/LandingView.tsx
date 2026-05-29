@@ -81,6 +81,7 @@ interface LandingViewProps {
   onChooseCheck: () => void;
   onBackToIntent: () => void;
   registerIntent: boolean;
+  registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
   onCancelRegistration: () => Promise<void>;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
@@ -122,6 +123,7 @@ const LandingView: React.FC<LandingViewProps> = ({
   onChooseCheck,
   onBackToIntent,
   registerIntent,
+  registeredAsStaff,
   onViewMyRegistration,
   onCancelRegistration,
   getNextWhatsappUrl,
@@ -200,6 +202,7 @@ const LandingView: React.FC<LandingViewProps> = ({
             onChooseCheck={onChooseCheck}
             onBackToIntent={onBackToIntent}
             registerIntent={registerIntent}
+            registeredAsStaff={registeredAsStaff}
             onViewMyRegistration={onViewMyRegistration}
             onCancelRegistration={onCancelRegistration}
             getNextWhatsappUrl={getNextWhatsappUrl}

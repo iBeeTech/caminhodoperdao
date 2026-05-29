@@ -206,11 +206,17 @@ export async function createStaffRegistration(
 
   const existing = await getByCpfEncrypted(env.DB, cpfEncrypted);
   if (existing) {
+    const isActive = existing.status === "PAID" || existing.status === "PENDING";
+    // Validação cruzada: um CPF com inscrição ativa de peregrino não pode se
+    // inscrever como staff sem antes cancelar a inscrição de peregrino.
+    if (isActive && existing.is_staff === 0) {
+      return fail(409, "registered_as_peregrino");
+    }
     const hasDifferentName = Boolean(
       existing.name && existing.name.trim().toLowerCase() !== v.name.toLowerCase()
     );
     if (hasDifferentName) return fail(409, "cpf_already_registered");
-    if (existing.status === "PAID") return fail(409, "registration_exists");
+    if (isActive) return fail(409, "registration_exists");
   }
 
   // Capacidade: staff conta no total. Desconta a inscrição pendente do próprio

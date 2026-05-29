@@ -6,6 +6,7 @@ import { formatCpfBR } from "../../utils/formatters/cpf";
 import { formatPhoneBR } from "../../utils/formatters/phone";
 import { formatCepBR } from "../../utils/formatters/cep";
 import { canonicalizeCpf, isValidCpf } from "../../utils/validators/cpf";
+import { useAddressByCep } from "../../hooks/useAddressByCep";
 import {
   BackButton,
   DangerButton,
@@ -36,7 +37,6 @@ import {
   SuccessBanner,
   SuccessText,
   TermsLabel,
-  WhatsappLink,
 } from "./Staff.styles";
 
 type Step = "intent" | "register" | "check" | "edit";
@@ -97,6 +97,7 @@ const StaffPageComponent: React.FC = () => {
   const rf = (key: string) => tl(`signup.registrationForm.${key}`);
   const errorMessage = (code?: string) =>
     (code && t(`errors.${code}`) !== `errors.${code}` ? t(`errors.${code}`) : t("genericError"));
+  const { fetchAddress } = useAddressByCep();
 
   const [step, setStep] = React.useState<Step>("intent");
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
@@ -108,11 +109,28 @@ const StaffPageComponent: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCancelOpen, setIsCancelOpen] = React.useState(false);
   const [isCanceling, setIsCanceling] = React.useState(false);
-  const [waUrl, setWaUrl] = React.useState<string | null>(null);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     setErrors(prev => (prev[key] ? { ...prev, [key]: undefined } : prev));
+  };
+
+  // Formata o CEP e, com 8 dígitos, busca o endereço (ViaCEP) e preenche os campos.
+  const handleCepChange = async (raw: string) => {
+    const formatted = formatCepBR(raw);
+    update("cep", formatted);
+    const digits = formatted.replace(/\D/g, "");
+    if (digits.length === 8) {
+      const address = await fetchAddress(digits);
+      if (address) {
+        setForm(prev => ({
+          ...prev,
+          address: address.street || prev.address,
+          city: address.city || prev.city,
+          state: address.state || prev.state,
+        }));
+      }
+    }
   };
 
   const resetAll = (nextStep: Step) => {
@@ -150,29 +168,36 @@ const StaffPageComponent: React.FC = () => {
     setRegistrationNumber((data.registrationNumber as string) ?? null);
   };
 
-  // Busca inscrição de staff por CPF. Retorna os dados (found) ou null.
-  const lookupByCpf = async (cpfDigits: string): Promise<Record<string, unknown> | null> => {
+  // Busca inscrição de staff por CPF. Retorna se há inscrição de staff (found),
+  // se o CPF já é peregrino ativo (peregrino) e os dados quando encontrados.
+  const lookupByCpf = async (
+    cpfDigits: string
+  ): Promise<{ found: boolean; peregrino: boolean; data?: Record<string, unknown> }> => {
     const response = await fetch(`/api/staff/registration?cpf=${encodeURIComponent(cpfDigits)}`);
-    if (!response.ok) return null;
+    if (!response.ok) return { found: false, peregrino: false };
     const data = (await response.json().catch(() => ({}))) as Record<string, unknown> & {
       found?: boolean;
+      peregrino?: boolean;
     };
-    return data.found ? data : null;
+    return { found: !!data.found, peregrino: !!data.peregrino, data };
   };
 
-  // Conveniência no cadastro: ao sair do CPF, se já existir inscrição, abre a edição.
+  // Conveniência no cadastro: ao sair do CPF, abre a edição se já for staff, ou
+  // bloqueia com mensagem se o CPF já estiver inscrito como peregrino.
   const handleCpfBlur = async () => {
     if (step !== "register") return;
     const digits = canonicalizeCpf(form.cpf);
     if (!isValidCpf(digits)) return;
     try {
-      const data = await lookupByCpf(digits);
-      if (data) {
-        fillFromData(data);
+      const res = await lookupByCpf(digits);
+      if (res.found && res.data) {
+        fillFromData(res.data);
         setStep("edit");
         setErrors({});
         setFormError(null);
         setSavedMessage(null);
+      } else if (res.peregrino) {
+        setFormError(t("errors.registered_as_peregrino"));
       }
     } catch {
       /* segue como nova inscrição */
@@ -188,14 +213,16 @@ const StaffPageComponent: React.FC = () => {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      const data = await lookupByCpf(digits);
-      if (!data) {
+      const res = await lookupByCpf(digits);
+      if (res.found && res.data) {
+        fillFromData(res.data);
+        setStep("edit");
+        setErrors({});
+      } else if (res.peregrino) {
+        setFormError(t("errors.registered_as_peregrino"));
+      } else {
         setFormError(t("check.notFound"));
-        return;
       }
-      fillFromData(data);
-      setStep("edit");
-      setErrors({});
     } catch {
       setFormError(t("genericError"));
     } finally {
@@ -295,21 +322,8 @@ const StaffPageComponent: React.FC = () => {
     }
   };
 
-  const openCancelModal = async () => {
+  const openCancelModal = () => {
     setIsCancelOpen(true);
-    if (!waUrl) {
-      try {
-        const response = await fetch(
-          `/api/whatsapp/next?message=${encodeURIComponent(tc("cancellation.whatsappMessage"))}`
-        );
-        if (response.ok) {
-          const data = (await response.json()) as { waUrl?: string };
-          if (data.waUrl) setWaUrl(data.waUrl);
-        }
-      } catch {
-        /* sem link de WhatsApp se falhar */
-      }
-    }
   };
 
   const confirmCancel = async () => {
@@ -384,7 +398,7 @@ const StaffPageComponent: React.FC = () => {
 
       <FormField label={rf("cepLabel")} htmlFor="cep" error={errors.cep}>
         <Input id="cep" type="text" value={form.cep} placeholder={rf("cepPlaceholder")}
-          onChange={e => update("cep", formatCepBR(e.target.value))} inputMode="numeric"
+          onChange={e => handleCepChange(e.target.value)} inputMode="numeric"
           autoComplete="postal-code" />
       </FormField>
 
@@ -593,13 +607,7 @@ const StaffPageComponent: React.FC = () => {
             onClick={e => e.stopPropagation()}
           >
             <ModalTitle id="cancel-modal-title">{tc("cancellation.title")}</ModalTitle>
-            <ModalText>{tc("cancellation.notice")}</ModalText>
-
-            {waUrl && (
-              <WhatsappLink href={waUrl} target="_blank" rel="noopener noreferrer">
-                {tc("cancellation.whatsapp")}
-              </WhatsappLink>
-            )}
+            <ModalText>{tc("cancellation.confirmQuestion")}</ModalText>
 
             <ModalActions>
               <SecondaryButton type="button" onClick={() => setIsCancelOpen(false)} disabled={isCanceling}>

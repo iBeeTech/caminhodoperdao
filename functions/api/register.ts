@@ -168,6 +168,13 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   const existing = await getByCpfEncrypted(env.DB, cpfEncrypted);
 
   if (existing) {
+    const isActive = existing.status === "PAID" || existing.status === "PENDING";
+    // Validação cruzada: um CPF com inscrição ativa de staff não pode se inscrever
+    // como peregrino sem antes cancelar a inscrição de staff.
+    if (isActive && existing.is_staff === 1) {
+      return conflict("registered_as_staff");
+    }
+
     const hasDifferentName = Boolean(
       existing.name &&
         name &&

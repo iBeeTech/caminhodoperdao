@@ -24,13 +24,14 @@ export interface Registration {
   allergy_medication_details: string | null;
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
+  is_staff: number;
   created_at: string;
   paid_at: string | null;
 }
 
 export async function getByEmail(DB: D1Database, email: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE email = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE email = ?"
   ).bind(email.toLowerCase());
   return (await stmt.first<Registration>()) ?? null;
 }
@@ -38,21 +39,21 @@ export async function getByEmail(DB: D1Database, email: string): Promise<Registr
 export async function getByPhone(DB: D1Database, phone: string): Promise<Registration | null> {
   const normalized = phone.replace(/\D/g, "");
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE phone = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE phone = ?"
   ).bind(normalized);
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByPaymentRef(DB: D1Database, paymentRef: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE payment_ref = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE payment_ref = ?"
   ).bind(paymentRef);
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByCpfEncrypted(DB: D1Database, cpfEncrypted: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at, paid_at FROM registrations WHERE cpf_encrypted = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE cpf_encrypted = ?"
   ).bind(cpfEncrypted);
   return (await stmt.first<Registration>()) ?? null;
 }

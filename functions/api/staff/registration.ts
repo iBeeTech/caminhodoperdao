@@ -2,6 +2,7 @@
 import { badRequest, json, notFound } from "../../_utils/responses";
 import { canonicalizeCpf, isValidCpf } from "../../_utils/cpfValidation";
 import { decryptCpf, encryptCpf } from "../../_utils/cpfCrypto";
+import { getByCpfEncrypted } from "../../_utils/registrations";
 import {
   StaffRegistrationEnv,
   StaffRegistrationRow,
@@ -43,8 +44,22 @@ export const onRequestGet: PagesFunction<StaffRegistrationEnv> = async context =
 
   const resolved = await resolveByCpf(context.env, cpf);
   if (!resolved.ok) {
-    // CPF válido mas sem inscrição: não é erro, é uma inscrição nova.
-    return json(200, { found: false });
+    // Sem inscrição de staff: verifica se o CPF já é peregrino ativo (validação cruzada).
+    let peregrino = false;
+    const key = context.env.CPF_ENCRYPTION_KEY;
+    const iv = context.env.CPF_ENCRYPTION_IV;
+    if (key && iv) {
+      try {
+        const enc = await encryptCpf(canonicalizeCpf(cpf), key, iv);
+        const reg = await getByCpfEncrypted(context.env.DB, enc);
+        if (reg && reg.is_staff === 0 && (reg.status === "PAID" || reg.status === "PENDING")) {
+          peregrino = true;
+        }
+      } catch {
+        /* ignora: trata como inscrição nova */
+      }
+    }
+    return json(200, { found: false, peregrino });
   }
   const r = resolved.registration;
 
