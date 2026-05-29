@@ -204,7 +204,8 @@ const StaffPageComponent: React.FC = () => {
     }
   };
 
-  const handleCheckSubmit = async () => {
+  const handleCheckSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     const digits = canonicalizeCpf(form.cpf);
     if (!isValidCpf(digits)) {
       setErrors({ cpf: t("validation.invalidCpf") });
@@ -546,14 +547,16 @@ const StaffPageComponent: React.FC = () => {
               <BackButton type="button" onClick={() => resetAll("intent")}>← {t("back")}</BackButton>
               <StaffTitle>{t("check.title")}</StaffTitle>
               <StaffSubtitle>{t("check.subtitle")}</StaffSubtitle>
-              <FormField label={rf("cpfLabel")} htmlFor="check-cpf" error={errors.cpf} required>
-                <Input id="check-cpf" type="text" value={form.cpf} placeholder={rf("cpfPlaceholder")}
-                  onChange={e => update("cpf", formatCpfBR(e.target.value))} inputMode="numeric" />
-              </FormField>
-              {formError && <ErrorText>{formError}</ErrorText>}
-              <PrimaryButton type="button" onClick={handleCheckSubmit} disabled={isSubmitting}>
-                {isSubmitting ? t("check.loading") : t("check.submit")}
-              </PrimaryButton>
+              <SignupForm noValidate onSubmit={handleCheckSubmit}>
+                <FormField label={rf("cpfLabel")} htmlFor="check-cpf" error={errors.cpf} required>
+                  <Input id="check-cpf" type="text" value={form.cpf} placeholder={rf("cpfPlaceholder")}
+                    onChange={e => update("cpf", formatCpfBR(e.target.value))} inputMode="numeric" />
+                </FormField>
+                {formError && <ErrorText>{formError}</ErrorText>}
+                <PrimaryButton type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? t("check.loading") : t("check.submit")}
+                </PrimaryButton>
+              </SignupForm>
             </>
           )}
 
