@@ -361,7 +361,8 @@
         "back": "Voltar",
         "alreadyRegistered": {
             "message": "Você já está inscrito. Vá para a seção \"Já me inscrevi\" para ver os detalhes da sua inscrição.",
-            "button": "Ir para \"Já me inscrevi\""
+            "button": "Ir para \"Já me inscrevi\"",
+            "goToStaff": "Ir para a página de Staff"
         },
         "registerCheck": {
             "subtitle": "Informe seu nome e CPF para começar a inscrição.",

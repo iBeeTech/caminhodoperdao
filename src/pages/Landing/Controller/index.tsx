@@ -531,8 +531,17 @@ const LandingController: React.FC = () => {
         return;
       }
 
+      // Validação cruzada: na home (peregrino), um CPF com inscrição ativa de
+      // staff não vê o status — recebe o aviso para cancelar e se inscrever como peregrino.
+      if (hasActiveRegistration && result.is_staff === 1) {
+        setRegisteredAsStaff(true);
+        setPhase("alreadyRegistered");
+        return;
+      }
+
       // Fluxo "Já me inscrevi": mostra o status (ou abre o formulário se não houver).
       if (hasActiveRegistration || result.expired || normalizedStatus === "CANCELED") {
+        setRegisteredAsStaff(false);
         setPhase("status");
       } else {
         setPhase("form");

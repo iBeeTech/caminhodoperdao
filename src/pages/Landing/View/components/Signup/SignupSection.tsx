@@ -433,19 +433,38 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   ? t("signup.registeredAsStaff")
                   : t("signup.alreadyRegistered.message")}
               </Callout>
-              <TrackedButton
-                pageName="landing"
-                ctaId={LANDING_CTAS.FORM_CHECK_STATUS}
-                sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
-                sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
-                position={LANDING_SECTIONS.REGISTRATION_FORM.position}
-                variant="primary"
-                size="md"
-                type="button"
-                onClick={onViewMyRegistration}
-              >
-                {t("signup.alreadyRegistered.button")}
-              </TrackedButton>
+              {registeredAsStaff ? (
+                <Link
+                  to="/staff"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#1f6feb",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    padding: "12px 18px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  {t("signup.alreadyRegistered.goToStaff")}
+                </Link>
+              ) : (
+                <TrackedButton
+                  pageName="landing"
+                  ctaId={LANDING_CTAS.FORM_CHECK_STATUS}
+                  sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                  sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                  position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                  variant="primary"
+                  size="md"
+                  type="button"
+                  onClick={onViewMyRegistration}
+                >
+                  {t("signup.alreadyRegistered.button")}
+                </TrackedButton>
+              )}
             </IntentContainer>
           )}
 
