@@ -1,7 +1,7 @@
 export const theme = {
   colors: {
-    primary: "#4169e1",
-    secondary: "#1e3a8a",
+    primary: "#1d2c5e",
+    secondary: "#34488f",
     background: "#f8f9fa",
     surface: "#ffffff",
     text: "#2c3e50",
@@ -13,8 +13,8 @@ export const theme = {
     successSoft: "#bbf7d0",
     error: "#dc2626",
     info: "#1d4ed8",
-    gradientStart: "#4169e1",
-    gradientEnd: "#1e3a8a",
+    gradientStart: "#1d2c5e",
+    gradientEnd: "#34488f",
     ctaDark: "#2c3e50",
   },
   spacing: {
