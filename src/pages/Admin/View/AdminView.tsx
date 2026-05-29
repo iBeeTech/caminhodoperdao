@@ -35,6 +35,7 @@ interface AdminViewProps {
   onChangePassword: () => void;
   onDownloadMonastery: () => void;
   onDownloadInscritos: () => void;
+  onDownloadTshirt: () => void;
   onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
   onAddAdmin: () => void;
@@ -61,6 +62,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   onChangePassword,
   onDownloadMonastery,
   onDownloadInscritos,
+  onDownloadTshirt,
   onLogout,
   onNewAdminEmailChange,
   onAddAdmin,
@@ -148,6 +150,9 @@ const AdminView: React.FC<AdminViewProps> = ({
             </PrimaryButton>
             <SecondaryButton type="button" onClick={onDownloadInscritos} disabled={isDownloading}>
               Gerar e Baixar Planilha de Inscritos
+            </SecondaryButton>
+            <SecondaryButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
+              Gerar e Baixar Planilha de Camisetas
             </SecondaryButton>
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
               Sair
