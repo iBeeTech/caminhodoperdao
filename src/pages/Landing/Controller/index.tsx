@@ -76,6 +76,9 @@ const LandingController: React.FC = () => {
   }, [t]);
 
   const [phase, setPhase] = useState<LandingPhase>("intent");
+  // Intenção escolhida no seletor: "register" (Quero me inscrever) faz o pré-check
+  // de CPF e bloqueia quem já tem inscrição ativa; "check" (Já me inscrevi) mostra o status.
+  const [intent, setIntent] = useState<"register" | "check">("check");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -494,21 +497,38 @@ const LandingController: React.FC = () => {
       setQrCodeText(result.qrCodeText ?? null);
       setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
 
+      // Define a mensagem de status (usada ao exibir o status).
       if (normalizedStatus === "PAID") {
         setStatusMessage(result.message ?? t("signup.status.paid"));
         setStatusTone("success");
         paymentConfirmed("landing", "woovi", "pix", { status: "PAID" });
-        setPhase("status");
-        return;
-      }
-
-      if (result.expired || normalizedStatus === "CANCELED") {
+      } else if (result.expired || normalizedStatus === "CANCELED") {
         setStatusMessage(t("signup.status.canceled"));
         setStatusTone("error");
-        setPhase("status");
       } else if (normalizedStatus === "PENDING") {
         setStatusMessage(t("signup.status.pending"));
         setStatusTone("warn");
+      }
+
+      const hasActiveRegistration =
+        normalizedStatus === "PAID" || normalizedStatus === "PENDING";
+
+      // Fluxo "Quero me inscrever": se já há inscrição ativa, bloqueia com callout;
+      // se a anterior expirou/cancelou, permite refazer a inscrição.
+      if (intent === "register") {
+        if (hasActiveRegistration) {
+          setPhase("alreadyRegistered");
+        } else {
+          const currentName = getFieldValue(nameRef.current);
+          localStorage.setItem("landing_form_name", currentName);
+          localStorage.setItem("landing_form_cpf", cpf);
+          setPhase("form");
+        }
+        return;
+      }
+
+      // Fluxo "Já me inscrevi": mostra o status (ou abre o formulário se não houver).
+      if (hasActiveRegistration || result.expired || normalizedStatus === "CANCELED") {
         setPhase("status");
       } else {
         setPhase("form");
@@ -803,8 +823,8 @@ const LandingController: React.FC = () => {
     setPhase("check");
   };
 
-  // Seletor de intenção: "Quero me inscrever" vai direto ao formulário (limpo);
-  // "Já me inscrevi" abre o formulário de conferência.
+  // Seletor de intenção: "Quero me inscrever" abre o mini-form (Nome + CPF) para
+  // validar o CPF antes do formulário completo; "Já me inscrevi" abre a conferência.
   const handleChooseRegister = () => {
     setCapacityCallout(null);
     resetStatusState();
@@ -816,13 +836,15 @@ const LandingController: React.FC = () => {
       localStorage.removeItem("landing_form_cpf");
       localStorage.removeItem("landing_form_email");
     }
-    setPhase("form");
+    setIntent("register");
+    setPhase("check");
   };
 
   const handleChooseCheck = () => {
     setCapacityCallout(null);
     resetStatusState();
     setErrors({});
+    setIntent("check");
     setPhase("check");
   };
 
@@ -831,6 +853,13 @@ const LandingController: React.FC = () => {
     setErrors({});
     setStatusPollingCpf(null);
     setPhase("intent");
+  };
+
+  // No callout "você já está inscrito", leva o usuário ao status da inscrição
+  // (dados já carregados pelo pré-check).
+  const handleViewMyRegistration = () => {
+    setIntent("check");
+    setPhase("status");
   };
 
   return (
@@ -893,6 +922,8 @@ const LandingController: React.FC = () => {
       onChooseRegister={handleChooseRegister}
       onChooseCheck={handleChooseCheck}
       onBackToIntent={handleBackToIntent}
+      registerIntent={intent === "register"}
+      onViewMyRegistration={handleViewMyRegistration}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onPhoneChangeError={clearPhoneError}

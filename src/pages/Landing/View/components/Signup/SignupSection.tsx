@@ -118,6 +118,8 @@ interface SignupSectionProps {
   onChooseRegister: () => void;
   onChooseCheck: () => void;
   onBackToIntent: () => void;
+  registerIntent: boolean;
+  onViewMyRegistration: () => void;
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
@@ -157,6 +159,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   onChooseRegister,
   onChooseCheck,
   onBackToIntent,
+  registerIntent,
+  onViewMyRegistration,
   getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
@@ -178,6 +182,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const hasAvailabilityError = Boolean(availability.error);
   const showIntent = !hasAvailabilityError && phase === "intent" && !availability.totalFull && enrollmentEnabled;
   const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull && enrollmentEnabled;
+  const showAlreadyRegistered =
+    !hasAvailabilityError && phase === "alreadyRegistered" && enrollmentEnabled;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull && enrollmentEnabled;
   const showStatus = !hasAvailabilityError && phase === "status" && enrollmentEnabled;
 
@@ -270,7 +276,9 @@ const SignupSection: React.FC<SignupSectionProps> = ({
           <SignupHeader>
             <h2>
               {phase === "check"
-                ? t("signup.checkForm.title")
+                ? registerIntent
+                  ? t("signup.registrationForm.title")
+                  : t("signup.checkForm.title")
                 : phase === "form"
                 ? t("signup.registrationForm.title")
                 : t("signup.title")}
@@ -382,11 +390,36 @@ const SignupSection: React.FC<SignupSectionProps> = ({
             </IntentContainer>
           )}
 
+          {showAlreadyRegistered && (
+            <IntentContainer>
+              <BackButton type="button" onClick={onBackToIntent}>
+                ← {t("signup.back")}
+              </BackButton>
+              <Callout variant="warning">{t("signup.alreadyRegistered.message")}</Callout>
+              <TrackedButton
+                pageName="landing"
+                ctaId={LANDING_CTAS.FORM_CHECK_STATUS}
+                sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                variant="primary"
+                size="md"
+                type="button"
+                onClick={onViewMyRegistration}
+              >
+                {t("signup.alreadyRegistered.button")}
+              </TrackedButton>
+            </IntentContainer>
+          )}
+
           {showCheckForm && (
             <SignupForm noValidate onSubmit={handleCheckSubmit}>
               <BackButton type="button" onClick={onBackToIntent}>
                 ← {t("signup.back")}
               </BackButton>
+              {registerIntent && (
+                <p style={{ margin: 0, color: "#4b5563" }}>{t("signup.registerCheck.subtitle")}</p>
+              )}
               <FormField label={t("signup.checkForm.nameLabel")} htmlFor="name" error={errors.name}>
                 <Input
                   id="name"
@@ -426,7 +459,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 disabled={isCheckingStatus || availability.loading}
                 loading={isCheckingStatus}
               >
-                {isCheckingStatus ? t("signup.checkForm.loading") : t("signup.checkForm.submit")}
+                {isCheckingStatus
+                  ? t("signup.checkForm.loading")
+                  : registerIntent
+                  ? t("signup.registerCheck.submit")
+                  : t("signup.checkForm.submit")}
               </TrackedButton>
             </SignupForm>
           )}

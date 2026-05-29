@@ -80,6 +80,8 @@ interface LandingViewProps {
   onChooseRegister: () => void;
   onChooseCheck: () => void;
   onBackToIntent: () => void;
+  registerIntent: boolean;
+  onViewMyRegistration: () => void;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
   onCpfChange?: () => void;
   onPhoneChangeError?: () => void;
@@ -118,6 +120,8 @@ const LandingView: React.FC<LandingViewProps> = ({
   onChooseRegister,
   onChooseCheck,
   onBackToIntent,
+  registerIntent,
+  onViewMyRegistration,
   getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
@@ -193,6 +197,8 @@ const LandingView: React.FC<LandingViewProps> = ({
             onChooseRegister={onChooseRegister}
             onChooseCheck={onChooseCheck}
             onBackToIntent={onBackToIntent}
+            registerIntent={registerIntent}
+            onViewMyRegistration={onViewMyRegistration}
             getNextWhatsappUrl={getNextWhatsappUrl}
             onCpfChange={onCpfChange}
             onPhoneChangeError={onPhoneChangeError}

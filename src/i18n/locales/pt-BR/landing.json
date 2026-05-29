@@ -358,7 +358,15 @@
             "checkTitle": "Já me inscrevi",
             "checkHint": "Conferir o status da minha inscrição."
         },
-        "back": "Voltar"
+        "back": "Voltar",
+        "alreadyRegistered": {
+            "message": "Você já está inscrito. Vá para a seção \"Já me inscrevi\" para ver os detalhes da sua inscrição.",
+            "button": "Ir para \"Já me inscrevi\""
+        },
+        "registerCheck": {
+            "subtitle": "Informe seu nome e CPF para começar a inscrição.",
+            "submit": "Continuar"
+        }
     },
     "verseMoment": {
         "label": "Este versículo da Bíblia foi escolhido exclusivamente para você:",
