@@ -226,7 +226,7 @@ const AdminController: React.FC = () => {
       onChangePassword={handleChangePassword}
       onDownloadPeregrinosGeral={() =>
         downloadReport(
-          "/api/admin/reports/inscritos?staff=0&sleep=0",
+          "/api/admin/reports/inscritos?staff=0",
           "peregrinos-geral.xls"
         )
       }
@@ -237,10 +237,7 @@ const AdminController: React.FC = () => {
         )
       }
       onDownloadStaffGeral={() =>
-        downloadReport("/api/admin/reports/inscritos?staff=1&sleep=0", "staff-geral.xls")
-      }
-      onDownloadStaffMosteiro={() =>
-        downloadReport("/api/admin/reports/inscritos?staff=1&sleep=1", "staff-mosteiro.xls")
+        downloadReport("/api/admin/reports/inscritos?staff=1", "staff-geral.xls")
       }
       onDownloadTshirt={() =>
         downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xls")

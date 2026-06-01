@@ -37,7 +37,6 @@ interface AdminViewProps {
   onToggleChangePassword: () => void;
   onChangePassword: () => void;
   onDownloadStaffGeral: () => void;
-  onDownloadStaffMosteiro: () => void;
   onDownloadPeregrinosGeral: () => void;
   onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
@@ -66,7 +65,6 @@ const AdminView: React.FC<AdminViewProps> = ({
   onToggleChangePassword,
   onChangePassword,
   onDownloadStaffGeral,
-  onDownloadStaffMosteiro,
   onDownloadPeregrinosGeral,
   onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
@@ -174,13 +172,6 @@ const AdminView: React.FC<AdminViewProps> = ({
             >
               {t("panel.reportStaffGeral")}
             </SecondaryButton>
-            <OrangeButton
-              type="button"
-              onClick={onDownloadStaffMosteiro}
-              disabled={isDownloading}
-            >
-              {t("panel.reportStaffMosteiro")}
-            </OrangeButton>
             <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
               {t("panel.reportTshirt")}
             </PurpleButton>
