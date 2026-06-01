@@ -1,10 +1,33 @@
 /// <reference types="@cloudflare/workers-types" />
-import { describe, it, expect, beforeEach } from "vitest";
-import { handleRegister } from "../../functions/api/register";
-import { handleWebhook } from "../../functions/api/webhooks/pix";
-import { handleStatus } from "../../functions/api/status";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
-interface MemoryRegistration {
+// Mocka apenas a integração de rede com a Woovi. Todo o resto (validação,
+// capacidade, criptografia de CPF, persistência via InMemoryD1) roda de verdade.
+vi.mock("../../functions/_utils/woovi", () => ({
+  createWooviCharge: vi.fn(async (_appId: string, payload: any) => ({
+    charge: {
+      transactionID: `TX-${payload.correlationID}`,
+      brCode: "00020126BR-CODE-PIX",
+      qrCodeImage: "data:image/png;base64,AAAA",
+      expiresDate: "2026-12-31T23:59:59.000Z",
+      correlationID: payload.correlationID,
+    },
+  })),
+  getWooviChargeStatus: vi.fn(async () => ({ charge: { status: "ACTIVE" } })),
+}));
+
+import { handleRegister } from "../../functions/api/register";
+import { handleStatus } from "../../functions/api/status";
+import { onRequestPost as webhookPost } from "../../functions/api/webhooks";
+
+// CPFs válidos (dígitos verificadores corretos).
+const CPF_A = "529.982.247-25";
+const CPF_B = "111.444.777-35";
+// Chave/IV de 32 e 16 bytes (zeros) em base64, válidos para AES-256-CBC.
+const CPF_KEY = Buffer.from(new Uint8Array(32)).toString("base64");
+const CPF_IV = Buffer.from(new Uint8Array(16)).toString("base64");
+
+interface RegRow {
   id: string;
   email: string;
   name: string;
@@ -12,6 +35,7 @@ interface MemoryRegistration {
   payment_provider: string | null;
   payment_ref: string | null;
   sleep_at_monastery: number;
+  companion_name: string | null;
   phone: string;
   cep: string;
   address: string;
@@ -19,200 +43,328 @@ interface MemoryRegistration {
   complement: string | null;
   city: string;
   state: string;
+  cpf_encrypted: string | null;
+  date_of_birth: string | null;
+  terms_accepted_at: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  has_allergy_medication: number;
+  allergy_medication_details: string | null;
+  has_dietary_restriction: number;
+  dietary_restriction_details: string | null;
+  is_staff: number;
+  registration_number: string | null;
   created_at: string;
   paid_at: string | null;
 }
 
-class InMemoryD1 implements D1Database {
-  private registrations: MemoryRegistration[] = [];
+interface PaymentRow {
+  id: string;
+  email: string;
+  correlation_id: string;
+  provider_charge_id: string | null;
+  amount_cents: number;
+  status: string;
+  brcode: string | null;
+  qr_code_image: string | null;
+  qr_code_url: string | null;
+  expires_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
 
-  prepare(query: string): D1PreparedStatement {
+// D1 em memória que atende as queries reais das functions exercitadas no fluxo
+// register -> webhook -> status. O roteamento é por trecho da query.
+class InMemoryD1 {
+  registrations: RegRow[] = [];
+  payments: PaymentRow[] = [];
+
+  prepare(query: string) {
     const db = this;
-    return {
-      bind(...args: unknown[]) {
-        return {
-          async first<T>() {
-            if (query.startsWith("SELECT COUNT(1) as total FROM registrations WHERE status IN ('PENDING','PAID') AND sleep_at_monastery = 1")) {
-              const total = db.registrations.filter(r => (r.status === "PENDING" || r.status === "PAID") && r.sleep_at_monastery === 1).length;
-              return { total } as unknown as T;
-            }
-            if (query.startsWith("SELECT COUNT(1) as total FROM registrations WHERE status IN ('PENDING','PAID')")) {
-              const total = db.registrations.filter(r => r.status === "PENDING" || r.status === "PAID").length;
-              return { total } as unknown as T;
-            }
-            if (query.includes("WHERE email = ?")) {
-              const email = String(args[0]).toLowerCase();
-              const found = db.registrations.find(r => r.email === email);
-              return (found as unknown as T) ?? null;
-            }
-            if (query.includes("WHERE payment_ref = ?")) {
-              const ref = String(args[0]);
-              const found = db.registrations.find(r => r.payment_ref === ref);
-              return (found as unknown as T) ?? null;
-            }
-            return null as T;
-          },
-          async run() {
-            if (query.startsWith("INSERT INTO registrations")) {
-              const [id, email, name, status, provider, ref, sleep, phone, cep, address, number, complement, city, state] = args as [
-                string,
-                string,
-                string,
-                string,
-                string,
-                string,
-                number,
-                string,
-                string,
-                string,
-                string,
-                string | null,
-                string,
-                string
-              ];
-              if (db.registrations.some(r => r.email === email.toLowerCase())) {
-                throw new Error("UNIQUE constraint failed: registrations.email");
-              }
-              db.registrations.push({
-                id,
-                email: email.toLowerCase(),
-                name,
-                status: status as MemoryRegistration["status"],
-                payment_provider: provider,
-                payment_ref: ref,
-                sleep_at_monastery: sleep,
-                phone,
-                cep,
-                address,
-                number,
-                complement,
-                city,
-                state,
-                created_at: new Date().toISOString(),
-                paid_at: null,
-              });
-              return { success: true } as D1Result;
-            }
-
-            if (query.startsWith("UPDATE registrations SET payment_ref")) {
-              const [payment_ref, provider, email] = args as [string, string, string];
-              db.registrations = db.registrations.map(r =>
-                r.email === email.toLowerCase()
-                  ? { ...r, payment_ref, payment_provider: provider }
-                  : r
-              );
-              return { success: true } as D1Result;
-            }
-
-            if (query.startsWith("UPDATE registrations SET status = 'PAID'")) {
-              const [email, ref] = args as [string, string];
-              db.registrations = db.registrations.map(r =>
-                r.email === email.toLowerCase() && r.payment_ref === ref
-                  ? { ...r, status: "PAID", paid_at: new Date().toISOString() }
-                  : r
-              );
-              return { success: true } as D1Result;
-            }
-
-            if (query.startsWith("UPDATE registrations SET status = 'CANCELED' WHERE status = 'PENDING' AND created_at <= datetime('now', '-1 day')")) {
-              const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-              db.registrations = db.registrations.map(r =>
-                r.status === "PENDING" && new Date(r.created_at).getTime() <= cutoff
-                  ? { ...r, status: "CANCELED" }
-                  : r
-              );
-              return { success: true } as D1Result;
-            }
-
-            return { success: true } as D1Result;
-          },
-        } as D1PreparedStatement;
+    const statement = {
+      _args: [] as any[],
+      bind(...args: any[]) {
+        this._args = args;
+        return this;
       },
-    } as D1PreparedStatement;
+      async first<T = any>(): Promise<T | null> {
+        return db.runFirst(query, this._args) as T | null;
+      },
+      async run() {
+        return db.runExec(query, this._args);
+      },
+      async all<T = any>() {
+        const row = db.runFirst(query, this._args);
+        return { results: (row ? [row] : []) as T[], success: true };
+      },
+    };
+    return statement as any;
   }
 
-  async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
-    const results: D1Result<T>[] = [];
-    for (const statement of statements) {
-      const run = (statement as unknown as { run?: () => Promise<D1Result<T>> }).run;
-      results.push(run ? await run() : ({ success: true } as D1Result<T>));
-    }
+  async batch(statements: any[]) {
+    const results = [];
+    for (const s of statements) results.push(s.run ? await s.run() : { success: true });
     return results;
   }
 
-  async exec(): Promise<D1ExecResult> {
+  async exec() {
     return { count: 0, duration: 0 };
   }
 
-  withSession(): D1DatabaseSession {
-    return new InMemoryD1Session(this);
-  }
+  private runFirst(query: string, args: any[]): any {
+    // Contagens de capacidade (a mais específica primeiro).
+    if (query.includes("SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID')")) {
+      const active = this.registrations.filter((r) => r.status === "PENDING" || r.status === "PAID");
+      if (query.includes("sleep_at_monastery = 1")) {
+        return { total: active.filter((r) => r.sleep_at_monastery === 1).length };
+      }
+      if (query.includes("is_staff = 1")) {
+        return { total: active.filter((r) => r.is_staff === 1).length };
+      }
+      return { total: active.length };
+    }
 
-  async dump(): Promise<ArrayBuffer> {
-    return new ArrayBuffer(0);
-  }
-}
+    // generateRegistrationNumber (webhook).
+    if (query.includes("SELECT COUNT(*) as count FROM registrations WHERE registration_number LIKE ?")) {
+      const count = this.registrations.filter(
+        (r) => r.status === "PAID" && r.registration_number
+      ).length;
+      return { count };
+    }
 
-class InMemoryD1Session implements D1DatabaseSession {
-  constructor(private readonly db: InMemoryD1) {}
+    // Webhook: busca enxuta por payment_ref.
+    if (query.startsWith("SELECT id, email, name FROM registrations WHERE payment_ref = ?")) {
+      const r = this.registrations.find((x) => x.payment_ref === args[0]);
+      return r ? { id: r.id, email: r.email, name: r.name } : null;
+    }
 
-  prepare(query: string): D1PreparedStatement {
-    return this.db.prepare(query);
-  }
+    // Lookups completos de registration.
+    if (query.includes("FROM registrations WHERE cpf_encrypted = ?")) {
+      return this.registrations.find((r) => r.cpf_encrypted === args[0]) ?? null;
+    }
+    if (query.includes("FROM registrations WHERE payment_ref = ?")) {
+      return this.registrations.find((r) => r.payment_ref === args[0]) ?? null;
+    }
+    if (query.includes("FROM registrations WHERE phone = ?")) {
+      const normalized = String(args[0]).replace(/\D/g, "");
+      return this.registrations.find((r) => r.phone === normalized) ?? null;
+    }
+    if (query.includes("FROM registrations WHERE email = ?")) {
+      return this.registrations.find((r) => r.email === String(args[0]).toLowerCase()) ?? null;
+    }
 
-  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
-    return this.db.batch<T>(statements);
-  }
+    // Pagamentos.
+    if (query.includes("SELECT * FROM payments WHERE correlation_id = ?")) {
+      return this.payments.find((p) => p.correlation_id === args[0]) ?? null;
+    }
+    if (query.includes("FROM payments WHERE correlation_id = ? OR provider_charge_id = ?")) {
+      const p = this.payments.find(
+        (x) => x.correlation_id === args[0] || x.provider_charge_id === args[1]
+      );
+      return p ? { correlation_id: p.correlation_id, provider_charge_id: p.provider_charge_id } : null;
+    }
 
-  getBookmark(): D1SessionBookmark | null {
+    // Camiseta: nunca presente neste fluxo.
+    if (query.includes("FROM tshirt_purchase")) {
+      return null;
+    }
+
     return null;
   }
+
+  private runExec(query: string, args: any[]) {
+    // expirePending: registros do teste são recém-criados, ninguém expira.
+    if (query.includes("WHERE status = 'PENDING' AND created_at <= datetime('now', '-1 day')")) {
+      return { success: true };
+    }
+
+    if (query.startsWith("INSERT INTO registrations")) {
+      const [
+        id, email, name, status, payment_provider, payment_ref, sleep_at_monastery,
+        companion_name, phone, cep, address, number, complement, city, state,
+        cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name,
+        emergency_contact_phone, has_allergy_medication, allergy_medication_details,
+        has_dietary_restriction, dietary_restriction_details,
+      ] = args;
+      this.registrations.push({
+        id, email: String(email).toLowerCase(), name, status,
+        payment_provider, payment_ref, sleep_at_monastery,
+        companion_name, phone: String(phone).replace(/\D/g, ""), cep, address, number,
+        complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at,
+        emergency_contact_name, emergency_contact_phone,
+        has_allergy_medication, allergy_medication_details,
+        has_dietary_restriction, dietary_restriction_details,
+        is_staff: 0, registration_number: null,
+        created_at: new Date().toISOString(), paid_at: null,
+      });
+      return { success: true };
+    }
+
+    if (query.startsWith("UPDATE registrations SET name = ?1")) {
+      const id = args[22];
+      const row = this.registrations.find((r) => r.id === id);
+      if (row) {
+        row.name = args[0]; row.status = args[1]; row.payment_provider = args[2];
+        row.payment_ref = args[3]; row.sleep_at_monastery = args[4]; row.companion_name = args[5];
+        row.phone = String(args[6]).replace(/\D/g, ""); row.cep = args[7]; row.address = args[8];
+        row.number = args[9]; row.complement = args[10]; row.city = args[11]; row.state = args[12];
+        row.cpf_encrypted = args[13]; row.date_of_birth = args[14]; row.terms_accepted_at = args[15];
+        row.emergency_contact_name = args[16]; row.emergency_contact_phone = args[17];
+        row.has_allergy_medication = args[18]; row.allergy_medication_details = args[19];
+        row.has_dietary_restriction = args[20]; row.dietary_restriction_details = args[21];
+        row.paid_at = null;
+      }
+      return { success: true };
+    }
+
+    // Webhook: marca como PAID com número de inscrição.
+    if (query.includes("SET status = 'PAID', paid_at = ?, registration_number = ?")) {
+      const [paid_at, registration_number, id] = args;
+      const row = this.registrations.find((r) => r.id === id);
+      if (row) {
+        row.status = "PAID";
+        row.paid_at = String(paid_at);
+        row.registration_number = registration_number;
+      }
+      return { success: true };
+    }
+
+    // Sincronização via status (por telefone).
+    if (query.includes("SET status = 'PAID', paid_at = ? WHERE phone = ?")) {
+      const normalized = String(args[1]).replace(/\D/g, "");
+      const row = this.registrations.find((r) => r.phone === normalized);
+      if (row) { row.status = "PAID"; row.paid_at = String(args[0]); }
+      return { success: true };
+    }
+
+    if (query.includes("SET status = 'CANCELED' WHERE id = ?")) {
+      const row = this.registrations.find((r) => r.id === args[0]);
+      if (row) row.status = "CANCELED";
+      return { success: true };
+    }
+
+    if (query.startsWith("INSERT INTO payments")) {
+      const [
+        id, email, correlation_id, provider_charge_id, amount_cents, status,
+        brcode, qr_code_image, qr_code_url, expires_at, created_at, updated_at,
+      ] = args;
+      this.payments.push({
+        id, email, correlation_id, provider_charge_id, amount_cents, status,
+        brcode, qr_code_image, qr_code_url, expires_at, created_at, updated_at,
+      });
+      return { success: true };
+    }
+
+    return { success: true };
+  }
 }
 
-function responseJson(response: Response): Promise<any> {
-  return response.json();
+function makeEnv(overrides: Record<string, any> = {}) {
+  return {
+    DB: new InMemoryD1(),
+    WOOVI_APP_ID: "test-app-id",
+    CPF_ENCRYPTION_KEY: CPF_KEY,
+    CPF_ENCRYPTION_IV: CPF_IV,
+    ...overrides,
+  };
+}
+
+function validBody(overrides: Record<string, any> = {}) {
+  return {
+    name: "Ana",
+    email: "ana@example.com",
+    phone: "11999999999",
+    cpf: CPF_A,
+    dateOfBirth: "1990-01-01",
+    termsAccepted: true,
+    emergencyContactName: "Maria",
+    emergencyContactPhone: "11888888888",
+    hasAllergyMedication: false,
+    hasDietaryRestriction: false,
+    sleepAtMonastery: false,
+    cep: "12345678",
+    address: "Rua Teste",
+    number: "123",
+    city: "São Paulo",
+    state: "SP",
+    ...overrides,
+  };
+}
+
+function paidWebhookRequest(paymentRef: string) {
+  return new Request("http://localhost/api/webhooks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      charge: { status: "COMPLETED", transactionID: paymentRef, correlationID: paymentRef },
+    }),
+  });
 }
 
 describe("register flow", () => {
-  let env: { DB: InMemoryD1; WEBHOOK_SECRET: string };
+  let env: ReturnType<typeof makeEnv>;
 
   beforeEach(() => {
-    env = { DB: new InMemoryD1(), WEBHOOK_SECRET: "secret" };
+    env = makeEnv();
   });
 
-  it("creates PENDING on new email", async () => {
-    const res = await handleRegister(env as any, { name: "Ana", email: "ana@example.com" });
+  it("cria inscrição PENDING para um CPF novo", async () => {
+    const res = await handleRegister(env as any, validBody());
     expect(res.status).toBe(200);
-    const data = await responseJson(res);
+    const data = await res.json();
     expect(data.status).toBe("PENDING");
     expect(data.payment_ref).toBeTruthy();
+    expect(env.DB.registrations).toHaveLength(1);
+    expect(env.DB.registrations[0].status).toBe("PENDING");
   });
 
-  it("returns 409 when email already exists", async () => {
-    await handleRegister(env as any, { name: "Ana", email: "ana@example.com" });
-    const res = await handleRegister(env as any, { name: "Ana", email: "ana@example.com" });
+  it("permite re-inscrição enquanto PENDING (atualiza, não duplica)", async () => {
+    await handleRegister(env as any, validBody());
+    const res = await handleRegister(env as any, validBody({ city: "Campinas" }));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe("PENDING");
+    // Continua existindo apenas UMA inscrição para o mesmo CPF.
+    expect(env.DB.registrations).toHaveLength(1);
+    expect(env.DB.registrations[0].city).toBe("Campinas");
+  });
+
+  it("retorna 409 quando o CPF já está PAGO", async () => {
+    const first = await handleRegister(env as any, validBody());
+    const { payment_ref } = await first.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleRegister(env as any, validBody());
     expect(res.status).toBe(409);
-    const data = await responseJson(res);
+    const data = await res.json();
     expect(data.error).toBe("registration_exists");
   });
 
-  it("marks as PAID on webhook", async () => {
-    const registerRes = await handleRegister(env as any, { name: "Ana", email: "ana@example.com" });
-    const { payment_ref } = await responseJson(registerRes);
+  it("marca como PAID via webhook e reflete no status", async () => {
+    const registerRes = await handleRegister(env as any, validBody());
+    const { payment_ref } = await registerRes.json();
 
-    const webhookReq = new Request("http://localhost/api/webhooks/pix", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-webhook-signature": "secret",
-      },
-      body: JSON.stringify({ payment_ref, status: "PAID" }),
-    });
-
-    const webhookRes = await handleWebhook(env as any, webhookReq, { payment_ref, status: "PAID" });
+    const webhookRes = await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
     expect(webhookRes.status).toBe(200);
-    const statusRes = await handleStatus(env as any, "ana@example.com");
-    const statusData = await responseJson(statusRes);
+
+    const statusRes = await handleStatus(env as any, null, null, CPF_A);
+    const statusData = await statusRes.json();
     expect(statusData.status).toBe("PAID");
+    expect(statusData.exists).toBe(true);
+  });
+
+  it("bloqueia com monastery_full quando o pool do mosteiro esgota", async () => {
+    const limited = makeEnv({ MAX_REGISTRATIONS_SLEEP: "1" });
+
+    const ok = await handleRegister(limited as any, validBody({ sleepAtMonastery: true }));
+    expect(ok.status).toBe(200);
+
+    const full = await handleRegister(
+      limited as any,
+      validBody({ cpf: CPF_B, email: "bruno@example.com", sleepAtMonastery: true })
+    );
+    expect(full.status).toBe(409);
+    const data = await full.json();
+    expect(data.error).toBe("monastery_full");
   });
 });

@@ -12,6 +12,8 @@ import {
   getRegion,
   validateHealthRequest,
 } from '../../functions/_utils/health';
+import { onRequest as healthHandler } from '../../functions/api/health/index';
+import { onRequest as pixHandler } from '../../functions/api/health/pix';
 
 describe('Health Check Utilities', () => {
   describe('getClientIp', () => {
@@ -155,11 +157,19 @@ describe('Health Check Utilities', () => {
 });
 
 describe('Health Check Endpoints', () => {
+  // Invoca os handlers diretamente (em vez de fetch real à rede). Cada teste usa
+  // um IP distinto para não colidir com o rate limit compartilhado em memória.
+  const makeRequest = (ip: string) =>
+    new Request('http://localhost/api/health', { headers: { 'CF-Connecting-IP': ip } });
+
   describe('GET /api/health', () => {
     it('should return 200 with ok status', async () => {
-      const response = await fetch('http://localhost/api/health');
+      const response = await healthHandler({
+        request: makeRequest('203.0.113.1'),
+        env: { SERVICE_VERSION: '0.1.0' },
+      });
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.status).toBe('ok');
       expect(data.service).toBe('caminhodoperdao');
@@ -169,29 +179,23 @@ describe('Health Check Endpoints', () => {
     });
 
     it('should return correct headers', async () => {
-      const response = await fetch('http://localhost/api/health');
+      const response = await healthHandler({
+        request: makeRequest('203.0.113.2'),
+        env: {},
+      });
       expect(response.headers.get('Content-Type')).toContain('application/json');
       expect(response.headers.get('Cache-Control')).toContain('no-store');
-    });
-
-    it('should reject without token when token required', async () => {
-      // This would need MONITOR_TOKEN env var set in test
-      // Skipping for now as we can't easily set env in tests
-    });
-  });
-
-  describe('GET /api/health/db', () => {
-    it('should return 500 if DB not available', async () => {
-      // Without mocking D1, this will fail
-      // In real environment, this tests actual DB connectivity
     });
   });
 
   describe('GET /api/health/pix', () => {
     it('should return 200 with pix status', async () => {
-      const response = await fetch('http://localhost/api/health/pix');
+      const response = await pixHandler({
+        request: makeRequest('203.0.113.3'),
+        env: {},
+      });
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.status).toBe('ok');
       expect(data).toHaveProperty('pix');

@@ -1,9 +1,10 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'jsdom',
+    // Jest roda apenas os testes de front (tests/frontend/units). Os testes de
+    // backend (tests/backend) importam de "vitest" e rodam via `npm run test:functions`.
     testMatch: [
         '<rootDir>/tests/frontend/units/**/*.test.ts?(x)',
-        '<rootDir>/tests/backend/**/*.test.ts?(x)',
     ],
     testPathIgnorePatterns: [
         '/node_modules/',

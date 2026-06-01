@@ -1,15 +1,18 @@
 {
-    "extends": "./tsconfig.json",
+    "//": "Config autossuficiente para o ts-jest. NÃO estende o tsconfig.json base de propósito: o base usa moduleResolution \"Bundler\", que o TypeScript 4.9 (usado pelo react-scripts) rejeita ao resolver o extends. Mantendo as opções aqui, o jest compila sob TS 4.9 sem precisar subir o TypeScript (o que quebraria o build do CRA com @types/react 19).",
     "compilerOptions": {
-        "types": [
-            "jest",
-            "node"
-        ],
-        "strict": true,
+        "target": "es2020",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "lib": ["dom", "dom.iterable", "es2020"],
+        "jsx": "react-jsx",
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "moduleResolution": "node",
-        "jsx": "react-jsx"
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "types": ["jest", "node"]
     },
     "include": [
         "tests/frontend/units/**/*.test.ts",

@@ -6,7 +6,10 @@ import { validateCheckForm, validateRegistrationForm } from "../../../../src/uti
 import type { FieldRefsType } from "../../../../src/utils/landing/types";
 import React from "react";
 
-// Mock de refs
+// CPF válido (dígitos verificadores corretos) usado nos casos de sucesso.
+const VALID_CPF = "52998224725";
+
+// Mock de refs de input/select (campos com `value`).
 const createMockRef = (value: string): React.RefObject<HTMLInputElement> => ({
   current: {
     value,
@@ -21,65 +24,70 @@ const createMockSelectRef = (value: string): React.RefObject<HTMLSelectElement> 
   } as any,
 });
 
+// Mock de refs de checkbox/radio (campos com `checked`).
+const createMockCheckRef = (checked: boolean): React.RefObject<HTMLInputElement> => ({
+  current: {
+    checked,
+    focus: jest.fn(),
+  } as any,
+});
+
 const mockT = (key: string) => {
   const messages: Record<string, string> = {
     "signup.errors.required": "Campo obrigatório",
     "signup.errors.emailInvalid": "Email inválido",
+    "signup.errors.cpfInvalid": "CPF inválido",
+    "signup.errors.dateOfBirthInvalid": "Data inválida",
     "signup.errors.phoneInvalid": "Telefone inválido",
     "signup.errors.cepInvalid": "CEP inválido",
     "signup.errors.sleepRequired": "Selecione dormitório",
     "signup.errors.sleepFull": "Dormitório lotado",
+    "signup.errors.emergencyContactNameRequired": "Informe o contato de emergência",
+    "signup.errors.emergencyContactPhoneInvalid": "Telefone de emergência inválido",
+    "signup.errors.emergencyContactPhoneSameAsRegistration": "Telefone de emergência igual ao seu",
+    "signup.errors.termsRequired": "Aceite os termos",
+    "signup.errors.allergyMedicationRequired": "Informe se tem alergia",
+    "signup.errors.dietaryRestrictionRequired": "Informe restrição alimentar",
   };
   return messages[key] || key;
 };
 
 describe("validateCheckForm", () => {
-  it("deve retornar válido quando preenchido corretamente", () => {
+  it("deve retornar válido quando o CPF é válido", () => {
     const result = validateCheckForm(mockT, {
-      name: createMockRef("João Silva"),
-      email: createMockRef("joao@example.com"),
+      cpf: createMockRef(VALID_CPF),
     });
 
     expect(result.isValid).toBe(true);
     expect(Object.keys(result.errors)).toHaveLength(0);
   });
 
-  it("deve retornar erro quando nome vazio", () => {
+  it("deve retornar erro quando o CPF está vazio", () => {
     const result = validateCheckForm(mockT, {
-      name: createMockRef(""),
-      email: createMockRef("joao@example.com"),
+      cpf: createMockRef(""),
     });
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.name).toBe("Campo obrigatório");
+    expect(result.errors.cpf).toBe("Campo obrigatório");
   });
 
-  it("deve retornar erro quando email vazio", () => {
+  it("deve retornar erro quando o CPF é inválido", () => {
     const result = validateCheckForm(mockT, {
-      name: createMockRef("João"),
-      email: createMockRef(""),
+      cpf: createMockRef("12345678900"),
     });
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.email).toBe("Campo obrigatório");
-  });
-
-  it("deve retornar erro quando email inválido", () => {
-    const result = validateCheckForm(mockT, {
-      name: createMockRef("João"),
-      email: createMockRef("email-invalido"),
-    });
-
-    expect(result.isValid).toBe(false);
-    expect(result.errors.email).toBe("Email inválido");
+    expect(result.errors.cpf).toBe("CPF inválido");
   });
 });
 
 describe("validateRegistrationForm", () => {
-  const createFullRefs = (overrides: Partial<Record<keyof FieldRefsType, string>> = {}) => {
-    const defaults: Record<keyof FieldRefsType, string> = {
+  const createFullRefs = (overrides: Partial<Record<string, string>> = {}) => {
+    const defaults: Record<string, string> = {
       name: "João Silva",
       email: "joao@example.com",
+      cpf: VALID_CPF,
+      dateOfBirth: "1990-01-01",
       phone: "11999999999",
       cep: "12345678",
       address: "Rua Teste",
@@ -88,6 +96,8 @@ describe("validateRegistrationForm", () => {
       city: "São Paulo",
       state: "SP",
       sleepAtMonastery: "yes",
+      emergencyContactName: "Maria Silva",
+      emergencyContactPhone: "11888888888",
     };
 
     const values = { ...defaults, ...overrides };
@@ -95,6 +105,8 @@ describe("validateRegistrationForm", () => {
     return {
       name: createMockRef(values.name),
       email: createMockRef(values.email),
+      cpf: createMockRef(values.cpf),
+      dateOfBirth: createMockRef(values.dateOfBirth),
       phone: createMockRef(values.phone),
       cep: createMockRef(values.cep),
       address: createMockRef(values.address),
@@ -103,7 +115,15 @@ describe("validateRegistrationForm", () => {
       city: createMockRef(values.city),
       state: createMockRef(values.state),
       sleepAtMonastery: createMockSelectRef(values.sleepAtMonastery),
-    } as FieldRefsType;
+      emergencyContactName: createMockRef(values.emergencyContactName),
+      emergencyContactPhone: createMockRef(values.emergencyContactPhone),
+      // Campos obrigatórios de marcação: termos aceitos e "não" para alergia/dieta.
+      termsAccepted: createMockCheckRef(true),
+      allergyMedicationYes: createMockCheckRef(false),
+      allergyMedicationNo: createMockCheckRef(true),
+      dietaryRestrictionYes: createMockCheckRef(false),
+      dietaryRestrictionNo: createMockCheckRef(true),
+    } as unknown as FieldRefsType;
   };
 
   it("deve retornar válido quando preenchido corretamente", () => {
@@ -125,6 +145,13 @@ describe("validateRegistrationForm", () => {
 
     expect(result.isValid).toBe(false);
     expect(result.errors.cep).toBe("CEP inválido");
+  });
+
+  it("deve retornar erro para CPF inválido", () => {
+    const result = validateRegistrationForm(mockT, createFullRefs({ cpf: "12345678900" }));
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors.cpf).toBe("CPF inválido");
   });
 
   it("deve retornar erro para sleep não selecionado", () => {

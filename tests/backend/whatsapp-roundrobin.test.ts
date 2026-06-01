@@ -41,9 +41,12 @@ describe("WhatsApp Round Robin Endpoint", () => {
 
   it("deve alternar os números corretamente", async () => {
     const results: string[] = [];
+    // O contador é persistido entre chamadas: o env (e seu estado) deve ser
+    // criado UMA vez, fora do loop, para simular a tabela compartilhada do D1.
+    const env = makeEnv();
     for (let i = 0; i < 8; i++) {
       const req = new Request("http://localhost/api/whatsapp/next");
-      const resp = await onRequestGet({ env: makeEnv(), request: req } as any);
+      const resp = await onRequestGet({ env, request: req } as any);
       const data = await resp.json();
       results.push(data.phone);
     }

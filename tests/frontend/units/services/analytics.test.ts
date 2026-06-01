@@ -237,13 +237,9 @@ describe("amplitudeContext", () => {
   });
 
   describe("getPageContext", () => {
-    const mockLocation = { pathname: "/landing", href: "http://localhost:3000/landing" };
-
     beforeEach(() => {
-      Object.defineProperty(window, "location", {
-        value: mockLocation,
-        writable: true,
-      });
+      // jsdom 30 não permite redefinir window.location; pushState altera o pathname.
+      window.history.pushState({}, "", "/landing");
     });
 
     it("deve retornar page_name e route", () => {
@@ -271,17 +267,9 @@ describe("amplitudeContext", () => {
       expect(context.referrer).toBe("https://google.com");
     });
 
-    it("deve retornar objeto com page_name mesmo se window for undefined", () => {
-      const originalWindow = global.window;
-      delete (global as any).window;
-
-      const context = getPageContext("landing");
-
-      // getPageContext retorna {} quando window is undefined
-      expect(context).toEqual({});
-
-      global.window = originalWindow;
-    });
+    // O cenário "window === undefined" (SSR) não é simulável no jsdom 30, onde
+    // `window` é um getter não-configurável do global. Ele é coberto em
+    // analytics.ssr.test.ts, que roda no ambiente node.
   });
 
   describe("validateEventProperties", () => {
@@ -346,10 +334,8 @@ describe("amplitudeContext", () => {
 
   describe("prepareEventProperties", () => {
     beforeEach(() => {
-      Object.defineProperty(window, "location", {
-        value: { pathname: "/landing" },
-        writable: true,
-      });
+      // jsdom 30 não permite redefinir window.location; pushState altera o pathname.
+      window.history.pushState({}, "", "/landing");
       jest.spyOn(console, "warn").mockImplementation();
     });
 
