@@ -224,3 +224,15 @@ export async function countActiveSleep(DB: D1Database): Promise<number> {
     return 0;
   }
 }
+
+export async function countActiveStaff(DB: D1Database): Promise<number> {
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID') AND is_staff = 1"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting active staff registrations:", error);
+    return 0;
+  }
+}

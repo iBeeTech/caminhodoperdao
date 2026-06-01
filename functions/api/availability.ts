@@ -1,40 +1,45 @@
 /// <reference types="@cloudflare/workers-types" />
 import { json, serverError } from "../_utils/responses";
-import { getCapacityLimits } from "../_utils/capacity";
-import { countActive, countActiveSleep, expirePending } from "../_utils/registrations";
+import { getCapacityLimits, CapacityEnv } from "../_utils/capacity";
+import {
+  countActive,
+  countActiveSleep,
+  countActiveStaff,
+  expirePending,
+} from "../_utils/registrations";
 
-interface Env {
+interface Env extends CapacityEnv {
   DB: D1Database;
-  MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
-  MAX_REGISTRATIONS_WITH_SLEEP?: string;
-  // Legacy names kept for backward compatibility.
-  MAX_TOTAL?: string;
-  MAX_SLEEP?: string;
 }
 
 async function handleAvailability(env: Env): Promise<Response> {
   try {
     const {
-      maxRegistrationsOverall,
-      maxRegistrationsWithoutSleep,
-      maxRegistrationsWithSleep,
+      maxRegistrations,
+      maxRegistrationsSleep,
+      maxRegistrationsStaff,
+      maxRegistrationsNonStaff,
     } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
     const sleepers = await countActiveSleep(env.DB);
-    const nonSleepers = Math.max(0, total - sleepers);
-    const monasteryFull = sleepers >= maxRegistrationsWithSleep;
-    const nonSleepFull = nonSleepers >= maxRegistrationsWithoutSleep;
+    const staff = await countActiveStaff(env.DB);
+    const nonStaff = Math.max(0, total - staff);
+    // Endpoint público (peregrino): vagas de não-staff esgotadas trancam a inscrição.
+    const nonStaffFull = nonStaff >= maxRegistrationsNonStaff;
+    const monasteryFull = sleepers >= maxRegistrationsSleep;
     return json(200, {
-      totalFull: monasteryFull && nonSleepFull,
+      // Peregrino não consegue se inscrever de jeito nenhum.
+      totalFull: nonStaffFull,
       monasteryFull,
       total,
       sleepers,
-      totalLimit: maxRegistrationsOverall,
-      monasteryLimit: maxRegistrationsWithSleep,
-      nonSleepers,
-      nonSleepLimit: maxRegistrationsWithoutSleep,
-      nonSleepFull,
+      staff,
+      nonStaff,
+      totalLimit: maxRegistrations,
+      monasteryLimit: maxRegistrationsSleep,
+      staffLimit: maxRegistrationsStaff,
+      nonStaffLimit: maxRegistrationsNonStaff,
     });
   } catch (error) {
     console.error("Error in handleAvailability:", error);

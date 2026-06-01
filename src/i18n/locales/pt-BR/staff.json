@@ -65,6 +65,7 @@
         "registration_exists": "Este CPF já possui inscrição confirmada.",
         "monastery_full": "As vagas do mosteiro estão esgotadas.",
         "registrations_full": "As vagas estão esgotadas.",
+        "staff_full": "As vagas de staff estão esgotadas.",
         "registration_not_found": "Inscrição não encontrada.",
         "cpf_encryption_not_configured": "Erro de configuração no servidor. Avise a organização.",
         "staff_registration_failed": "Não foi possível concluir a inscrição. Tente novamente.",

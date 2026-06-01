@@ -5,6 +5,7 @@ import { encryptCpf } from "./cpfCrypto";
 import {
   countActive,
   countActiveSleep,
+  countActiveStaff,
   expirePending,
   getByCpfEncrypted,
 } from "./registrations";
@@ -219,24 +220,27 @@ export async function createStaffRegistration(
     if (isActive) return fail(409, "registration_exists");
   }
 
-  // Capacidade: staff conta no total. Desconta a inscrição pendente do próprio
-  // CPF, caso exista, e checa o balde correto (mosteiro x geral).
-  const { maxRegistrationsWithoutSleep, maxRegistrationsWithSleep } = getCapacityLimits(env);
+  // Capacidade: staff tem vagas reservadas dentro do teto global. Desconta a
+  // inscrição pendente do próprio CPF, caso exista, e checa as vagas de staff e
+  // o pool do mosteiro (compartilhado com peregrinos).
+  const { maxRegistrations, maxRegistrationsSleep, maxRegistrationsStaff } = getCapacityLimits(env);
   let total = await countActive(env.DB);
   let sleepers = await countActiveSleep(env.DB);
+  let staff = await countActiveStaff(env.DB);
   if (existing && existing.status === "PENDING") {
     total = Math.max(0, total - 1);
-    if (existing.sleep_at_monastery === 1) {
-      sleepers = Math.max(0, sleepers - 1);
-    }
+    // Uma pendência prévia é de peregrino (is_staff=0) sendo convertida em staff:
+    // não desconta de `staff`, mas desconta do pool de mosteiro se for o caso.
+    if (existing.is_staff === 1) staff = Math.max(0, staff - 1);
+    if (existing.sleep_at_monastery === 1) sleepers = Math.max(0, sleepers - 1);
   }
-  const nonSleepers = Math.max(0, total - sleepers);
 
-  if (v.sleepFlag) {
-    if (sleepers >= maxRegistrationsWithSleep) return fail(409, "monastery_full");
-  } else if (nonSleepers >= maxRegistrationsWithoutSleep) {
-    return fail(409, "registrations_full");
-  }
+  // Vagas de staff esgotadas.
+  if (staff >= maxRegistrationsStaff) return fail(409, "staff_full");
+  // Pool do mosteiro compartilhado por ordem de chegada.
+  if (v.sleepFlag && sleepers >= maxRegistrationsSleep) return fail(409, "monastery_full");
+  // Guarda defensiva do teto global (não deve disparar dada a reserva de staff).
+  if (total >= maxRegistrations) return fail(409, "registrations_full");
 
   const nowIso = new Date().toISOString();
   const registrationNumber = await generateStaffRegistrationNumber(env.DB);
@@ -429,19 +433,13 @@ export async function updateStaffRegistration(
   if ("error" in validated) return fail(400, validated.error);
   const v = validated.value;
 
-  // Se mudou de grupo, garante que o grupo de destino tem vaga (excluindo o próprio).
-  if (v.sleepFlag !== current.sleep_at_monastery) {
-    const { maxRegistrationsWithoutSleep, maxRegistrationsWithSleep } = getCapacityLimits(env);
-    const total = await countActive(env.DB);
+  // O staff já ocupa uma vaga reservada; só precisamos checar capacidade ao
+  // ENTRAR no mosteiro (pool compartilhado de 80). Ao sair do mosteiro ele apenas
+  // libera uma cama, sem disputar nenhum outro teto.
+  if (v.sleepFlag === 1 && current.sleep_at_monastery !== 1) {
+    const { maxRegistrationsSleep } = getCapacityLimits(env);
     const sleepers = await countActiveSleep(env.DB);
-    if (v.sleepFlag === 1) {
-      // Passa a dormir no mosteiro: sleepers ainda não conta este registro.
-      if (sleepers >= maxRegistrationsWithSleep) return fail(409, "monastery_full");
-    } else {
-      // Deixa de dormir: nonSleepers ainda não conta este registro.
-      const nonSleepers = Math.max(0, total - sleepers);
-      if (nonSleepers >= maxRegistrationsWithoutSleep) return fail(409, "registrations_full");
-    }
+    if (sleepers >= maxRegistrationsSleep) return fail(409, "monastery_full");
   }
 
   try {

@@ -8,23 +8,20 @@ import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 import {
   countActive,
   countActiveSleep,
+  countActiveStaff,
   expirePending,
   getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
 } from "../_utils/registrations";
+import type { CapacityEnv } from "../_utils/capacity";
 
-interface Env {
+interface Env extends CapacityEnv {
   DB: D1Database;
   GATEWAY_API_KEY?: string;
   // Custos da inscrição em reais (ex: "100" para R$100,00). Configuráveis na Cloudflare.
   REGISTRATION_COST?: string;
   REGISTRATION_COST_MONASTERY?: string;
-  MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
-  MAX_REGISTRATIONS_WITH_SLEEP?: string;
-  // Legacy names kept for backward compatibility.
-  MAX_TOTAL?: string;
-  MAX_SLEEP?: string;
   CPF_ENCRYPTION_KEY?: string;
   CPF_ENCRYPTION_IV?: string;
 }
@@ -34,7 +31,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     return badRequest("invalid_body");
   }
 
-  const { maxRegistrationsWithoutSleep, maxRegistrationsWithSleep } = getCapacityLimits(env);
+  const { maxRegistrationsNonStaff, maxRegistrationsSleep } = getCapacityLimits(env);
 
   const {
     name,
@@ -190,30 +187,28 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     }
   }
 
-  let total = await countActive(env.DB);
+  const total = await countActive(env.DB);
+  const staff = await countActiveStaff(env.DB);
   let sleepers = await countActiveSleep(env.DB);
-  let nonSleepers = Math.max(0, total - sleepers);
+  // Peregrinos (não-staff) disputam o que sobra do teto global após reservar as vagas de staff.
+  let nonStaff = Math.max(0, total - staff);
 
-  // If updating an existing pending registration, discount it from capacity checks
-  if (existing && (existing.status === "PENDING" || existing.status === "CANCELED")) {
-    if (existing.status === "PENDING") {
-      total = Math.max(0, total - 1);
-      if (existing.sleep_at_monastery === 1) {
-        sleepers = Math.max(0, sleepers - 1);
-      } else {
-        nonSleepers = Math.max(0, nonSleepers - 1);
-      }
+  // If updating an existing pending registration, discount it from capacity checks.
+  // Uma inscrição pendente aqui é sempre de peregrino (is_staff=0): staff entra direto como PAID.
+  if (existing && existing.status === "PENDING") {
+    nonStaff = Math.max(0, nonStaff - 1);
+    if (existing.sleep_at_monastery === 1) {
+      sleepers = Math.max(0, sleepers - 1);
     }
   }
 
-  if (sleepFlag) {
-    if (sleepers >= maxRegistrationsWithSleep) {
-      return conflict("monastery_full");
-    }
-  } else {
-    if (nonSleepers >= maxRegistrationsWithoutSleep) {
-      return conflict("registrations_full");
-    }
+  // Teto global (vagas de não-staff) tranca a inscrição por completo.
+  if (nonStaff >= maxRegistrationsNonStaff) {
+    return conflict("registrations_full");
+  }
+  // Pool do mosteiro é compartilhado por staff e não-staff (por ordem de chegada).
+  if (sleepFlag && sleepers >= maxRegistrationsSleep) {
+    return conflict("monastery_full");
   }
 
   // Guard before charge creation: avoid leaking a PIX charge for already-paid registrations.
@@ -352,26 +347,30 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 async function handleAvailability(env: Env): Promise<Response> {
   try {
     const {
-      maxRegistrationsOverall,
-      maxRegistrationsWithoutSleep,
-      maxRegistrationsWithSleep,
+      maxRegistrations,
+      maxRegistrationsSleep,
+      maxRegistrationsStaff,
+      maxRegistrationsNonStaff,
     } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
     const sleepers = await countActiveSleep(env.DB);
-    const nonSleepers = Math.max(0, total - sleepers);
-    const monasteryFull = sleepers >= maxRegistrationsWithSleep;
-    const nonSleepFull = nonSleepers >= maxRegistrationsWithoutSleep;
+    const staff = await countActiveStaff(env.DB);
+    const nonStaff = Math.max(0, total - staff);
+    // Ótica do peregrino: vagas de não-staff esgotadas trancam a inscrição.
+    const nonStaffFull = nonStaff >= maxRegistrationsNonStaff;
+    const monasteryFull = sleepers >= maxRegistrationsSleep;
     return json(200, {
-      totalFull: monasteryFull && nonSleepFull,
+      totalFull: nonStaffFull,
       monasteryFull,
       total,
       sleepers,
-      totalLimit: maxRegistrationsOverall,
-      monasteryLimit: maxRegistrationsWithSleep,
-      nonSleepers,
-      nonSleepLimit: maxRegistrationsWithoutSleep,
-      nonSleepFull,
+      staff,
+      nonStaff,
+      totalLimit: maxRegistrations,
+      monasteryLimit: maxRegistrationsSleep,
+      staffLimit: maxRegistrationsStaff,
+      nonStaffLimit: maxRegistrationsNonStaff,
     });
   } catch (error) {
     console.error("Error in handleAvailability:", error);
