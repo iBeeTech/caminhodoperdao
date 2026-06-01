@@ -19,6 +19,7 @@ vi.mock("../../functions/_utils/woovi", () => ({
 import { handleRegister } from "../../functions/api/register";
 import { handleStatus } from "../../functions/api/status";
 import { onRequestPost as webhookPost } from "../../functions/api/webhooks";
+import { createStaffRegistration } from "../../functions/_utils/staffRegistration";
 
 // CPFs válidos (dígitos verificadores corretos).
 const CPF_A = "529.982.247-25";
@@ -116,7 +117,12 @@ class InMemoryD1 {
     if (query.includes("SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID')")) {
       const active = this.registrations.filter((r) => r.status === "PENDING" || r.status === "PAID");
       if (query.includes("sleep_at_monastery = 1")) {
-        return { total: active.filter((r) => r.sleep_at_monastery === 1).length };
+        const sleepers = active.filter((r) => r.sleep_at_monastery === 1);
+        // Pool do mosteiro dos peregrinos: conta só não-staff dormindo.
+        if (query.includes("is_staff = 0")) {
+          return { total: sleepers.filter((r) => r.is_staff === 0).length };
+        }
+        return { total: sleepers.length };
       }
       if (query.includes("is_staff = 1")) {
         return { total: active.filter((r) => r.is_staff === 1).length };
@@ -175,6 +181,29 @@ class InMemoryD1 {
   private runExec(query: string, args: any[]) {
     // expirePending: registros do teste são recém-criados, ninguém expira.
     if (query.includes("WHERE status = 'PENDING' AND created_at <= datetime('now', '-1 day')")) {
+      return { success: true };
+    }
+
+    // INSERT de staff (cortesia): ordem de colunas própria, já entra como PAID e is_staff=1.
+    if (query.startsWith("INSERT INTO registrations") && query.includes("is_staff,")) {
+      const [
+        id, email, name, sleep_at_monastery, companion_name, phone, cep, address,
+        number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at,
+        emergency_contact_name, emergency_contact_phone, has_allergy_medication,
+        allergy_medication_details, has_dietary_restriction, dietary_restriction_details,
+        registration_number, paid_at,
+      ] = args;
+      this.registrations.push({
+        id, email: String(email).toLowerCase(), name, status: "PAID",
+        payment_provider: "cortesia", payment_ref: null, sleep_at_monastery,
+        companion_name, phone: String(phone).replace(/\D/g, ""), cep, address, number,
+        complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at,
+        emergency_contact_name, emergency_contact_phone,
+        has_allergy_medication, allergy_medication_details,
+        has_dietary_restriction, dietary_restriction_details,
+        is_staff: 1, registration_number,
+        created_at: new Date().toISOString(), paid_at,
+      });
       return { success: true };
     }
 
@@ -366,5 +395,71 @@ describe("register flow", () => {
     expect(full.status).toBe(409);
     const data = await full.json();
     expect(data.error).toBe("monastery_full");
+  });
+});
+
+function staffBody(overrides: Record<string, any> = {}) {
+  return {
+    name: "Carla Staff",
+    email: "carla@example.com",
+    phone: "11977777777",
+    cpf: CPF_B,
+    dateOfBirth: "1985-05-05",
+    termsAccepted: true,
+    emergencyContactName: "Joana",
+    emergencyContactPhone: "11866666666",
+    hasAllergyMedication: false,
+    hasDietaryRestriction: false,
+    sleepAtMonastery: false,
+    cep: "12345678",
+    address: "Rua Staff",
+    number: "10",
+    city: "São Paulo",
+    state: "SP",
+    ...overrides,
+  };
+}
+
+describe("staff capacity (balde independente dos peregrinos)", () => {
+  it("staff dormindo NÃO consome o pool de camas dos peregrinos", async () => {
+    // Apenas 1 cama no pool de peregrinos.
+    const env = makeEnv({ MAX_REGISTRATIONS_SLEEP: "1" });
+
+    // Um staff dorme no mosteiro (à parte).
+    const staff = await createStaffRegistration(env as any, staffBody({ sleepAtMonastery: true }));
+    expect(staff.ok).toBe(true);
+
+    // O peregrino ainda consegue ocupar a única cama do pool: o staff não a consumiu.
+    const peregrino = await handleRegister(
+      env as any,
+      validBody({ sleepAtMonastery: true })
+    );
+    expect(peregrino.status).toBe(200);
+  });
+
+  it("staff NÃO ocupa vaga dos peregrinos (teto de peregrinos é próprio)", async () => {
+    // Teto de peregrinos = 1; no modelo antigo o staff (40) zerava esse teto.
+    const env = makeEnv({ MAX_REGISTRATIONS: "1" });
+
+    const staff = await createStaffRegistration(env as any, staffBody());
+    expect(staff.ok).toBe(true);
+
+    // Mesmo com staff presente, ainda há 1 vaga de peregrino disponível.
+    const peregrino = await handleRegister(env as any, validBody());
+    expect(peregrino.status).toBe(200);
+  });
+
+  it("bloqueia com staff_full quando o balde de staff esgota", async () => {
+    const env = makeEnv({ MAX_REGISTRATIONS_STAFF: "1" });
+
+    const first = await createStaffRegistration(env as any, staffBody());
+    expect(first.ok).toBe(true);
+
+    const second = await createStaffRegistration(
+      env as any,
+      staffBody({ cpf: CPF_A, email: "diego@example.com" })
+    );
+    expect(second.ok).toBe(false);
+    if (!second.ok) expect(second.error).toBe("staff_full");
   });
 });

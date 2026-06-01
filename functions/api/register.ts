@@ -7,7 +7,7 @@ import { encryptCpf } from "../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 import {
   countActive,
-  countActiveSleep,
+  countActiveSleepNonStaff,
   countActiveStaff,
   expirePending,
   getByCpfEncrypted,
@@ -189,8 +189,9 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   const total = await countActive(env.DB);
   const staff = await countActiveStaff(env.DB);
-  let sleepers = await countActiveSleep(env.DB);
-  // Peregrinos (não-staff) disputam o que sobra do teto global após reservar as vagas de staff.
+  // Pool do mosteiro dos peregrinos: conta só não-staff dormindo (staff dorme à parte).
+  let sleepers = await countActiveSleepNonStaff(env.DB);
+  // Peregrinos (não-staff) têm teto próprio (MAX_REGISTRATIONS), independente do staff.
   let nonStaff = Math.max(0, total - staff);
 
   // If updating an existing pending registration, discount it from capacity checks.
@@ -202,11 +203,11 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     }
   }
 
-  // Teto global (vagas de não-staff) tranca a inscrição por completo.
+  // Teto de peregrinos (não-staff) tranca a inscrição por completo.
   if (nonStaff >= maxRegistrationsNonStaff) {
     return conflict("registrations_full");
   }
-  // Pool do mosteiro é compartilhado por staff e não-staff (por ordem de chegada).
+  // Pool do mosteiro dos peregrinos (não-staff), por ordem de chegada.
   if (sleepFlag && sleepers >= maxRegistrationsSleep) {
     return conflict("monastery_full");
   }
@@ -354,7 +355,8 @@ async function handleAvailability(env: Env): Promise<Response> {
     } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
-    const sleepers = await countActiveSleep(env.DB);
+    // monasteryFull reflete só os peregrinos (não-staff); o staff dorme à parte.
+    const sleepers = await countActiveSleepNonStaff(env.DB);
     const staff = await countActiveStaff(env.DB);
     const nonStaff = Math.max(0, total - staff);
     // Ótica do peregrino: vagas de não-staff esgotadas trancam a inscrição.

@@ -3,11 +3,11 @@ const DEFAULT_MAX_REGISTRATIONS_SLEEP = 80;
 const DEFAULT_MAX_REGISTRATIONS_STAFF = 40;
 
 export interface CapacityEnv {
-  // Teto global de inscritos (staff + peregrinos, dormindo no mosteiro ou não).
+  // Teto de peregrinos (não-staff), dormindo no mosteiro ou não. Independente do staff.
   MAX_REGISTRATIONS?: string;
-  // Teto de quem dorme no mosteiro (staff + não-staff juntos, por ordem de chegada).
+  // Teto de peregrinos (não-staff) dormindo no mosteiro. O staff que dorme não consome daqui.
   MAX_REGISTRATIONS_SLEEP?: string;
-  // Teto de staff (dormindo no mosteiro ou não). Vagas reservadas dentro do total.
+  // Teto de staff (dormindo no mosteiro ou não). Balde separado, somado por fora dos peregrinos.
   MAX_REGISTRATIONS_STAFF?: string;
   // Legacy names kept for backward compatibility.
   MAX_REGISTRATIONS_WITHOUT_SLEEP?: string;
@@ -58,14 +58,17 @@ export function getCapacityLimits(env: CapacityEnv) {
     parseNonNegativeInteger(env.MAX_REGISTRATIONS_STAFF) ??
     DEFAULT_MAX_REGISTRATIONS_STAFF;
 
-  // Vagas de staff são reservadas dentro do teto global: os peregrinos (não-staff)
-  // disputam o que sobra (maxRegistrations - maxRegistrationsStaff).
-  const maxRegistrationsNonStaff = Math.max(0, maxRegistrations - maxRegistrationsStaff);
+  // Peregrinos (não-staff) têm teto próprio (= MAX_REGISTRATIONS). O staff é um
+  // balde separado de MAX_REGISTRATIONS_STAFF vagas, somado por fora.
+  const maxRegistrationsNonStaff = maxRegistrations;
+  // Teto agregado real do evento (peregrinos + staff), usado só como guarda defensiva.
+  const maxRegistrationsTotal = maxRegistrations + maxRegistrationsStaff;
 
   return {
     maxRegistrations,
     maxRegistrationsSleep,
     maxRegistrationsStaff,
     maxRegistrationsNonStaff,
+    maxRegistrationsTotal,
   };
 }

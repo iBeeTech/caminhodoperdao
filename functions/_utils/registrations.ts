@@ -225,6 +225,21 @@ export async function countActiveSleep(DB: D1Database): Promise<number> {
   }
 }
 
+// Conta apenas peregrinos (não-staff) dormindo no mosteiro. É esse número que
+// disputa o pool de camas dos peregrinos (MAX_REGISTRATIONS_SLEEP); o staff que
+// dorme não entra nessa conta.
+export async function countActiveSleepNonStaff(DB: D1Database): Promise<number> {
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status IN ('PENDING','PAID') AND sleep_at_monastery = 1 AND is_staff = 0"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting active non-staff sleep registrations:", error);
+    return 0;
+  }
+}
+
 export async function countActiveStaff(DB: D1Database): Promise<number> {
   try {
     const row = await DB.prepare(
