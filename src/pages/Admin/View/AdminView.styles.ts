@@ -96,3 +96,8 @@ export const OrangeButton = styled(PrimaryButton)`
   background: #f97316;
 `;
 
+export const YellowButton = styled(PrimaryButton)`
+  background: #fbbf24;
+  color: #1d1d1f;
+`;
+

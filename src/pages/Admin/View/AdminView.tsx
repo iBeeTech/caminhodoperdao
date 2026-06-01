@@ -15,6 +15,7 @@ import {
   PurpleButton,
   SecondaryButton,
   SuccessText,
+  YellowButton,
 } from "./AdminView.styles";
 
 interface AdminViewProps {
@@ -165,13 +166,13 @@ const AdminView: React.FC<AdminViewProps> = ({
             >
               {t("panel.reportPeregrinosMosteiro")}
             </OrangeButton>
-            <SecondaryButton
+            <YellowButton
               type="button"
               onClick={onDownloadStaffGeral}
               disabled={isDownloading}
             >
               {t("panel.reportStaffGeral")}
-            </SecondaryButton>
+            </YellowButton>
             <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
               {t("panel.reportTshirt")}
             </PurpleButton>
