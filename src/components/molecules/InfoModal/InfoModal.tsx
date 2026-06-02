@@ -22,6 +22,7 @@ const WA_NUMBER = "5516982221415";
 const ITEM_KEYS = [
   "cpfRule",
   "paymentDeadline",
+  "paymentReceipt",
   "tshirtSeparate",
   "tshirtCancel",
 ] as const;

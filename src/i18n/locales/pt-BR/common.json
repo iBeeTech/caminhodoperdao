@@ -91,6 +91,10 @@
                 "title": "Pague em até 24h",
                 "desc": "Depois desse prazo a inscrição é cancelada — mas dá para refazer."
             },
+            "paymentReceipt": {
+                "title": "Comprovante de pagamento",
+                "desc": "Você receberá o comprovante de pagamento via e-mail."
+            },
             "cpfRule": {
                 "title": "1 inscrição por CPF",
                 "desc": "Porém o mesmo CPF pode comprar várias camisetas."
