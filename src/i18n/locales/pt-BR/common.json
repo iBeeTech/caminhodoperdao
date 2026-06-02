@@ -93,7 +93,7 @@
             },
             "cpfRule": {
                 "title": "1 inscrição por CPF",
-                "desc": "O mesmo CPF pode comprar várias camisetas."
+                "desc": "Porém o mesmo CPF pode comprar várias camisetas."
             },
             "tshirtCancel": {
                 "title": "Cancelar camiseta?",
