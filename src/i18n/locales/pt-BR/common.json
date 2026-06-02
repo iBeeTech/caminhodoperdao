@@ -107,6 +107,10 @@
             "tshirtCancel": {
                 "title": "Cancelar camiseta?",
                 "desc": "Fale com a organização pelo WhatsApp."
+            },
+            "registrationCancel": {
+                "title": "Cancelar inscrição?",
+                "desc": "Clique em \"Já me inscrevi\" na seção de inscrições e clique no botão \"Cancelar inscrição\"."
             }
         },
         "whatsapp": "Conversar por WhatsApp",

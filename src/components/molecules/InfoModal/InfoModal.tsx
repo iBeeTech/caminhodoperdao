@@ -26,7 +26,11 @@ const ITEM_KEYS = [
   "paymentReceipt",
   "tshirtSeparate",
   "tshirtCancel",
+  "registrationCancel",
 ] as const;
+
+// Itens cujo título deve aparecer em destaque (vermelho).
+const DANGER_ITEM_KEYS: ReadonlyArray<(typeof ITEM_KEYS)[number]> = ["registrationCancel"];
 
 const InfoModal: React.FC = () => {
   const { t } = useTranslation("common");
@@ -83,7 +87,9 @@ const InfoModal: React.FC = () => {
             <Item key={key}>
               <ItemIcon aria-hidden="true">✓</ItemIcon>
               <ItemBody>
-                <ItemTitle>{t(`infoModal.items.${key}.title`)}</ItemTitle>
+                <ItemTitle $danger={DANGER_ITEM_KEYS.includes(key)}>
+                  {t(`infoModal.items.${key}.title`)}
+                </ItemTitle>
                 <ItemDesc>{t(`infoModal.items.${key}.desc`)}</ItemDesc>
               </ItemBody>
             </Item>

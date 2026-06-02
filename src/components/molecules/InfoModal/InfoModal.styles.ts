@@ -92,8 +92,8 @@ export const ItemBody = styled.div`
   gap: 2px;
 `;
 
-export const ItemTitle = styled.span`
-  color: ${({ theme }) => theme.colors.text};
+export const ItemTitle = styled.span<{ $danger?: boolean }>`
+  color: ${({ theme, $danger }) => ($danger ? theme.colors.error : theme.colors.text)};
   font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.3;
