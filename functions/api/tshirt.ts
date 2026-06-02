@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, conflict, json, serverError } from "../_utils/responses";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
+import { isValidEmail } from "../_utils/validation";
 import { encryptCpf } from "../_utils/cpfCrypto";
 import { getPaymentProvider } from "../_utils/payment";
 import { getWooviChargeStatus } from "../_utils/woovi";
@@ -24,6 +25,7 @@ interface TshirtSizes {
 interface TshirtPurchaseRow {
   id: string;
   customer_name: string;
+  email: string | null;
   cpf_encrypted: string;
   size_p_qty: number;
   size_m_qty: number;
@@ -130,6 +132,7 @@ async function encryptCpfForLookup(env: Env, cpf: string): Promise<string> {
 const PURCHASE_COLUMNS = `
   id,
   customer_name,
+  email,
   cpf_encrypted,
   size_p_qty,
   size_m_qty,
@@ -381,9 +384,18 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
   const rawName = typeof payload.name === "string" ? payload.name : "";
   const name = normalizeName(rawName);
   const cpf = typeof payload.cpf === "string" ? payload.cpf : "";
+  const email = (typeof payload.email === "string" ? payload.email : "").trim().toLowerCase();
 
   if (!name) {
     return badRequest("name_required");
+  }
+
+  if (!email) {
+    return badRequest("email_required");
+  }
+
+  if (!isValidEmail(email)) {
+    return badRequest("invalid_email");
   }
 
   if (!cpf) {
@@ -437,6 +449,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
   try {
     charge = await provider.createCharge({
       name,
+      email,
       amountCents,
       taxId: canonicalizeCpf(cpf),
       comment: `Camiseta Exclusiva - Caminhada do Perdão (${totalQuantity} unidade(s))`,
@@ -458,6 +471,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
       `INSERT INTO tshirt_purchase (
          id,
          customer_name,
+         email,
          cpf_encrypted,
          size_p_qty,
          size_m_qty,
@@ -474,11 +488,12 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
          qr_code_image,
          created_at,
          updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'woovi', ?, ?, ?, ?, ?, ?, ?)`
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'woovi', ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         purchaseId,
         name,
+        email,
         cpfEncrypted,
         sizes.P,
         sizes.M,

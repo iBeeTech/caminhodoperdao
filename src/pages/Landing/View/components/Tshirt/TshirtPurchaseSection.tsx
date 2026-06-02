@@ -21,6 +21,7 @@ import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import { formatCpfBR } from "../../../../../utils/formatters/cpf";
 import { canonicalizeCpf, isValidCpf } from "../../../../../utils/validators/cpf";
+import { isEmailValid } from "../../../../../utils/validators/email";
 import camisetaFrente from "../../../../../assets/camiseta-frente.png";
 import camisetaTras from "../../../../../assets/camiseta-tras.png";
 import {
@@ -28,6 +29,7 @@ import {
   Chevron,
   Container,
   CopyButton,
+  FieldHint,
   Form,
   Header,
   ImageFigure,
@@ -68,7 +70,7 @@ import {
   ZoomClose,
 } from "./TshirtPurchaseSection.styles";
 
-type TshirtErrorKey = "name" | "cpf" | "quantities";
+type TshirtErrorKey = "name" | "email" | "cpf" | "quantities";
 type TshirtErrors = Partial<Record<TshirtErrorKey, string>>;
 
 const DEFAULT_PRICE_PER_TSHIRT_CENTS = 10_000;
@@ -118,6 +120,7 @@ const TshirtPurchaseSection: React.FC = () => {
   const { t } = useTranslation("landing");
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
   const [sizes, setSizes] = useState<TshirtSizes>({ P: 0, M: 0, G: 0, GG: 0 });
   const [pricePerUnitCents, setPricePerUnitCents] = useState<number>(
@@ -356,6 +359,13 @@ const TshirtPurchaseSection: React.FC = () => {
       nextErrors.name = t("tshirt.errors.required");
     }
 
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      nextErrors.email = t("tshirt.errors.required");
+    } else if (!isEmailValid(trimmedEmail)) {
+      nextErrors.email = t("tshirt.errors.invalidEmail");
+    }
+
     const cpfDigits = canonicalizeCpf(cpf);
     if (!cpfDigits) {
       nextErrors.cpf = t("tshirt.errors.required");
@@ -398,6 +408,16 @@ const TshirtPurchaseSection: React.FC = () => {
 
     if (payload.error === "name_required") {
       setErrors((prev) => ({ ...prev, name: t("tshirt.errors.required") }));
+      return;
+    }
+
+    if (payload.error === "email_required") {
+      setErrors((prev) => ({ ...prev, email: t("tshirt.errors.required") }));
+      return;
+    }
+
+    if (payload.error === "invalid_email") {
+      setErrors((prev) => ({ ...prev, email: t("tshirt.errors.invalidEmail") }));
       return;
     }
 
@@ -444,6 +464,7 @@ const TshirtPurchaseSection: React.FC = () => {
       const normalizedCpf = canonicalizeCpf(cpf);
       const result = await landingService.purchaseTshirt({
         name: normalizeName(name),
+        email: email.trim().toLowerCase(),
         cpf: normalizedCpf,
         sizes,
       });
@@ -623,6 +644,30 @@ const TshirtPurchaseSection: React.FC = () => {
                 autoComplete="name"
               />
             </FormField>
+
+            <FormField
+              label={t("tshirt.form.emailLabel")}
+              htmlFor="tshirt-email"
+              error={errors.email}
+              required
+            >
+              <Input
+                id="tshirt-email"
+                name="tshirt-email"
+                type="email"
+                value={email}
+                placeholder={t("tshirt.form.emailPlaceholder")}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+                }}
+                autoComplete="email"
+                inputMode="email"
+              />
+            </FormField>
+            {!errors.email && (
+              <FieldHint>{t("tshirt.form.emailHint")}</FieldHint>
+            )}
 
             <FormField label={t("tshirt.form.cpfLabel")} htmlFor="tshirt-cpf" error={errors.cpf} required>
               <Input

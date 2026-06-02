@@ -40,6 +40,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_cpf_encrypted ON registratio
 CREATE TABLE IF NOT EXISTS tshirt_purchase (
   id TEXT PRIMARY KEY,
   customer_name TEXT NOT NULL,
+  email TEXT,
   cpf_encrypted TEXT NOT NULL,
   size_p_qty INTEGER NOT NULL DEFAULT 0 CHECK (size_p_qty >= 0),
   size_m_qty INTEGER NOT NULL DEFAULT 0 CHECK (size_m_qty >= 0),
