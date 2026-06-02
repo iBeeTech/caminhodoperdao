@@ -7,7 +7,7 @@ import { encryptCpf } from "../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
 import {
   countActive,
-  countActiveSleepNonStaff,
+  countPaidSleepNonStaff,
   countActiveStaff,
   expirePending,
   getByCpfEncrypted,
@@ -190,17 +190,16 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   const total = await countActive(env.DB);
   const staff = await countActiveStaff(env.DB);
   // Pool do mosteiro dos peregrinos: conta só não-staff dormindo (staff dorme à parte).
-  let sleepers = await countActiveSleepNonStaff(env.DB);
+  // Pool do mosteiro: conta só PAGAS (pendentes não reservam vaga).
+  const sleepers = await countPaidSleepNonStaff(env.DB);
   // Peregrinos (não-staff) têm teto próprio (MAX_REGISTRATIONS), independente do staff.
   let nonStaff = Math.max(0, total - staff);
 
   // If updating an existing pending registration, discount it from capacity checks.
   // Uma inscrição pendente aqui é sempre de peregrino (is_staff=0): staff entra direto como PAID.
+  // O mosteiro conta só PAGAS, então a pendente existente não entra nessa conta.
   if (existing && existing.status === "PENDING") {
     nonStaff = Math.max(0, nonStaff - 1);
-    if (existing.sleep_at_monastery === 1) {
-      sleepers = Math.max(0, sleepers - 1);
-    }
   }
 
   // Teto de peregrinos (não-staff) tranca a inscrição por completo.
@@ -355,8 +354,8 @@ async function handleAvailability(env: Env): Promise<Response> {
     } = getCapacityLimits(env);
     await expirePending(env.DB);
     const total = await countActive(env.DB);
-    // monasteryFull reflete só os peregrinos (não-staff); o staff dorme à parte.
-    const sleepers = await countActiveSleepNonStaff(env.DB);
+    // monasteryFull reflete só os peregrinos (não-staff) JÁ PAGOS; o staff dorme à parte.
+    const sleepers = await countPaidSleepNonStaff(env.DB);
     const staff = await countActiveStaff(env.DB);
     const nonStaff = Math.max(0, total - staff);
     // Ótica do peregrino: vagas de não-staff esgotadas trancam a inscrição.

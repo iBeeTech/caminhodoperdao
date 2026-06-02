@@ -130,6 +130,17 @@ class InMemoryD1 {
       return { total: active.length };
     }
 
+    // Pool do mosteiro: contagem SÓ de PAGAS (não-staff dormindo).
+    if (query.includes("SELECT COUNT(*) as total FROM registrations WHERE status = 'PAID'")) {
+      const paid = this.registrations.filter((r) => r.status === "PAID");
+      if (query.includes("sleep_at_monastery = 1") && query.includes("is_staff = 0")) {
+        return {
+          total: paid.filter((r) => r.sleep_at_monastery === 1 && r.is_staff === 0).length,
+        };
+      }
+      return { total: paid.length };
+    }
+
     // generateRegistrationNumber (webhook).
     if (query.includes("SELECT COUNT(*) as count FROM registrations WHERE registration_number LIKE ?")) {
       const count = this.registrations.filter(
@@ -382,12 +393,16 @@ describe("register flow", () => {
     expect(statusData.exists).toBe(true);
   });
 
-  it("bloqueia com monastery_full quando o pool do mosteiro esgota", async () => {
+  it("bloqueia com monastery_full quando o pool de PAGAS esgota", async () => {
     const limited = makeEnv({ MAX_REGISTRATIONS_SLEEP: "1" });
 
+    // Primeira inscrição no mosteiro precisa estar PAGA para ocupar a cama.
     const ok = await handleRegister(limited as any, validBody({ sleepAtMonastery: true }));
     expect(ok.status).toBe(200);
+    const { payment_ref } = await ok.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env: limited } as any);
 
+    // Com a única cama já PAGA, a próxima inscrição no mosteiro é bloqueada.
     const full = await handleRegister(
       limited as any,
       validBody({ cpf: CPF_B, email: "bruno@example.com", sleepAtMonastery: true })
@@ -395,6 +410,21 @@ describe("register flow", () => {
     expect(full.status).toBe(409);
     const data = await full.json();
     expect(data.error).toBe("monastery_full");
+  });
+
+  it("inscrição PENDENTE no mosteiro NÃO bloqueia novas (conta só pagas)", async () => {
+    const limited = makeEnv({ MAX_REGISTRATIONS_SLEEP: "1" });
+
+    // Primeira fica PENDENTE (não paga) — não reserva a cama.
+    const ok = await handleRegister(limited as any, validBody({ sleepAtMonastery: true }));
+    expect(ok.status).toBe(200);
+
+    // Segunda inscrição no mosteiro ainda é permitida, pois nenhuma foi paga.
+    const second = await handleRegister(
+      limited as any,
+      validBody({ cpf: CPF_B, email: "bruno@example.com", sleepAtMonastery: true })
+    );
+    expect(second.status).toBe(200);
   });
 });
 

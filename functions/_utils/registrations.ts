@@ -240,6 +240,21 @@ export async function countActiveSleepNonStaff(DB: D1Database): Promise<number> 
   }
 }
 
+// Conta apenas as inscrições PAGAS de peregrinos (não-staff) que dormem no
+// mosteiro. O pool do mosteiro tranca somente quando as PAGAS atingem o teto
+// (pendentes não reservam vaga).
+export async function countPaidSleepNonStaff(DB: D1Database): Promise<number> {
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status = 'PAID' AND sleep_at_monastery = 1 AND is_staff = 0"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting paid non-staff sleep registrations:", error);
+    return 0;
+  }
+}
+
 export async function countActiveStaff(DB: D1Database): Promise<number> {
   try {
     const row = await DB.prepare(
