@@ -352,7 +352,6 @@
         },
         "intent": {
             "pricing": {
-                "title": "Valores da inscrição",
                 "withoutLodgingLabel": "Inscrição sem pernoite",
                 "withoutLodgingPrice": "R$ 150,00",
                 "withLodgingLabel": "Inscrição com pernoite",
