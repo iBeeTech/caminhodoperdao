@@ -1197,7 +1197,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </>
               )}
 
-              {(currentStatus === "PENDING" || currentStatus === "PAID") && (
+              {currentStatus === "PAID" && (
                 <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
                   <CancelRegistrationButton type="button" onClick={openCancelModal}>
                     {t("signup.status.cancelRegistration")}
