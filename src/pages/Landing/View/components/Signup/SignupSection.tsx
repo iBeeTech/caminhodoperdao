@@ -179,6 +179,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const [copiedBrcode, setCopiedBrcode] = useState(false);
   const [isPaidModalOpen, setIsPaidModalOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isCanceledModalOpen, setIsCanceledModalOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [cancelWaUrl, setCancelWaUrl] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -197,12 +198,19 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     }
   };
 
+  // Número fixo e exclusivo para estorno (não usar o round robin).
+  const REFUND_WA_NUMBER = "5534992896160";
+  const refundWaUrl = `https://wa.me/${REFUND_WA_NUMBER}?text=${encodeURIComponent(
+    t("cancellation.refundWhatsappMessage", { ns: "common" })
+  )}`;
+
   const confirmCancelRegistration = async () => {
     setIsCanceling(true);
     setCancelError(null);
     try {
       await onCancelRegistration();
       setIsCancelOpen(false);
+      setIsCanceledModalOpen(true);
     } catch {
       setCancelError(t("cancellation.error", { ns: "common" }));
     } finally {
@@ -1331,6 +1339,70 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     loading={isCanceling}
                   >
                     {t("cancellation.confirm", { ns: "common" })}
+                  </TrackedButton>
+                </ConfirmationModalActions>
+              </ConfirmationModalDialog>
+            </ConfirmationModalOverlay>
+          )}
+
+          {isCanceledModalOpen && (
+            <ConfirmationModalOverlay onClick={() => setIsCanceledModalOpen(false)}>
+              <ConfirmationModalDialog
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="canceled-registration-modal-title"
+                onClick={event => event.stopPropagation()}
+              >
+                <ConfirmationModalClose
+                  type="button"
+                  aria-label={t("cancellation.canceledClose", { ns: "common" })}
+                  onClick={() => setIsCanceledModalOpen(false)}
+                >
+                  ×
+                </ConfirmationModalClose>
+
+                <ConfirmationModalTitle id="canceled-registration-modal-title">
+                  {t("cancellation.canceledTitle", { ns: "common" })}
+                </ConfirmationModalTitle>
+
+                <ConfirmationModalDescription>
+                  {t("cancellation.canceledNotice", { ns: "common" })}
+                </ConfirmationModalDescription>
+
+                <a
+                  href={refundWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                    background: "#25d366",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    padding: "12px 16px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <img src={whatsappIcon} alt="" style={{ width: "1.25rem", height: "1.25rem" }} />
+                  {t("cancellation.refundWhatsapp", { ns: "common" })}
+                </a>
+
+                <ConfirmationModalActions>
+                  <TrackedButton
+                    pageName="landing"
+                    ctaId={LANDING_CTAS.FORM_SUBMIT}
+                    sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
+                    sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
+                    position={LANDING_SECTIONS.REGISTRATION_FORM.position}
+                    variant="secondary"
+                    size="md"
+                    type="button"
+                    onClick={() => setIsCanceledModalOpen(false)}
+                  >
+                    {t("cancellation.canceledClose", { ns: "common" })}
                   </TrackedButton>
                 </ConfirmationModalActions>
               </ConfirmationModalDialog>
