@@ -21,6 +21,7 @@ interface InscritoRow {
   allergy_medication_details: string | null;
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
+  amount_cents: number | null;
 }
 
 // Converte um parâmetro de query (0/1) em filtro opcional. Retorna undefined quando ausente.
@@ -46,38 +47,40 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
   const staffFilter = parseFlag(url.searchParams.get("staff"));
   const sleepFilter = parseFlag(url.searchParams.get("sleep"));
 
-  const conditions = ["status = 'PAID'"];
+  const conditions = ["r.status = 'PAID'"];
   const bindings: number[] = [];
   if (staffFilter !== undefined) {
-    conditions.push("is_staff = ?");
+    conditions.push("r.is_staff = ?");
     bindings.push(staffFilter);
   }
   if (sleepFilter !== undefined) {
-    conditions.push("sleep_at_monastery = ?");
+    conditions.push("r.sleep_at_monastery = ?");
     bindings.push(sleepFilter);
   }
 
   const query = `
     SELECT
-      name,
-      email,
-      phone,
-      registration_number,
-      is_staff,
-      sleep_at_monastery,
-      city,
-      state,
-      cpf_encrypted,
-      date_of_birth,
-      emergency_contact_name,
-      emergency_contact_phone,
-      has_allergy_medication,
-      allergy_medication_details,
-      has_dietary_restriction,
-      dietary_restriction_details
-    FROM registrations
+      r.name,
+      r.email,
+      r.phone,
+      r.registration_number,
+      r.is_staff,
+      r.sleep_at_monastery,
+      r.city,
+      r.state,
+      r.cpf_encrypted,
+      r.date_of_birth,
+      r.emergency_contact_name,
+      r.emergency_contact_phone,
+      r.has_allergy_medication,
+      r.allergy_medication_details,
+      r.has_dietary_restriction,
+      r.dietary_restriction_details,
+      p.amount_cents AS amount_cents
+    FROM registrations r
+    LEFT JOIN payments p ON p.correlation_id = r.payment_ref
     WHERE ${conditions.join(" AND ")}
-    ORDER BY name
+    ORDER BY r.name
   `;
 
   const results = await context.env.DB.prepare(query)
@@ -102,7 +105,10 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
     rowsWithCpf.push({ ...row, cpfDecrypted });
   }
 
-  const spreadsheet = buildInscritosSpreadsheet(rowsWithCpf);
+  const spreadsheet =
+    sleepFilter === 1
+      ? buildMonasterySpreadsheet(rowsWithCpf)
+      : buildInscritosSpreadsheet(rowsWithCpf);
   return new Response(spreadsheet, {
     status: 200,
     headers: {
@@ -111,6 +117,11 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
     },
   });
 };
+
+function formatBRL(cents: number): string {
+  const value = (cents / 100).toFixed(2).replace(".", ",");
+  return `R$ ${value.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+}
 
 function formatDateOfBirth(value: string | null): string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value ?? "";
@@ -148,6 +159,7 @@ function buildInscritosSpreadsheet(
     "CIDADE",
     "ESTADO",
     "ASSINATURA RECEBIMENTO KIT",
+    "VALOR",
   ];
 
   const header = headerCells
@@ -165,6 +177,7 @@ function buildInscritosSpreadsheet(
   }
 
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
+  let totalCents = 0;
   const rowsHtml = sorted
     .map(row => {
       const registrationNumber = escapeHtml(row.registration_number ?? "");
@@ -183,6 +196,9 @@ function buildInscritosSpreadsheet(
       const dietaryDetails = escapeHtml((row.dietary_restriction_details ?? "").trim());
       const city = escapeHtml(row.city ?? "");
       const state = escapeHtml(row.state ?? "");
+      const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
+      totalCents += amountCents;
+      const valor = amountCents > 0 ? escapeHtml(formatBRL(amountCents)) : "";
 
       const medicationStyle = medicationDetails
         ? " style=\"font-weight:700;color:#c62828;\""
@@ -214,8 +230,41 @@ function buildInscritosSpreadsheet(
         `<td>${city}</td>`,
         `<td>${state}</td>`,
         "<td></td>",
+        `<td>${valor}</td>`,
         "</tr>",
       ].join("");
+    })
+    .join("");
+
+  const totalColspan = headerCells.length - 1;
+  const totalRow = [
+    "<tr>",
+    `<td colspan="${totalColspan}" style="text-align:right;font-weight:700;">TOTAL</td>`,
+    `<td style="font-weight:700;">${escapeHtml(formatBRL(totalCents))}</td>`,
+    "</tr>",
+  ].join("");
+
+  return [
+    "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
+    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
+    `<thead><tr>${header}</tr></thead>`,
+    `<tbody>${rowsHtml}${totalRow}</tbody>`,
+    "</table></body></html>",
+  ].join("");
+}
+
+function buildMonasterySpreadsheet(
+  rows: Array<InscritoRow & { cpfDecrypted: string }>
+): string {
+  const headerCells = ["NOME", "CPF"];
+  const header = headerCells.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
+
+  const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
+  const rowsHtml = sorted
+    .map(row => {
+      const name = escapeHtml(row.name || "");
+      const cpf = escapeHtml(row.cpfDecrypted || "");
+      return `<tr><td>${name}</td><td>${cpf}</td></tr>`;
     })
     .join("");
 
