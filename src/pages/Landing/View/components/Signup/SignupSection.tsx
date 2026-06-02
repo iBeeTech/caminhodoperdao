@@ -167,7 +167,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   registeredAsStaff,
   onViewMyRegistration,
   onCancelRegistration,
-  getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
   onTermsChange,
@@ -181,21 +180,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isCanceledModalOpen, setIsCanceledModalOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [cancelWaUrl, setCancelWaUrl] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const { t } = useTranslation("landing");
   const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
 
-  const openCancelModal = async () => {
+  const openCancelModal = () => {
     setCancelError(null);
     setIsCancelOpen(true);
-    if (!cancelWaUrl) {
-      try {
-        setCancelWaUrl(await getNextWhatsappUrl());
-      } catch {
-        /* sem link de WhatsApp se falhar */
-      }
-    }
   };
 
   // Número fixo e exclusivo para estorno (não usar o round robin).
@@ -1284,29 +1275,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 <ConfirmationModalDescription>
                   {t("cancellation.notice", { ns: "common" })}
                 </ConfirmationModalDescription>
-
-                {cancelWaUrl && (
-                  <a
-                    href={cancelWaUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "0.5rem",
-                      background: "#25d366",
-                      color: "#fff",
-                      borderRadius: "10px",
-                      padding: "12px 16px",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                    }}
-                  >
-                    <img src={whatsappIcon} alt="" style={{ width: "1.25rem", height: "1.25rem" }} />
-                    {t("cancellation.whatsapp", { ns: "common" })}
-                  </a>
-                )}
 
                 {cancelError && <ErrorText role="alert">{cancelError}</ErrorText>}
 
