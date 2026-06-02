@@ -351,6 +351,13 @@
             "emergencyContactPhoneSameAsRegistration": "Este é o mesmo telefone usado na inscrição, utilize um telefone de outra pessoa"
         },
         "intent": {
+            "pricing": {
+                "title": "Valores da inscrição",
+                "withoutLodgingLabel": "Inscrição sem pernoite",
+                "withoutLodgingPrice": "R$ 150,00",
+                "withLodgingLabel": "Inscrição com pernoite",
+                "withLodgingPrice": "R$ 200,00"
+            },
             "title": "O que você deseja fazer?",
             "subtitle": "Escolha uma opção para continuar.",
             "registerTitle": "Quero me inscrever",

@@ -80,6 +80,41 @@ export const IntentContainer = styled.div`
   }
 `;
 
+export const PricingBox = styled.div`
+  display: grid;
+  gap: 10px;
+  background: #fff;
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 14px;
+  padding: 18px 20px;
+`;
+
+export const PricingTitle = styled.h3`
+  margin: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+export const PricingRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+
+  span:first-child {
+    font-size: 0.95rem;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  span:last-child {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.primary};
+    white-space: nowrap;
+  }
+`;
+
 export const IntentTitle = styled.h3`
   margin: 0;
   text-align: center;

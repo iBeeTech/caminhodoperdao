@@ -39,6 +39,9 @@ import {
   SignupWarningIcon,
   StatusMessage,
   IntentContainer,
+  PricingBox,
+  PricingTitle,
+  PricingRow,
   IntentTitle,
   IntentGrid,
   IntentButton,
@@ -412,6 +415,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
           {showIntent && (
             <IntentContainer>
               <IntentTitle>{t("signup.intent.title")}</IntentTitle>
+              <PricingBox>
+                <PricingTitle>{t("signup.intent.pricing.title")}</PricingTitle>
+                <PricingRow>
+                  <span>{t("signup.intent.pricing.withoutLodgingLabel")}</span>
+                  <span>{t("signup.intent.pricing.withoutLodgingPrice")}</span>
+                </PricingRow>
+                <PricingRow>
+                  <span>{t("signup.intent.pricing.withLodgingLabel")}</span>
+                  <span>{t("signup.intent.pricing.withLodgingPrice")}</span>
+                </PricingRow>
+              </PricingBox>
               <IntentGrid>
                 <IntentButton type="button" onClick={onChooseRegister}>
                   <strong>{t("signup.intent.registerTitle")} →</strong>
