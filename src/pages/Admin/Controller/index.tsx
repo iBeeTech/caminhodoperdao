@@ -242,6 +242,12 @@ const AdminController: React.FC = () => {
       onDownloadTshirt={() =>
         downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xls")
       }
+      onDownloadCancelados={() =>
+        downloadReport(
+          "/api/admin/reports/cancelados",
+          "inscricoes-canceladas.xls"
+        )
+      }
       onDownloadVendas={() =>
         downloadReport("/api/admin/reports/vendas", "vendas-totais.xls")
       }

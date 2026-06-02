@@ -15,6 +15,7 @@ import {
   PurpleButton,
   ReportLink,
   SecondaryButton,
+  SlateButton,
   SuccessText,
   YellowButton,
 } from "./AdminView.styles";
@@ -42,6 +43,7 @@ interface AdminViewProps {
   onDownloadPeregrinosGeral: () => void;
   onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
+  onDownloadCancelados: () => void;
   onDownloadVendas: () => void;
   onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
@@ -71,6 +73,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadPeregrinosGeral,
   onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
+  onDownloadCancelados,
   onDownloadVendas,
   onLogout,
   onNewAdminEmailChange,
@@ -179,6 +182,9 @@ const AdminView: React.FC<AdminViewProps> = ({
             <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
               {t("panel.reportTshirt")}
             </PurpleButton>
+            <SlateButton type="button" onClick={onDownloadCancelados} disabled={isDownloading}>
+              {t("panel.reportCancelados")}
+            </SlateButton>
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
               {t("panel.logout")}
             </DangerButton>

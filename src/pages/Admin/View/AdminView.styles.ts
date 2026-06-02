@@ -101,6 +101,10 @@ export const YellowButton = styled(PrimaryButton)`
   color: #1d1d1f;
 `;
 
+export const SlateButton = styled(PrimaryButton)`
+  background: #475569;
+`;
+
 export const ReportLink = styled.button`
   align-self: flex-start;
   margin-top: 4px;
