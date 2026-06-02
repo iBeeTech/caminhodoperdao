@@ -239,7 +239,7 @@
             "cpfPlaceholder": "000.000.000-00",
             "emailLabel": "Email",
             "emailPlaceholder": "seu@email.com",
-            "submit": "Verificar inscrição ou Inscrever-se",
+            "submit": "Verificar inscrição",
             "loading": "Verificando...",
             "title": "Conferir minha inscrição"
         },
