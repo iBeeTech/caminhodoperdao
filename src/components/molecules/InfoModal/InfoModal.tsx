@@ -1,0 +1,103 @@
+import React from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Actions,
+  CloseButton,
+  Dialog,
+  Intro,
+  Item,
+  ItemIcon,
+  List,
+  Overlay,
+  PrimaryButton,
+  Title,
+  WhatsAppButton,
+} from "./InfoModal.styles";
+
+const WA_NUMBER = "5516982221415";
+
+const ITEM_KEYS = [
+  "tshirtSeparate",
+  "tshirtCancel",
+  "paymentDeadline",
+  "cpfRule",
+] as const;
+
+const InfoModal: React.FC = () => {
+  const { t } = useTranslation("common");
+  const [open, setOpen] = React.useState(true);
+  const closeRef = React.useRef<HTMLButtonElement>(null);
+
+  const close = React.useCallback(() => setOpen(false), []);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    closeRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, close]);
+
+  if (!open) return null;
+
+  const whatsappUrl = `https://api.whatsapp.com/send/?phone=${WA_NUMBER}&text=${encodeURIComponent(
+    t("infoModal.whatsappMessage")
+  )}&type=phone_number&app_absent=0`;
+
+  return (
+    <Overlay onClick={close}>
+      <Dialog
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="info-modal-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <CloseButton
+          ref={closeRef}
+          type="button"
+          onClick={close}
+          aria-label={t("infoModal.close")}
+        >
+          ×
+        </CloseButton>
+
+        <Title id="info-modal-title">{t("infoModal.title")}</Title>
+        <Intro>{t("infoModal.intro")}</Intro>
+
+        <List>
+          {ITEM_KEYS.map((key) => (
+            <Item key={key}>
+              <ItemIcon aria-hidden="true">✓</ItemIcon>
+              <span>{t(`infoModal.items.${key}`)}</span>
+            </Item>
+          ))}
+        </List>
+
+        <Actions>
+          <WhatsAppButton
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("infoModal.whatsapp")}
+          </WhatsAppButton>
+          <PrimaryButton type="button" onClick={close}>
+            {t("infoModal.understood")}
+          </PrimaryButton>
+        </Actions>
+      </Dialog>
+    </Overlay>
+  );
+};
+
+export default InfoModal;
