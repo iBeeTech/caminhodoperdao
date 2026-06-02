@@ -13,6 +13,7 @@ import {
   OrangeButton,
   PrimaryButton,
   PurpleButton,
+  ReportLink,
   SecondaryButton,
   SuccessText,
   YellowButton,
@@ -41,6 +42,7 @@ interface AdminViewProps {
   onDownloadPeregrinosGeral: () => void;
   onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
+  onDownloadVendas: () => void;
   onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
   onAddAdmin: () => void;
@@ -69,6 +71,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadPeregrinosGeral,
   onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
+  onDownloadVendas,
   onLogout,
   onNewAdminEmailChange,
   onAddAdmin,
@@ -180,6 +183,11 @@ const AdminView: React.FC<AdminViewProps> = ({
               {t("panel.logout")}
             </DangerButton>
           </ButtonRow>
+          {canManageAdmins && (
+            <ReportLink type="button" onClick={onDownloadVendas} disabled={isDownloading}>
+              {t("panel.reportVendas")}
+            </ReportLink>
+          )}
           {canManageAdmins && (
             <FieldGroup>
               <Label htmlFor="admin-new-email">{t("panel.addAdminLabel")}</Label>

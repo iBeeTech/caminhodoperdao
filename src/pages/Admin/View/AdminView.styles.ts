@@ -101,3 +101,25 @@ export const YellowButton = styled(PrimaryButton)`
   color: #1d1d1f;
 `;
 
+export const ReportLink = styled.button`
+  align-self: flex-start;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  color: #1f6feb;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: #1a5fce;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
