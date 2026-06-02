@@ -23,6 +23,11 @@ export const Dialog = styled.div`
   padding: 24px;
   position: relative;
 
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+
   @media (max-width: 480px) {
     padding: 20px 16px;
   }
@@ -60,7 +65,8 @@ export const Title = styled.h2`
 
 export const Intro = styled.p`
   margin: 0 0 16px;
-  color: ${({ theme }) => theme.colors.muted};
+  color: ${({ theme }) => theme.colors.error};
+  font-weight: 700;
   line-height: 1.4;
   font-size: 0.95rem;
 `;

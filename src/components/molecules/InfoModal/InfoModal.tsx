@@ -20,23 +20,23 @@ import {
 const WA_NUMBER = "5516982221415";
 
 const ITEM_KEYS = [
-  "tshirtSeparate",
-  "paymentDeadline",
   "cpfRule",
+  "paymentDeadline",
+  "tshirtSeparate",
   "tshirtCancel",
 ] as const;
 
 const InfoModal: React.FC = () => {
   const { t } = useTranslation("common");
   const [open, setOpen] = React.useState(true);
-  const closeRef = React.useRef<HTMLButtonElement>(null);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
 
   const close = React.useCallback(() => setOpen(false), []);
 
   React.useEffect(() => {
     if (!open) return;
 
-    closeRef.current?.focus();
+    dialogRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -60,17 +60,14 @@ const InfoModal: React.FC = () => {
   return (
     <Overlay onClick={close}>
       <Dialog
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="info-modal-title"
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        <CloseButton
-          ref={closeRef}
-          type="button"
-          onClick={close}
-          aria-label={t("infoModal.close")}
-        >
+        <CloseButton type="button" onClick={close} aria-label={t("infoModal.close")}>
           ×
         </CloseButton>
 
