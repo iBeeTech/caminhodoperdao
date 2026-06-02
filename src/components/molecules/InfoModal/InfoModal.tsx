@@ -6,7 +6,10 @@ import {
   Dialog,
   Intro,
   Item,
+  ItemBody,
+  ItemDesc,
   ItemIcon,
+  ItemTitle,
   List,
   Overlay,
   PrimaryButton,
@@ -18,9 +21,9 @@ const WA_NUMBER = "5516982221415";
 
 const ITEM_KEYS = [
   "tshirtSeparate",
-  "tshirtCancel",
   "paymentDeadline",
   "cpfRule",
+  "tshirtCancel",
 ] as const;
 
 const InfoModal: React.FC = () => {
@@ -78,7 +81,10 @@ const InfoModal: React.FC = () => {
           {ITEM_KEYS.map((key) => (
             <Item key={key}>
               <ItemIcon aria-hidden="true">✓</ItemIcon>
-              <span>{t(`infoModal.items.${key}`)}</span>
+              <ItemBody>
+                <ItemTitle>{t(`infoModal.items.${key}.title`)}</ItemTitle>
+                <ItemDesc>{t(`infoModal.items.${key}.desc`)}</ItemDesc>
+              </ItemBody>
             </Item>
           ))}
         </List>

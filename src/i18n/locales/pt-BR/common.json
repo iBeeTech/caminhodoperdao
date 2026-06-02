@@ -80,15 +80,27 @@
         "accept": "ACEITAR"
     },
     "infoModal": {
-        "title": "Antes de começar, fique atento",
-        "intro": "Algumas informações importantes sobre inscrições e camisetas:",
+        "title": "Antes de começar",
+        "intro": "Pontos rápidos sobre inscrição e camisetas:",
         "items": {
-            "tshirtSeparate": "A compra das camisetas é separada das inscrições. Você não precisa participar da Caminhada para comprá-la.",
-            "tshirtCancel": "Quer cancelar a compra de uma camiseta? Entre em contato com a organização pelo WhatsApp.",
-            "paymentDeadline": "Você tem até 24 horas para efetuar o pagamento da sua inscrição. Após esse prazo ela será cancelada, mas você pode refazê-la normalmente.",
-            "cpfRule": "A inscrição é por CPF, então não é possível fazer mais de uma inscrição de uma vez. Porém, o mesmo CPF pode comprar mais de uma camiseta."
+            "tshirtSeparate": {
+                "title": "Camiseta é compra à parte",
+                "desc": "Não precisa se inscrever na Caminhada para comprar."
+            },
+            "paymentDeadline": {
+                "title": "Pague em até 24h",
+                "desc": "Depois desse prazo a inscrição é cancelada — mas dá para refazer."
+            },
+            "cpfRule": {
+                "title": "1 inscrição por CPF",
+                "desc": "O mesmo CPF pode comprar várias camisetas."
+            },
+            "tshirtCancel": {
+                "title": "Cancelar camiseta?",
+                "desc": "Fale com a organização pelo WhatsApp."
+            }
         },
-        "whatsapp": "Cancelar camiseta no WhatsApp",
+        "whatsapp": "Conversar por WhatsApp",
         "whatsappMessage": "Olá! Gostaria de cancelar a compra da minha camiseta do Caminho do Perdão.",
         "understood": "Entendi",
         "close": "Fechar aviso"

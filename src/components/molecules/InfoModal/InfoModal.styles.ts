@@ -78,9 +78,25 @@ export const Item = styled.li`
   display: flex;
   align-items: flex-start;
   gap: 10px;
+`;
+
+export const ItemBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const ItemTitle = styled.span`
   color: ${({ theme }) => theme.colors.text};
-  line-height: 1.4;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+`;
+
+export const ItemDesc = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.86rem;
+  line-height: 1.35;
 `;
 
 export const ItemIcon = styled.span`
