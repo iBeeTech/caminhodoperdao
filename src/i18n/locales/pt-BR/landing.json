@@ -376,6 +376,13 @@
     },
     "enrollmentCallout": {
         "title": "Atenção!",
-        "message": "As inscrições abrirão em breve"
+        "message": "As inscrições abrirão em",
+        "opening": "As inscrições estão abrindo...",
+        "units": {
+            "days": "dias",
+            "hours": "horas",
+            "minutes": "min",
+            "seconds": "seg"
+        }
     }
 }
