@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Callout, FormField, Input } from "../../../../../components";
 import { CalloutVariant } from "../../../../../components/molecules/Callout/Callout";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
+import { useAnalytics } from "../../../../../hooks/useAnalytics";
+import { useSectionView } from "../../../../../hooks/useSectionView";
 import { ErrorText } from "../../../../../components/molecules/FormField/FormField.styles";
 import { HttpError } from "../../../../../services/http/client";
 import { landingService } from "../../../../../services/landing/landing.service";
@@ -135,6 +137,31 @@ const TshirtPurchaseSection: React.FC = () => {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+
+  const { paymentConfirmed } = useAnalytics();
+
+  // Rastreia a visualização da seção (Amplitude: section_viewed), igual às demais seções.
+  const sectionViewRef = useSectionView({
+    pageName: "landing",
+    sectionId: LANDING_SECTIONS.TSHIRT_PURCHASE.id,
+    sectionName: LANDING_SECTIONS.TSHIRT_PURCHASE.name,
+    position: LANDING_SECTIONS.TSHIRT_PURCHASE.position,
+  });
+
+  // Une a ref de scroll (handleStartNewPurchase) com a ref do observer de section_view.
+  const setSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      sectionRef.current = node;
+      (sectionViewRef as React.MutableRefObject<HTMLElement | null>).current = node;
+    },
+    [sectionViewRef]
+  );
+
+  // Pedidos vistos como pendentes nesta sessão e pedidos já reportados como pagos,
+  // para disparar a conversão (payment_confirmed) só na transição PENDING -> PAID
+  // e uma única vez por pedido.
+  const seenPendingRef = useRef<Set<string>>(new Set());
+  const reportedPaidRef = useRef<Set<string>>(new Set());
 
   const totalQuantity = useMemo(
     () => sizes.P + sizes.M + sizes.G + sizes.GG,
@@ -295,6 +322,32 @@ const TshirtPurchaseSection: React.FC = () => {
       window.clearInterval(intervalId);
     };
   }, [hasPending, cpf, name, applyState]);
+
+  // Memoriza os pedidos que apareceram como pendentes nesta sessão.
+  useEffect(() => {
+    pendingPurchases.forEach((p) => seenPendingRef.current.add(p.id));
+  }, [pendingPurchases]);
+
+  // Dispara o evento de conversão (payment_confirmed) quando um pedido que estava
+  // pendente nesta sessão passa para pago. Pagamentos históricos exibidos na consulta
+  // de status (que nunca foram vistos como pendentes aqui) são ignorados.
+  useEffect(() => {
+    paidPurchases.forEach((p) => {
+      if (reportedPaidRef.current.has(p.id)) return;
+      if (!seenPendingRef.current.has(p.id)) return;
+
+      reportedPaidRef.current.add(p.id);
+      paymentConfirmed("landing", "woovi", "pix", {
+        status: "PAID",
+        product: "tshirt",
+        order_id: p.id,
+        quantity: p.totalQuantity,
+        amount_cents: p.amountCents,
+        section_id: LANDING_SECTIONS.TSHIRT_PURCHASE.id,
+        section_name: LANDING_SECTIONS.TSHIRT_PURCHASE.name,
+      });
+    });
+  }, [paidPurchases, paymentConfirmed]);
 
   const validateForm = (): TshirtErrors => {
     const nextErrors: TshirtErrors = {};
@@ -462,7 +515,7 @@ const TshirtPurchaseSection: React.FC = () => {
   };
 
   return (
-    <TshirtSectionWrapper id="tshirt-purchase" ref={sectionRef}>
+    <TshirtSectionWrapper id="tshirt-purchase" ref={setSectionRef}>
       <Container>
         <TshirtCard>
           <Header>
