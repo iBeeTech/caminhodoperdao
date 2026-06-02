@@ -71,7 +71,12 @@
         "success": "Inscrição cancelada com sucesso. A vaga foi liberada para outra pessoa.",
         "error": "Não foi possível cancelar a inscrição. Tente novamente.",
         "whatsappMessage": "Olá! Sou staff e preciso de ajuda com a minha inscrição.",
-        "confirmQuestion": "Tem certeza que deseja cancelar sua inscrição? A vaga será liberada para outra pessoa."
+        "confirmQuestion": "Tem certeza que deseja cancelar sua inscrição? A vaga será liberada para outra pessoa.",
+        "canceledTitle": "Inscrição Cancelada",
+        "canceledNotice": "Sua inscrição foi cancelada. Para solicitar o estorno do pagamento, entre em contato com a organização pelo WhatsApp.",
+        "refundWhatsapp": "Falar no WhatsApp para estorno",
+        "refundWhatsappMessage": "Olá! Cancelei minha inscrição e gostaria de solicitar o estorno do pagamento.",
+        "canceledClose": "Fechar"
     },
     "consent": {
         "title": "Privacidade e cookies",
