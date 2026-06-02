@@ -11,6 +11,12 @@ export const Container = styled.div`
   padding: 0 20px;
 `;
 
+export const FieldHint = styled.p`
+  margin: -4px 0 0;
+  font-size: 0.8rem;
+  color: ${({ theme }) => theme.colors.muted};
+`;
+
 export const TshirtCard = styled.div`
   background: #ffffff;
   border-radius: 16px;
