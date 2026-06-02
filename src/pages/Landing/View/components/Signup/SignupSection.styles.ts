@@ -3,12 +3,21 @@ import styled, { css } from "styled-components";
 export const SignupSectionWrapper = styled.section`
   background: #f5f7fb;
   padding: 80px 0;
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding: 48px 0;
+  }
 `;
 
 export const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
+  }
 `;
 
 export const SignupCard = styled.div`
@@ -20,6 +29,17 @@ export const SignupCard = styled.div`
   margin: 0 auto;
   display: grid;
   gap: 16px;
+  /* Impede que conteúdo "inquebrável" (ex.: código PIX, e-mails longos)
+     estoure a largura no mobile, criando rolagem horizontal. */
+  min-width: 0;
+
+  > * {
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
 `;
 
 export const SignupHeader = styled.div`
@@ -44,12 +64,20 @@ export const SignupForm = styled.form`
   display: grid;
   gap: 16px;
   margin-top: 8px;
+
+  > * {
+    min-width: 0;
+  }
 `;
 
 export const IntentContainer = styled.div`
   display: grid;
   gap: 16px;
   margin-top: 8px;
+
+  > * {
+    min-width: 0;
+  }
 `;
 
 export const IntentTitle = styled.h3`
@@ -61,7 +89,7 @@ export const IntentTitle = styled.h3`
 
 export const IntentGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 
   @media (max-width: 560px) {
@@ -188,6 +216,10 @@ export const PixBox = styled.div`
   background: #f9fafb;
   display: grid;
   gap: 12px;
+
+  > * {
+    min-width: 0;
+  }
 `;
 
 export const PixLabelContainer = styled.div`
@@ -235,12 +267,17 @@ export const CopyButton = styled.button`
 
 export const PixTextarea = styled.textarea`
   width: 100%;
+  max-width: 100%;
   min-height: 120px;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 10px;
   padding: 12px;
   resize: vertical;
   font-family: monospace;
+  /* O código PIX é uma string longa sem espaços; força a quebra
+     para não estourar a largura no mobile. */
+  overflow-wrap: anywhere;
+  word-break: break-all;
 `;
 
 export const QRCodeContainer = styled.div`
