@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import {
   Actions,
   CloseButton,
@@ -29,13 +30,15 @@ const ITEM_KEYS = [
 
 const InfoModal: React.FC = () => {
   const { t } = useTranslation("common");
+  const location = useLocation();
+  const isRootRoute = location.pathname === "/";
   const [open, setOpen] = React.useState(true);
   const dialogRef = React.useRef<HTMLDivElement>(null);
 
   const close = React.useCallback(() => setOpen(false), []);
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || !isRootRoute) return;
 
     dialogRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
@@ -50,9 +53,9 @@ const InfoModal: React.FC = () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, close]);
+  }, [open, isRootRoute, close]);
 
-  if (!open) return null;
+  if (!open || !isRootRoute) return null;
 
   const whatsappUrl = `https://api.whatsapp.com/send/?phone=${WA_NUMBER}&text=${encodeURIComponent(
     t("infoModal.whatsappMessage")
