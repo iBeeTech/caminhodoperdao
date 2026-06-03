@@ -346,7 +346,7 @@
             "switchPayWarning": "O pagamento desse QR Code deve ser pago imediatamente para validar sua mudança, caso você saia dessa tela sua mudança não estará validada",
             "switchDone": "Pronto! Sua modalidade foi atualizada.",
             "switchDowngraded": "Pronto! Você saiu do mosteiro. O estorno de R$ {{amount}} será combinado com a organização.",
-            "switchMonasteryFull": "Não há mais vagas no mosteiro no momento.",
+            "switchMonasteryFull": "Vagas para dormir no Mosteiro esgotadas",
             "switchError": "Não foi possível trocar agora. Tente novamente.",
             "switchProcessing": "Processando…"
         },
