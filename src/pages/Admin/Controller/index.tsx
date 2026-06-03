@@ -263,17 +263,6 @@ const AdminController: React.FC = () => {
           "retirada-camisetas.xls"
         )
       }
-      onLogout={() => {
-        localStorage.removeItem(STORAGE_KEY);
-        setToken(null);
-        setStatus("unauthenticated");
-        setPassword("");
-        setNewPassword("");
-        setNewAdminEmail("");
-        setAdminEmail(null);
-        setError(null);
-        setSuccess(null);
-      }}
       canManageAdmins={adminEmail?.toLowerCase() === DEFAULT_EMAIL}
       newAdminEmail={newAdminEmail}
       isAddingAdmin={isAddingAdmin}

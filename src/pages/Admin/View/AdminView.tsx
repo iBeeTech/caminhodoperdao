@@ -7,7 +7,6 @@ import {
   AdminPage,
   AdminTitle,
   ButtonRow,
-  DangerButton,
   ErrorText,
   FieldGroup,
   Label,
@@ -59,7 +58,6 @@ interface AdminViewProps {
   onDownloadCredPeregrinos: () => void;
   onDownloadCredStaff: () => void;
   onDownloadRetiradaCamisetas: () => void;
-  onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
   onAddAdmin: () => void;
 }
@@ -91,12 +89,30 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadCredPeregrinos,
   onDownloadCredStaff,
   onDownloadRetiradaCamisetas,
-  onLogout,
   onNewAdminEmailChange,
   onAddAdmin,
 }) => {
   const { t } = useTranslation("admin");
   const [openMenu, setOpenMenu] = React.useState<null | "completas" | "controle">(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  // Dropdown persiste: só fecha ao clicar fora ou apertar Esc (não no mouseleave).
+  React.useEffect(() => {
+    if (!openMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenu(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openMenu]);
+
   if (status === "loading") {
     return (
       <AdminPage>
@@ -176,8 +192,9 @@ const AdminView: React.FC<AdminViewProps> = ({
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
+            <div ref={menuRef} style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {/* Planilhas Completas */}
-            <div style={{ position: "relative" }} onMouseLeave={() => setOpenMenu(null)}>
+            <div style={{ position: "relative" }}>
               <button
                 type="button"
                 style={dropTrigger}
@@ -210,7 +227,7 @@ const AdminView: React.FC<AdminViewProps> = ({
             </div>
 
             {/* Planilhas de Controle */}
-            <div style={{ position: "relative" }} onMouseLeave={() => setOpenMenu(null)}>
+            <div style={{ position: "relative" }}>
               <button
                 type="button"
                 style={dropTrigger}
@@ -233,10 +250,7 @@ const AdminView: React.FC<AdminViewProps> = ({
                 </div>
               )}
             </div>
-
-            <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
-              {t("panel.logout")}
-            </DangerButton>
+            </div>
           </ButtonRow>
           {canManageAdmins && (
             <FieldGroup>

@@ -3,11 +3,25 @@ import { Link, useLocation } from "react-router-dom";
 
 const navStyle: React.CSSProperties = {
   display: "flex",
+  alignItems: "center",
   gap: "0.5rem",
-  justifyContent: "center",
   marginBottom: "1.5rem",
   flexWrap: "wrap",
 };
+
+const logoutLink: React.CSSProperties = {
+  marginLeft: "auto",
+  background: "none",
+  border: "none",
+  color: "#b91c1c",
+  fontWeight: 600,
+  fontSize: "0.9rem",
+  textDecoration: "underline",
+  cursor: "pointer",
+  font: "inherit",
+};
+
+const STORAGE_KEY = "admin_jwt";
 
 const baseItem: React.CSSProperties = {
   padding: "0.5rem 1.2rem",
@@ -48,6 +62,16 @@ const AdminNav: React.FC = () => {
       >
         Inscritos
       </Link>
+      <button
+        type="button"
+        style={logoutLink}
+        onClick={() => {
+          localStorage.removeItem(STORAGE_KEY);
+          window.location.href = "/admin";
+        }}
+      >
+        Sair
+      </button>
     </nav>
   );
 };
