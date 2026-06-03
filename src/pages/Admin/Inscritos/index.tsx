@@ -134,11 +134,23 @@ const InscritosPage: React.FC = () => {
     load();
   }, [load]);
 
-  // Callouts contam só peregrinos pagos (is_staff = 0). O total da tabela inclui todos.
-  const paidTotal = regs.filter((r) => r.status === "PAID" && r.is_staff === 0).length;
+  // Quebra por status considera só peregrinos (is_staff = 0); staff é contado à parte.
+  const isPeregrino = (r: Registration) => r.is_staff === 0;
+  const paidTotal = regs.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
   const paidPernoite = regs.filter(
-    (r) => r.status === "PAID" && r.is_staff === 0 && r.sleep_at_monastery === 1
+    (r) => r.status === "PAID" && isPeregrino(r) && r.sleep_at_monastery === 1
   ).length;
+  const pendentes = regs.filter((r) => r.status === "PENDING" && isPeregrino(r)).length;
+  const cancelados = regs.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
+  const staffCount = regs.filter((r) => r.is_staff === 1).length;
+
+  const metrics = [
+    { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
+    { num: paidPernoite, label: "Pagos — com pernoite", c: "#b45309", bg: "#fffbeb", b: "#fde68a" },
+    { num: pendentes, label: "Pendentes", c: "#a16207", bg: "#fefce8", b: "#fde68a" },
+    { num: cancelados, label: "Cancelados", c: "#b91c1c", bg: "#fef2f2", b: "#fecaca" },
+    { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
+  ];
 
   const regsFiltered = regs.filter(
     (r) =>
@@ -175,14 +187,15 @@ const InscritosPage: React.FC = () => {
       </div>
 
       <div style={s.totals}>
-        <div style={s.totalBox}>
-          <div style={s.totalNum}>{paidTotal}</div>
-          <div style={s.totalLabel}>Inscritos pagos — Total</div>
-        </div>
-        <div style={{ ...s.totalBox, borderColor: "#fde68a", background: "#fffbeb" }}>
-          <div style={{ ...s.totalNum, color: "#b45309" }}>{paidPernoite}</div>
-          <div style={{ ...s.totalLabel, color: "#92400e" }}>Inscritos pagos — Com pernoite</div>
-        </div>
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            style={{ ...s.totalBox, flex: "1 1 160px", background: m.bg, borderColor: m.b }}
+          >
+            <div style={{ ...s.totalNum, color: m.c }}>{m.num}</div>
+            <div style={{ ...s.totalLabel, color: m.c }}>{m.label}</div>
+          </div>
+        ))}
       </div>
 
       <div style={s.body}>
