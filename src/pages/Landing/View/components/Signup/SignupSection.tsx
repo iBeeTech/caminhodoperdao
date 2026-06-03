@@ -1368,6 +1368,18 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                           <QRCodeImage src={switchQr.image} alt={t("signup.status.qrCodeAlt")} />
                         </QRCodeContainer>
                       )}
+                      <p
+                        style={{
+                          color: "#dc2626",
+                          fontSize: "1.15rem",
+                          fontWeight: 700,
+                          textAlign: "center",
+                          marginTop: "1rem",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {t("signup.status.switchPayWarning")}
+                      </p>
                     </PixBox>
                   )}
 

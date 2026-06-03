@@ -343,6 +343,7 @@
             "switchPayTitle": "Pague para confirmar a troca",
             "switchPayFull": "Gere o pagamento de R$ {{amount}} no PIX abaixo. Após pagar, é só aguardar a confirmação nesta tela.",
             "switchPayDiff": "Pague a diferença de R$ {{amount}} no PIX abaixo. Após pagar, é só aguardar a confirmação nesta tela.",
+            "switchPayWarning": "O pagamento desse QR Code deve ser pago imediatamente para validar sua mudança, caso você saia dessa tela sua mudança não estará validada",
             "switchDone": "Pronto! Sua modalidade foi atualizada.",
             "switchDowngraded": "Pronto! Você saiu do mosteiro. O estorno de R$ {{amount}} será combinado com a organização.",
             "switchMonasteryFull": "Não há mais vagas no mosteiro no momento.",
