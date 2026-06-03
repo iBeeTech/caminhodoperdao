@@ -560,7 +560,12 @@ const TshirtPurchaseSection: React.FC = () => {
       <Container>
         <TshirtCard>
           <Header>
-            <h2>{t("tshirt.title")}</h2>
+            <h2>
+              {t("tshirt.title")}{" "}
+              <span style={{ color: "#dc2626", fontSize: "0.7em", fontWeight: 600 }}>
+                {t("tshirt.titleNote")}
+              </span>
+            </h2>
             <p>{t("tshirt.description")}</p>
           </Header>
 
