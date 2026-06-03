@@ -73,6 +73,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   miniInput: { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #d1d5db", fontSize: "0.9rem", minWidth: 130 },
   count: { color: "#6b7280", fontSize: "0.85rem", margin: "0 0 0.6rem" },
+  cityBox: { fontSize: "0.82rem", color: "#374151" },
+  citySummary: { cursor: "pointer", fontWeight: 700, color: "#1f7a3d", fontSize: "0.85rem" },
+  cityList: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 },
+  cityItem: {
+    background: "#f3f4f6", borderRadius: 8, padding: "0.25rem 0.6rem", fontSize: "0.8rem",
+    color: "#374151", border: "1px solid #e5e7eb",
+  },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 12 },
   card: {
     border: "1px solid #e5e7eb", borderRadius: 12, padding: "0.9rem 1rem", background: "#fff",
@@ -147,7 +154,6 @@ const InscritosPage: React.FC = () => {
   const [fNome, setFNome] = React.useState("");
   const [fStatus, setFStatus] = React.useState("");
   const [fPernoite, setFPernoite] = React.useState("");
-  const [fCidade, setFCidade] = React.useState("");
   const [fMed, setFMed] = React.useState("");
   const [fRestr, setFRestr] = React.useState("");
   const [fAniversariante, setFAniversariante] = React.useState(false);
@@ -187,20 +193,16 @@ const InscritosPage: React.FC = () => {
 
   React.useEffect(() => {
     setPage(1);
-  }, [tab, fNome, fStatus, fPernoite, fCidade, fMed, fRestr, fAniversariante, cNome, cStatus]);
+  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fAniversariante, cNome, cStatus]);
 
-  // Aniversariante: aniversário (mês/dia) dentro de ±7 dias de hoje.
+  // Aniversariante: aniversário (mês/dia) dentro de ±7 dias da CAMINHADA (02/08).
   const birthdayWithinWeek = (dob: string | null): boolean => {
     const m = dob && /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
     if (!m) return false;
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const week = 7 * 24 * 60 * 60 * 1000;
-    const mo = parseInt(m[2], 10) - 1;
-    const da = parseInt(m[3], 10);
-    return [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].some(
-      (yy) => Math.abs(new Date(yy, mo, da).getTime() - start) <= week
-    );
+    const ref = new Date(2026, 7, 2).getTime(); // 02/08 (data da caminhada)
+    const bday = new Date(2026, parseInt(m[2], 10) - 1, parseInt(m[3], 10)).getTime();
+    return Math.abs(bday - ref) <= week;
   };
 
   const isPeregrino = (r: Registration) => r.is_staff === 0;
@@ -224,11 +226,24 @@ const InscritosPage: React.FC = () => {
   const medCount = regs.filter((r) => hasText(r.allergy_medication_details)).length;
   const restrCount = regs.filter((r) => hasText(r.dietary_restriction_details)).length;
 
+  // Quantidade de pessoas por cidade (agrupado sem diferenciar caixa), maior primeiro.
+  const cityCounts = React.useMemo(() => {
+    const map = new Map<string, { label: string; n: number }>();
+    for (const r of regs) {
+      const c = (r.city || "").trim();
+      if (!c) continue;
+      const key = c.toLowerCase();
+      const cur = map.get(key) || { label: c, n: 0 };
+      cur.n += 1;
+      map.set(key, cur);
+    }
+    return [...map.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
+  }, [regs]);
+
   const regsFiltered = regs
     .filter(
       (r) =>
         inc(r.name, fNome) &&
-        inc(r.city, fCidade) &&
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
         (!fStatus || r.status === fStatus) &&
@@ -354,11 +369,20 @@ const InscritosPage: React.FC = () => {
                   <option value="0">Não</option>
                 </select>
               </label>
-              <label style={s.field}>
-                Cidade
-                <input style={s.miniInput} placeholder="Filtrar cidade" value={fCidade} onChange={(e) => setFCidade(e.target.value)} />
-              </label>
             </div>
+
+            {cityCounts.length > 0 && (
+              <details style={s.cityBox}>
+                <summary style={s.citySummary}>🏙️ Pessoas por cidade ({cityCounts.length})</summary>
+                <div style={s.cityList}>
+                  {cityCounts.map((c) => (
+                    <span key={c.label} style={s.cityItem}>
+                      {formatName(c.label)}: <strong>{c.n}</strong>
+                    </span>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
 
           <p style={s.count}>{regsFiltered.length} inscrição(ões)</p>
