@@ -1372,6 +1372,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                       <div style={{ textAlign: "center", marginBottom: "1rem" }}>
                         <strong>{t("signup.status.switchPayTitle")}</strong>
                         {switchMsg && <p style={{ color: "#555", marginTop: "0.5rem" }}>{switchMsg}</p>}
+                        <p
+                          style={{
+                            color: "#dc2626",
+                            fontSize: "1.15rem",
+                            fontWeight: 700,
+                            marginTop: "0.5rem",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {t("signup.status.switchPayWarning")}
+                        </p>
                       </div>
                       <PixLabelContainer>
                         <PixLabel htmlFor="switch-pix-code">{t("signup.status.pixCopyLabel")}</PixLabel>
@@ -1403,18 +1414,6 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                           <QRCodeImage src={switchQr.image} alt={t("signup.status.qrCodeAlt")} />
                         </QRCodeContainer>
                       )}
-                      <p
-                        style={{
-                          color: "#dc2626",
-                          fontSize: "1.15rem",
-                          fontWeight: 700,
-                          textAlign: "center",
-                          marginTop: "1rem",
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {t("signup.status.switchPayWarning")}
-                      </p>
                     </PixBox>
                   )}
 
