@@ -309,11 +309,9 @@ const TshirtPurchaseSection: React.FC = () => {
     setCancelingId(orderId);
     try {
       await landingService.cancelTshirt(normalizedCpf, orderId);
-      // Recarrega os pedidos para refletir o cancelamento.
-      if (normalizedName) {
-        const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
-        if (result.exists) applyState(result);
-      }
+      // Recarrega os pedidos (apenas por CPF) para refletir o cancelamento.
+      const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName || undefined);
+      if (result.exists) applyState(result);
     } catch {
       showMessage(t("tshirt.orders.cancelError"), "warning");
     } finally {
@@ -326,13 +324,13 @@ const TshirtPurchaseSection: React.FC = () => {
 
     const normalizedCpf = canonicalizeCpf(cpf);
     const normalizedName = normalizeName(name);
-    if (!normalizedCpf || !normalizedName) return;
+    if (!normalizedCpf) return;
 
     let cancelled = false;
 
     const poll = async () => {
       try {
-        const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
+        const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName || undefined);
         if (cancelled || !result.exists) return;
 
         applyState(result);
@@ -505,10 +503,8 @@ const TshirtPurchaseSection: React.FC = () => {
     const normalizedCpf = canonicalizeCpf(cpf);
     const normalizedName = normalizeName(name);
 
+    // Consulta de pedidos exige apenas o CPF.
     const nextErrors: TshirtErrors = {};
-    if (!normalizedName) {
-      nextErrors.name = t("tshirt.errors.required");
-    }
     if (!normalizedCpf) {
       nextErrors.cpf = t("tshirt.errors.required");
     } else if (!isValidCpf(normalizedCpf)) {
@@ -524,7 +520,7 @@ const TshirtPurchaseSection: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
+      const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName || undefined);
 
       if (!result.exists) {
         clearResults();

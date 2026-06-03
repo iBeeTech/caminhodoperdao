@@ -61,8 +61,12 @@ export const landingService = {
     return httpClient.post<TshirtPurchaseResponse>("/api/tshirt", payload);
   },
 
-  async checkTshirtStatus(cpf: string, name: string): Promise<TshirtStatusResponse> {
-    const url = `/api/tshirt?cpf=${encodeURIComponent(cpf)}&name=${encodeURIComponent(name)}`;
+  async checkTshirtStatus(cpf: string, name?: string): Promise<TshirtStatusResponse> {
+    // A consulta de pedidos exige apenas o CPF; o nome é opcional.
+    let url = `/api/tshirt?cpf=${encodeURIComponent(cpf)}`;
+    if (name) {
+      url += `&name=${encodeURIComponent(name)}`;
+    }
     return httpClient.get<TshirtStatusResponse>(url);
   },
 };

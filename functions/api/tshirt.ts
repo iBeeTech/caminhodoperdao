@@ -549,9 +549,8 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
     return badRequest("cpf_required");
   }
 
-  if (!name) {
-    return badRequest("name_required");
-  }
+  // A consulta de pedidos exige apenas o CPF. O nome é opcional aqui (quando vier,
+  // ainda é validado abaixo para preservar o aviso de "CPF usado por outro nome").
 
   if (!isValidCpf(cpf)) {
     return badRequest("invalid_cpf");
@@ -573,7 +572,7 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
     return json(200, { exists: false, pricePerUnitCents });
   }
 
-  if (normalizeNameForComparison(latestPurchase.customer_name) !== normalizeNameForComparison(name)) {
+  if (name && normalizeNameForComparison(latestPurchase.customer_name) !== normalizeNameForComparison(name)) {
     return conflict("cpf_used_by_other_name", { linkedName: latestPurchase.customer_name });
   }
 
