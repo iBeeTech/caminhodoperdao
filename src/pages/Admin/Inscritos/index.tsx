@@ -36,53 +36,79 @@ const STATUS_STYLE: Record<string, React.CSSProperties> = {
 };
 
 const s: Record<string, React.CSSProperties> = {
-  page: { maxWidth: 1280, margin: "0 auto", padding: "1.5rem 1rem", fontFamily: "sans-serif" },
+  page: { maxWidth: 1200, margin: "0 auto", padding: "1rem", fontFamily: "sans-serif" },
   topbar: { display: "flex", alignItems: "center", gap: 12, marginBottom: "1rem", flexWrap: "wrap" },
   title: { fontSize: "1.4rem", margin: 0 },
   refresh: {
-    marginLeft: "auto", padding: "0.5rem 1.1rem", borderRadius: 8, border: "none",
+    marginLeft: "auto", padding: "0.55rem 1.1rem", borderRadius: 8, border: "none",
     background: "#1f7a3d", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem",
   },
-  totals: { display: "flex", gap: 12, marginBottom: "1.25rem", flexWrap: "wrap" },
+  totals: { display: "flex", gap: 10, marginBottom: "1rem", flexWrap: "wrap" },
   totalBox: {
-    flex: "1 1 160px", borderRadius: 12, padding: "1rem 1.25rem", border: "1px solid #bbf7d0",
+    flex: "1 1 150px", borderRadius: 12, padding: "0.8rem 1rem", border: "1px solid #bbf7d0",
     background: "#f0fdf4",
   },
-  totalNum: { fontSize: "1.8rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 },
-  totalLabel: { color: "#166534", fontWeight: 600, fontSize: "0.9rem" },
-  body: { display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" },
-  sidebar: { display: "flex", flexDirection: "column", gap: 8, minWidth: 150 },
-  sideItem: {
-    padding: "0.6rem 1rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
-    color: "#374151", fontWeight: 600, cursor: "pointer", textAlign: "left", fontSize: "0.95rem",
+  totalNum: { fontSize: "1.6rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 },
+  totalLabel: { color: "#166534", fontWeight: 600, fontSize: "0.85rem" },
+  tabs: { display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" },
+  tab: {
+    flex: "1 1 140px", padding: "0.7rem 1rem", borderRadius: 10, border: "1px solid #d1d5db",
+    background: "#fff", color: "#374151", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem",
   },
-  sideActive: { background: "#1f7a3d", color: "#fff", borderColor: "#1f7a3d" },
-  tableWrap: { flex: "1 1 700px", overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" },
-  th: { textAlign: "left", borderBottom: "2px solid #ddd", padding: "0.5rem", whiteSpace: "nowrap" },
-  td: { borderBottom: "1px solid #eee", padding: "0.5rem", verticalAlign: "middle" },
-  filterInput: {
-    width: "100%", boxSizing: "border-box", padding: "0.3rem 0.4rem", borderRadius: 6,
-    border: "1px solid #d1d5db", fontSize: "0.8rem",
+  tabActive: { background: "#1f7a3d", color: "#fff", borderColor: "#1f7a3d" },
+  filterBar: { display: "flex", flexDirection: "column", gap: 10, marginBottom: "1rem" },
+  search: {
+    width: "100%", boxSizing: "border-box", padding: "0.75rem 0.9rem", borderRadius: 10,
+    border: "1px solid #d1d5db", fontSize: "1rem",
   },
-  count: { color: "#6b7280", fontSize: "0.85rem", margin: "0 0 0.5rem" },
+  chipsRow: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" },
+  chip: {
+    padding: "0.55rem 0.9rem", borderRadius: 999, border: "1px solid #d1d5db", background: "#fff",
+    color: "#374151", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer",
+  },
+  chipActive: { background: "#1f7a3d", color: "#fff", borderColor: "#1f7a3d" },
+  field: { display: "inline-flex", flexDirection: "column", gap: 3, fontSize: "0.72rem", color: "#6b7280", fontWeight: 700 },
+  miniSelect: {
+    padding: "0.45rem 0.5rem", borderRadius: 8, border: "1px solid #d1d5db", fontSize: "0.9rem", background: "#fff",
+  },
+  miniInput: { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #d1d5db", fontSize: "0.9rem", minWidth: 130 },
+  count: { color: "#6b7280", fontSize: "0.85rem", margin: "0 0 0.6rem" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 12 },
+  card: {
+    border: "1px solid #e5e7eb", borderRadius: 12, padding: "0.9rem 1rem", background: "#fff",
+    display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+  },
+  cardName: { fontSize: "1.05rem", fontWeight: 700, color: "#111827", lineHeight: 1.25 },
+  cardRow: { fontSize: "0.88rem", color: "#374151" },
+  cardEmail: { fontSize: "0.8rem", color: "#6b7280", wordBreak: "break-all" },
+  alertMed: {
+    fontSize: "0.86rem", fontWeight: 700, color: "#b91c1c", background: "#fef2f2",
+    border: "1px solid #fecaca", borderRadius: 8, padding: "0.45rem 0.6rem",
+  },
+  alertRestr: {
+    fontSize: "0.86rem", fontWeight: 700, color: "#92400e", background: "#fffbeb",
+    border: "1px solid #fde68a", borderRadius: 8, padding: "0.45rem 0.6rem",
+  },
   empty: { color: "#777", padding: "1.5rem 0" },
-  pager: { display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", flexWrap: "wrap" },
+  pager: { display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", flexWrap: "wrap", justifyContent: "center" },
   pagerBtn: {
-    padding: "0.4rem 0.9rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
+    padding: "0.5rem 1rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
     color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem",
   },
 };
 
 const badge = (status: string): React.CSSProperties => ({
   display: "inline-block", padding: "0.15rem 0.6rem", borderRadius: 999, fontWeight: 600,
-  fontSize: "0.8rem", border: "1px solid", ...STATUS_STYLE[status],
+  fontSize: "0.78rem", border: "1px solid", ...STATUS_STYLE[status],
+});
+const tag = (color: string, bg: string, border: string): React.CSSProperties => ({
+  display: "inline-block", padding: "0.15rem 0.6rem", borderRadius: 999, fontWeight: 600,
+  fontSize: "0.78rem", border: `1px solid ${border}`, color, background: bg,
 });
 
 const inc = (v: string | null | undefined, q: string) =>
   (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
 
-// Filtro Sim/Não/Todos: "1" = tem detalhe preenchido, "0" = não tem, "" = todos.
 const hasText = (v: string | null | undefined) => (v ?? "").trim().length > 0;
 const matchYesNo = (v: string | null | undefined, f: string) =>
   !f || (f === "1" ? hasText(v) : !hasText(v));
@@ -119,17 +145,14 @@ const InscritosPage: React.FC = () => {
 
   // filtros inscrições
   const [fNome, setFNome] = React.useState("");
-  const [fTel, setFTel] = React.useState("");
-  const [fEmail, setFEmail] = React.useState("");
   const [fStatus, setFStatus] = React.useState("");
   const [fPernoite, setFPernoite] = React.useState("");
   const [fCidade, setFCidade] = React.useState("");
   const [fMed, setFMed] = React.useState("");
   const [fRestr, setFRestr] = React.useState("");
-  const [fAniversariante, setFAniversariante] = React.useState("");
+  const [fAniversariante, setFAniversariante] = React.useState(false);
   // filtros camisetas
   const [cNome, setCNome] = React.useState("");
-  const [cEmail, setCEmail] = React.useState("");
   const [cStatus, setCStatus] = React.useState("");
 
   const load = React.useCallback(() => {
@@ -162,10 +185,9 @@ const InscritosPage: React.FC = () => {
     load();
   }, [load]);
 
-  // Volta pra página 1 quando muda filtro ou aba.
   React.useEffect(() => {
     setPage(1);
-  }, [tab, fNome, fTel, fEmail, fStatus, fPernoite, fCidade, fMed, fRestr, fAniversariante, cNome, cEmail, cStatus]);
+  }, [tab, fNome, fStatus, fPernoite, fCidade, fMed, fRestr, fAniversariante, cNome, cStatus]);
 
   // Aniversariante: aniversário (mês/dia) dentro de ±7 dias de hoje.
   const birthdayWithinWeek = (dob: string | null): boolean => {
@@ -181,7 +203,6 @@ const InscritosPage: React.FC = () => {
     );
   };
 
-  // Quebra por status considera só peregrinos (is_staff = 0); staff é contado à parte.
   const isPeregrino = (r: Registration) => r.is_staff === 0;
   const paidTotal = regs.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
   const paidPernoite = regs.filter(
@@ -199,12 +220,14 @@ const InscritosPage: React.FC = () => {
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
   ];
 
+  const anivCount = regs.filter((r) => birthdayWithinWeek(r.date_of_birth)).length;
+  const medCount = regs.filter((r) => hasText(r.allergy_medication_details)).length;
+  const restrCount = regs.filter((r) => hasText(r.dietary_restriction_details)).length;
+
   const regsFiltered = regs
     .filter(
       (r) =>
         inc(r.name, fNome) &&
-        inc(r.phone, fTel) &&
-        inc(r.email, fEmail) &&
         inc(r.city, fCidade) &&
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
@@ -214,7 +237,7 @@ const InscritosPage: React.FC = () => {
     )
     .sort(byName);
   const tshirtsFiltered = tshirts
-    .filter((t) => inc(t.name, cNome) && inc(t.email, cEmail) && (!cStatus || t.status === cStatus))
+    .filter((t) => inc(t.name, cNome) && (!cStatus || t.status === cStatus))
     .sort(byName);
 
   const activeTotal = tab === "inscricoes" ? regsFiltered.length : tshirtsFiltered.length;
@@ -227,23 +250,13 @@ const InscritosPage: React.FC = () => {
   const Pager = () =>
     activeTotal > PAGE_SIZE ? (
       <div style={s.pager}>
-        <button
-          type="button"
-          style={{ ...s.pagerBtn, opacity: safePage <= 1 ? 0.5 : 1 }}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={safePage <= 1}
-        >
+        <button type="button" style={{ ...s.pagerBtn, opacity: safePage <= 1 ? 0.5 : 1 }} onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}>
           ← Anterior
         </button>
         <span style={{ fontSize: "0.85rem", color: "#374151" }}>
           Página {safePage} de {totalPages} · {activeTotal} no total
         </span>
-        <button
-          type="button"
-          style={{ ...s.pagerBtn, opacity: safePage >= totalPages ? 0.5 : 1 }}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={safePage >= totalPages}
-        >
+        <button type="button" style={{ ...s.pagerBtn, opacity: safePage >= totalPages ? 0.5 : 1 }} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}>
           Próxima →
         </button>
       </div>
@@ -280,153 +293,145 @@ const InscritosPage: React.FC = () => {
         ))}
       </div>
 
-      <div style={s.body}>
-        <div style={s.sidebar}>
-          <button
-            style={{ ...s.sideItem, ...(tab === "inscricoes" ? s.sideActive : {}) }}
-            onClick={() => setTab("inscricoes")}
-          >
-            Inscrições
-          </button>
-          <button
-            style={{ ...s.sideItem, ...(tab === "camisetas" ? s.sideActive : {}) }}
-            onClick={() => setTab("camisetas")}
-          >
-            Camisetas
-          </button>
-        </div>
-
-        <div style={s.tableWrap}>
-          {loading ? (
-            <p>Carregando…</p>
-          ) : tab === "inscricoes" ? (
-            <>
-              <p style={s.count}>{regsFiltered.length} inscrição(ões)</p>
-              <table style={s.table}>
-                <thead>
-                  <tr>
-                    <th style={s.th}>Nome</th>
-                    <th style={s.th}>Telefone</th>
-                    <th style={s.th}>E-mail</th>
-                    <th style={s.th}>Data de nascimento</th>
-                    <th style={s.th}>Cidade</th>
-                    <th style={s.th}>Status</th>
-                    <th style={s.th}>Pernoite</th>
-                    <th style={s.th}>Qual medicação</th>
-                    <th style={s.th}>Qual restrição alimentar</th>
-                  </tr>
-                  <tr>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fNome} onChange={(e) => setFNome(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fTel} onChange={(e) => setFTel(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fEmail} onChange={(e) => setFEmail(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={fAniversariante} onChange={(e) => setFAniversariante(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="1">🎂 Aniversariantes (±7 dias)</option>
-                      </select>
-                    </th>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fCidade} onChange={(e) => setFCidade(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="PAID">Pago</option>
-                        <option value="PENDING">Pendente</option>
-                        <option value="CANCELED">Cancelado</option>
-                      </select>
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={fPernoite} onChange={(e) => setFPernoite(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                      </select>
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={fMed} onChange={(e) => setFMed(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                      </select>
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={fRestr} onChange={(e) => setFRestr(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                      </select>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {regsPage.map((r, i) => (
-                    <tr key={i}>
-                      <td style={{ ...s.td, fontWeight: 700 }}>{formatName(r.name)}</td>
-                      <td style={s.td}>{r.phone || "—"}</td>
-                      <td style={s.td}>{r.email || "—"}</td>
-                      <td style={s.td}>{formatDob(r.date_of_birth)}</td>
-                      <td style={s.td}>{r.city || "—"}</td>
-                      <td style={s.td}><span style={badge(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</span></td>
-                      <td style={s.td}>{r.sleep_at_monastery === 1 ? "Sim" : "Não"}</td>
-                      <td style={s.td}>{(r.allergy_medication_details || "").trim() || "—"}</td>
-                      <td style={s.td}>{(r.dietary_restriction_details || "").trim() || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {regsFiltered.length === 0 && <p style={s.empty}>Nenhuma inscrição encontrada.</p>}
-              <Pager />
-            </>
-          ) : (
-            <>
-              <p style={s.count}>{tshirtsFiltered.length} compra(s)</p>
-              <table style={s.table}>
-                <thead>
-                  <tr>
-                    <th style={s.th}>Nome</th>
-                    <th style={s.th}>E-mail</th>
-                    <th style={s.th}>Status</th>
-                  </tr>
-                  <tr>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={cNome} onChange={(e) => setCNome(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={cEmail} onChange={(e) => setCEmail(e.target.value)} />
-                    </th>
-                    <th style={s.th}>
-                      <select style={s.filterInput} value={cStatus} onChange={(e) => setCStatus(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="PAID">Pago</option>
-                        <option value="PENDING">Pendente</option>
-                        <option value="CANCELED">Cancelado</option>
-                      </select>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tshirtsPage.map((t, i) => (
-                    <tr key={i}>
-                      <td style={{ ...s.td, fontWeight: 700 }}>{formatName(t.name)}</td>
-                      <td style={s.td}>{t.email || "—"}</td>
-                      <td style={s.td}><span style={badge(t.status)}>{STATUS_LABEL[t.status] ?? t.status}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {tshirtsFiltered.length === 0 && <p style={s.empty}>Nenhuma compra encontrada.</p>}
-              <Pager />
-            </>
-          )}
-        </div>
+      <div style={s.tabs}>
+        <button style={{ ...s.tab, ...(tab === "inscricoes" ? s.tabActive : {}) }} onClick={() => setTab("inscricoes")}>
+          Inscrições
+        </button>
+        <button style={{ ...s.tab, ...(tab === "camisetas" ? s.tabActive : {}) }} onClick={() => setTab("camisetas")}>
+          Camisetas
+        </button>
       </div>
+
+      {loading ? (
+        <p>Carregando…</p>
+      ) : tab === "inscricoes" ? (
+        <>
+          <div style={s.filterBar}>
+            <input
+              style={s.search}
+              placeholder="🔍 Buscar por nome…"
+              value={fNome}
+              onChange={(e) => setFNome(e.target.value)}
+            />
+            <div style={s.chipsRow}>
+              <button
+                type="button"
+                style={fAniversariante ? { ...s.chip, ...s.chipActive } : s.chip}
+                onClick={() => setFAniversariante((v) => !v)}
+              >
+                🎂 Aniversariantes ({anivCount})
+              </button>
+              <label style={s.field}>
+                Status
+                <select style={s.miniSelect} value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="PAID">Pago</option>
+                  <option value="PENDING">Pendente</option>
+                  <option value="CANCELED">Cancelado</option>
+                </select>
+              </label>
+              <label style={s.field}>
+                Pernoite
+                <select style={s.miniSelect} value={fPernoite} onChange={(e) => setFPernoite(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="1">Sim</option>
+                  <option value="0">Não</option>
+                </select>
+              </label>
+              <label style={s.field}>
+                💊 Medicação ({medCount})
+                <select style={s.miniSelect} value={fMed} onChange={(e) => setFMed(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="1">Sim</option>
+                  <option value="0">Não</option>
+                </select>
+              </label>
+              <label style={s.field}>
+                🍽️ Restrição ({restrCount})
+                <select style={s.miniSelect} value={fRestr} onChange={(e) => setFRestr(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="1">Sim</option>
+                  <option value="0">Não</option>
+                </select>
+              </label>
+              <label style={s.field}>
+                Cidade
+                <input style={s.miniInput} placeholder="Filtrar cidade" value={fCidade} onChange={(e) => setFCidade(e.target.value)} />
+              </label>
+            </div>
+          </div>
+
+          <p style={s.count}>{regsFiltered.length} inscrição(ões)</p>
+          <div style={s.grid}>
+            {regsPage.map((r, i) => {
+              const aniv = birthdayWithinWeek(r.date_of_birth);
+              const med = (r.allergy_medication_details || "").trim();
+              const restr = (r.dietary_restriction_details || "").trim();
+              return (
+                <div key={i} style={s.card}>
+                  <div style={s.cardName}>{formatName(r.name)}</div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <span style={badge(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</span>
+                    {r.sleep_at_monastery === 1 ? (
+                      <span style={tag("#b45309", "#fffbeb", "#fde68a")}>🏠 Pernoite</span>
+                    ) : (
+                      <span style={tag("#374151", "#f3f4f6", "#e5e7eb")}>🚶 Sem pernoite</span>
+                    )}
+                    {r.is_staff === 1 && <span style={tag("#1f2937", "#f3f4f6", "#d1d5db")}>Staff</span>}
+                    {aniv && <span style={tag("#9d174d", "#fdf2f8", "#fbcfe8")}>🎂 Aniversariante</span>}
+                  </div>
+                  <div style={s.cardRow}>📞 {r.phone || "—"}</div>
+                  <div style={s.cardRow}>
+                    📍 {r.city || "—"} &nbsp;·&nbsp; 🎂 {formatDob(r.date_of_birth)}
+                  </div>
+                  {med && <div style={s.alertMed}>💊 Medicação: {med}</div>}
+                  {restr && <div style={s.alertRestr}>🍽️ Restrição: {restr}</div>}
+                  <div style={s.cardEmail}>{r.email || "—"}</div>
+                </div>
+              );
+            })}
+          </div>
+          {regsFiltered.length === 0 && <p style={s.empty}>Nenhuma inscrição encontrada.</p>}
+          <Pager />
+        </>
+      ) : (
+        <>
+          <div style={s.filterBar}>
+            <input
+              style={s.search}
+              placeholder="🔍 Buscar por nome…"
+              value={cNome}
+              onChange={(e) => setCNome(e.target.value)}
+            />
+            <div style={s.chipsRow}>
+              <label style={s.field}>
+                Status
+                <select style={s.miniSelect} value={cStatus} onChange={(e) => setCStatus(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="PAID">Pago</option>
+                  <option value="PENDING">Pendente</option>
+                  <option value="CANCELED">Cancelado</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <p style={s.count}>{tshirtsFiltered.length} compra(s)</p>
+          <div style={s.grid}>
+            {tshirtsPage.map((t, i) => (
+              <div key={i} style={s.card}>
+                <div style={s.cardName}>{formatName(t.name)}</div>
+                <div>
+                  <span style={badge(t.status)}>{STATUS_LABEL[t.status] ?? t.status}</span>
+                </div>
+                <div style={s.cardEmail}>{t.email || "—"}</div>
+              </div>
+            ))}
+          </div>
+          {tshirtsFiltered.length === 0 && <p style={s.empty}>Nenhuma compra encontrada.</p>}
+          <Pager />
+        </>
+      )}
     </div>
   );
 };
