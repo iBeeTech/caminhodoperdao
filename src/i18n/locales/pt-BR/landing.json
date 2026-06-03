@@ -217,7 +217,10 @@
             "cancelPurchase": "Cancelar compra",
             "cancelConfirm": "Tem certeza que deseja cancelar esta compra?",
             "canceling": "Cancelando…",
-            "cancelError": "Não foi possível cancelar agora. Tente novamente."
+            "cancelError": "Não foi possível cancelar agora. Tente novamente.",
+            "refundNote": "Você cancelou um pedido já pago. Para solicitar o estorno, fale com a organização pelo WhatsApp.",
+            "refundWhatsapp": "Falar no WhatsApp para estorno",
+            "refundWhatsappMessage": "Olá! Cancelei a compra da minha camiseta do Caminho do Perdão e gostaria de solicitar o estorno do pagamento."
         }
     },
     "signup": {

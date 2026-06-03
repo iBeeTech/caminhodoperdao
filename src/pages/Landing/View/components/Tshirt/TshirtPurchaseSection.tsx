@@ -24,6 +24,7 @@ import { canonicalizeCpf, isValidCpf } from "../../../../../utils/validators/cpf
 import { isEmailValid } from "../../../../../utils/validators/email";
 import camisetaFrente from "../../../../../assets/camiseta-frente.png";
 import camisetaTras from "../../../../../assets/camiseta-tras.png";
+import whatsappIcon from "../../../../../assets/whatsapp.png";
 import {
   Actions,
   Chevron,
@@ -116,6 +117,9 @@ interface UnifiedOrder {
   qrCodeImageUrl?: string | null;
 }
 
+// Mesmo número usado no estorno da inscrição (SignupSection).
+const REFUND_WA_NUMBER = "5534992896160";
+
 const TshirtPurchaseSection: React.FC = () => {
   const { t } = useTranslation("landing");
 
@@ -138,6 +142,8 @@ const TshirtPurchaseSection: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  // Pedidos pagos que foram cancelados nesta sessão e geraram estorno (mostra botão de WhatsApp).
+  const [refundOrderIds, setRefundOrderIds] = useState<Record<string, boolean>>({});
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -308,7 +314,11 @@ const TshirtPurchaseSection: React.FC = () => {
     }
     setCancelingId(orderId);
     try {
-      await landingService.cancelTshirt(normalizedCpf, orderId);
+      const cancelResult = await landingService.cancelTshirt(normalizedCpf, orderId);
+      // Pedido pago gera estorno -> mostra o botão de WhatsApp nesse pedido.
+      if (cancelResult.refund) {
+        setRefundOrderIds((prev) => ({ ...prev, [orderId]: true }));
+      }
       // Recarrega os pedidos (apenas por CPF) para refletir o cancelamento.
       const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName || undefined);
       if (result.exists) applyState(result);
@@ -888,9 +898,38 @@ const TshirtPurchaseSection: React.FC = () => {
                             </OrderNote>
                           )}
 
-                          {order.status === "CANCELED" && (
-                            <OrderNote>{t("tshirt.orders.canceledNote")}</OrderNote>
-                          )}
+                          {order.status === "CANCELED" &&
+                            (refundOrderIds[order.id] ? (
+                              <>
+                                <OrderNote>{t("tshirt.orders.refundNote")}</OrderNote>
+                                <div style={{ marginTop: "0.75rem", display: "flex", justifyContent: "center" }}>
+                                  <a
+                                    href={`https://wa.me/${REFUND_WA_NUMBER}?text=${encodeURIComponent(
+                                      t("tshirt.orders.refundWhatsappMessage")
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "0.5rem",
+                                      background: "#25d366",
+                                      color: "#fff",
+                                      borderRadius: "10px",
+                                      padding: "12px 16px",
+                                      fontWeight: 600,
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    <img src={whatsappIcon} alt="" style={{ width: "1.25rem", height: "1.25rem" }} />
+                                    {t("tshirt.orders.refundWhatsapp")}
+                                  </a>
+                                </div>
+                              </>
+                            ) : (
+                              <OrderNote>{t("tshirt.orders.canceledNote")}</OrderNote>
+                            ))}
 
                           {order.status !== "CANCELED" && (
                             <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
