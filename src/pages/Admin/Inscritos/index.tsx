@@ -82,6 +82,11 @@ const badge = (status: string): React.CSSProperties => ({
 const inc = (v: string | null | undefined, q: string) =>
   (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
 
+// Filtro Sim/Não/Todos: "1" = tem detalhe preenchido, "0" = não tem, "" = todos.
+const hasText = (v: string | null | undefined) => (v ?? "").trim().length > 0;
+const matchYesNo = (v: string | null | undefined, f: string) =>
+  !f || (f === "1" ? hasText(v) : !hasText(v));
+
 // Ordenação que ignora acento e caixa (ex.: "Élida" entra junto do E).
 const byName = (a: { name: string }, b: { name: string }) =>
   (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" });
@@ -201,8 +206,8 @@ const InscritosPage: React.FC = () => {
         inc(r.phone, fTel) &&
         inc(r.email, fEmail) &&
         inc(r.city, fCidade) &&
-        inc(r.allergy_medication_details, fMed) &&
-        inc(r.dietary_restriction_details, fRestr) &&
+        matchYesNo(r.allergy_medication_details, fMed) &&
+        matchYesNo(r.dietary_restriction_details, fRestr) &&
         (!fStatus || r.status === fStatus) &&
         (!fPernoite || String(r.sleep_at_monastery) === fPernoite) &&
         (!fAniversariante || birthdayWithinWeek(r.date_of_birth))
@@ -345,10 +350,18 @@ const InscritosPage: React.FC = () => {
                       </select>
                     </th>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fMed} onChange={(e) => setFMed(e.target.value)} />
+                      <select style={s.filterInput} value={fMed} onChange={(e) => setFMed(e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="1">Sim</option>
+                        <option value="0">Não</option>
+                      </select>
                     </th>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar" value={fRestr} onChange={(e) => setFRestr(e.target.value)} />
+                      <select style={s.filterInput} value={fRestr} onChange={(e) => setFRestr(e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="1">Sim</option>
+                        <option value="0">Não</option>
+                      </select>
                     </th>
                   </tr>
                 </thead>
