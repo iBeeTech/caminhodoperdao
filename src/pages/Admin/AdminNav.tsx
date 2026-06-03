@@ -42,6 +42,12 @@ const AdminNav: React.FC = () => {
       >
         Estornos
       </Link>
+      <Link
+        to="/admin/inscritos"
+        style={pathname.startsWith("/admin/inscritos") ? activeItem : baseItem}
+      >
+        Inscritos
+      </Link>
     </nav>
   );
 };
