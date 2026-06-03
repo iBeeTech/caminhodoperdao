@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 
 const styles: Record<string, React.CSSProperties> = {
   page: { maxWidth: 760, margin: "0 auto", padding: "2rem 1rem", fontFamily: "sans-serif" },
@@ -19,10 +20,12 @@ const styles: Record<string, React.CSSProperties> = {
 
 const TUTORIAIS = [
   {
+    tipo: "camiseta",
     titulo: "Cancelar compra da camiseta",
     gif: "/tutoriais/cancelar-camiseta.gif",
   },
   {
+    tipo: "inscricao",
     titulo: "Cancelar inscrição",
     gif: "/tutoriais/cancelar-inscricao.gif",
   },
@@ -30,6 +33,9 @@ const TUTORIAIS = [
 
 const TutoriaisPage: React.FC = () => {
   const [copied, setCopied] = React.useState<string | null>(null);
+  const [params] = useSearchParams();
+  const tipo = params.get("tipo");
+  const lista = TUTORIAIS.filter((t) => !tipo || t.tipo === tipo);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   const copy = (url: string) => {
@@ -47,7 +53,7 @@ const TutoriaisPage: React.FC = () => {
         Veja o passo a passo de como cancelar sua compra de camiseta ou sua inscrição.
       </p>
 
-      {TUTORIAIS.map((t) => {
+      {lista.map((t) => {
         const fullUrl = `${origin}${t.gif}`;
         return (
           <div key={t.gif} style={styles.card}>
