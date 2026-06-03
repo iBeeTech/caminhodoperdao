@@ -27,18 +27,25 @@ const activeItem: React.CSSProperties = {
   borderColor: "#1f7a3d",
 };
 
-// Navegação do /admin: alterna entre as planilhas (/admin) e os estornos (/admin/estorno).
+// Navegação do /admin: planilhas, estornos e tutoriais de cancelamento.
 const AdminNav: React.FC = () => {
   const { pathname } = useLocation();
-  const isEstorno = pathname.startsWith("/admin/estorno");
+  const items = [
+    { to: "/admin", label: "Planilhas", active: pathname === "/admin" },
+    { to: "/admin/estorno", label: "Estornos", active: pathname.startsWith("/admin/estorno") },
+    {
+      to: "/admin/tutoriais",
+      label: "Tutoriais de Cancelamento",
+      active: pathname.startsWith("/admin/tutoriais"),
+    },
+  ];
   return (
     <nav style={navStyle} aria-label="Navegação do admin">
-      <Link to="/admin" style={isEstorno ? baseItem : activeItem}>
-        Planilhas
-      </Link>
-      <Link to="/admin/estorno" style={isEstorno ? activeItem : baseItem}>
-        Estornos
-      </Link>
+      {items.map((it) => (
+        <Link key={it.to} to={it.to} style={it.active ? activeItem : baseItem}>
+          {it.label}
+        </Link>
+      ))}
     </nav>
   );
 };
