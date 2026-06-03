@@ -26,7 +26,6 @@ import {
   PixTextarea,
   QRCodeContainer,
   QRCodeImage,
-  SignupBullets,
   SignupCard,
   ConfirmationModalActions,
   ConfirmationModalClose,
@@ -448,11 +447,17 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </li>
               </ul>
             </Callout>
-            <SignupBullets>
-              {(t("signup.bullets", { returnObjects: true }) as string[]).map((bullet, index) => (
-                <li key={index}>{bullet}</li>
-              ))}
-            </SignupBullets>
+            <p
+              style={{
+                color: "#dc2626",
+                fontWeight: 700,
+                fontSize: "1.05rem",
+                lineHeight: 1.45,
+                marginTop: "1rem",
+              }}
+            >
+              {t("signup.vagaWarning")}
+            </p>
           </SignupHeader>
 
           <EnrollmentCallout />

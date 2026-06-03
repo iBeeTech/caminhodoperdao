@@ -232,6 +232,7 @@
             "Se você já se inscreveu, verifique o status. Se ainda não se inscreveu, preencha os dados para gerar seu PIX.",
             "Se você já se inscreveu, consulte o status de sua inscrição usando exatamente o mesmo e-mail."
         ],
+        "vagaWarning": "Você só garantirá sua vaga efetuando o pagamento. Inscrições pendentes não seguram sua vaga, caso atinjamos 500 vagas (sendo 80 liberadas para pernoite), as inscrições serão paralizadas",
         "callouts": {
             "availabilityError": "Algo de errado aconteceu, volte mais tarde para realizar sua inscrição!",
             "full": "As inscrições estão esgotadas no momento. Se alguém desistir, uma vaga pode ser reaberta — volte mais tarde.",
