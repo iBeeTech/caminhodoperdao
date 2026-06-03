@@ -137,6 +137,7 @@ const TshirtPurchaseSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<{ src: string; alt: string } | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -295,6 +296,29 @@ const TshirtPurchaseSection: React.FC = () => {
   const showMessage = (text: string, variant: CalloutVariant = "warning") => {
     setMessage(text);
     setMessageVariant(variant);
+  };
+
+  // Cancela UMA compra (pendente ou paga). Paga gera estorno no /admin/estorno.
+  const handleCancelPurchase = async (orderId: string) => {
+    const normalizedCpf = canonicalizeCpf(cpf);
+    const normalizedName = normalizeName(name);
+    if (!normalizedCpf) return;
+    if (typeof window !== "undefined" && !window.confirm(t("tshirt.orders.cancelConfirm"))) {
+      return;
+    }
+    setCancelingId(orderId);
+    try {
+      await landingService.cancelTshirt(normalizedCpf, orderId);
+      // Recarrega os pedidos para refletir o cancelamento.
+      if (normalizedName) {
+        const result = await landingService.checkTshirtStatus(normalizedCpf, normalizedName);
+        if (result.exists) applyState(result);
+      }
+    } catch {
+      showMessage(t("tshirt.orders.cancelError"), "warning");
+    } finally {
+      setCancelingId(null);
+    }
   };
 
   React.useEffect(() => {
@@ -853,6 +877,31 @@ const TshirtPurchaseSection: React.FC = () => {
 
                           {order.status === "CANCELED" && (
                             <OrderNote>{t("tshirt.orders.canceledNote")}</OrderNote>
+                          )}
+
+                          {order.status !== "CANCELED" && (
+                            <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
+                              <button
+                                type="button"
+                                onClick={() => handleCancelPurchase(order.id)}
+                                disabled={cancelingId === order.id}
+                                style={{
+                                  cursor: cancelingId === order.id ? "default" : "pointer",
+                                  color: "#b91c1c",
+                                  background: "none",
+                                  border: "1px solid #fecaca",
+                                  borderRadius: 8,
+                                  padding: "0.45rem 1rem",
+                                  fontSize: "0.9rem",
+                                  fontWeight: 600,
+                                  font: "inherit",
+                                }}
+                              >
+                                {cancelingId === order.id
+                                  ? t("tshirt.orders.canceling")
+                                  : t("tshirt.orders.cancelPurchase")}
+                              </button>
+                            </div>
                           )}
                         </OrderBody>
                       )}

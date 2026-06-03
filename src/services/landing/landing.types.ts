@@ -62,6 +62,22 @@ export interface RegistrationResponse {
   message?: string;
 }
 
+// Resposta da troca geral -> pernoite.
+// status: "PENDING" (precisa pagar; kind="full" para pendente ou "difference" para já pago),
+//         "UPGRADED" (promovido na hora, sem cobrança), "ALREADY_MONASTERY" (nada a fazer).
+export interface MonasteryUpgradeResponse {
+  status?: "PENDING" | "UPGRADED" | "DOWNGRADED" | "ALREADY_MONASTERY" | "ALREADY_GENERAL";
+  needsPayment?: boolean;
+  kind?: "full" | "difference";
+  amount_cents?: number;
+  refund_cents?: number;
+  payment_ref?: string | null;
+  qrCodeText?: string | null;
+  qrCodeImageUrl?: string | null;
+  expires_at?: string | null;
+  error?: string;
+}
+
 export interface TshirtSizes {
   P: number;
   M: number;

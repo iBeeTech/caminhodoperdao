@@ -211,7 +211,11 @@
             "pendingNote": "Finalize o pagamento do PIX abaixo para confirmar este pedido.",
             "paidNote": "Pagamento confirmado. Pedido concluído!",
             "paidNoteDated": "Pagamento confirmado em {{date}}. Pedido concluído!",
-            "canceledNote": "O PIX deste pedido expirou e ele foi cancelado. Gere um novo pedido para concluir a compra."
+            "canceledNote": "O PIX deste pedido expirou e ele foi cancelado. Gere um novo pedido para concluir a compra.",
+            "cancelPurchase": "Cancelar compra",
+            "cancelConfirm": "Tem certeza que deseja cancelar esta compra?",
+            "canceling": "Cancelando…",
+            "cancelError": "Não foi possível cancelar agora. Tente novamente."
         }
     },
     "signup": {
@@ -333,7 +337,17 @@
             "waitingPayment": "Para finaliza-la realize o pagamento do PIX, o qual irá se expirar em 24h.<br /><br />Seu pagamento pode levar um tempo para ser processado, mas fique tranquilo que você receberá um e-mail confirmando seu pagamento.<br /><br />Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento.",
             "reopen": "Refazer inscrição",
             "newRegistration": "Fazer nova inscrição",
-            "cancelRegistration": "Cancelar inscrição"
+            "cancelRegistration": "Cancelar inscrição",
+            "switchToMonastery": "Mudar para pernoite (dormir no mosteiro)",
+            "switchToGeneral": "Mudar para geral (sem pernoite)",
+            "switchPayTitle": "Pague para confirmar a troca",
+            "switchPayFull": "Gere o pagamento de R$ {{amount}} no PIX abaixo. Após pagar, é só aguardar a confirmação nesta tela.",
+            "switchPayDiff": "Pague a diferença de R$ {{amount}} no PIX abaixo. Após pagar, é só aguardar a confirmação nesta tela.",
+            "switchDone": "Pronto! Sua modalidade foi atualizada.",
+            "switchDowngraded": "Pronto! Você saiu do mosteiro. O estorno de R$ {{amount}} será combinado com a organização.",
+            "switchMonasteryFull": "Não há mais vagas no mosteiro no momento.",
+            "switchError": "Não foi possível trocar agora. Tente novamente.",
+            "switchProcessing": "Processando…"
         },
         "errors": {
             "required": "Obrigatório",

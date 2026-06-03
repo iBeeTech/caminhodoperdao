@@ -106,7 +106,7 @@
             },
             "tshirtCancel": {
                 "title": "Cancelar camiseta?",
-                "desc": "Fale com a organização pelo WhatsApp."
+                "desc": "Clique em \"Visualizar pedidos\" e clique no botão \"Cancelar compra\" da compra específica que quer cancelar."
             },
             "registrationCancel": {
                 "title": "Cancelar inscrição?",

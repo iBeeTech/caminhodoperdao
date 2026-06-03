@@ -83,6 +83,8 @@ interface LandingViewProps {
   registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
   onCancelRegistration: () => Promise<void>;
+  registrationCpf: string | null;
+  sleepAtMonastery: number | null;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
   onCpfChange?: () => void;
   onPhoneChangeError?: () => void;
@@ -125,6 +127,8 @@ const LandingView: React.FC<LandingViewProps> = ({
   registeredAsStaff,
   onViewMyRegistration,
   onCancelRegistration,
+  registrationCpf,
+  sleepAtMonastery,
   getNextWhatsappUrl,
   onCpfChange,
   onPhoneChangeError,
@@ -200,6 +204,8 @@ const LandingView: React.FC<LandingViewProps> = ({
             registeredAsStaff={registeredAsStaff}
             onViewMyRegistration={onViewMyRegistration}
             onCancelRegistration={onCancelRegistration}
+            registrationCpf={registrationCpf}
+            sleepAtMonastery={sleepAtMonastery}
             getNextWhatsappUrl={getNextWhatsappUrl}
             onCpfChange={onCpfChange}
             onPhoneChangeError={onPhoneChangeError}

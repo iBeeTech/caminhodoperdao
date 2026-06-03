@@ -1,5 +1,6 @@
-import React, { ChangeEvent, FormEvent, RefObject, useState } from "react";
+import React, { ChangeEvent, FormEvent, RefObject, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { landingService } from "../../../../../services/landing/landing.service";
 import { AvailabilityState, LandingPhase, LandingTone } from "../../../Model";
 import { Callout, FormField, Input, Select } from "../../../../../components";
 import { ErrorText } from "../../../../../components/molecules/FormField/FormField.styles";
@@ -124,6 +125,10 @@ interface SignupSectionProps {
   registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
   onCancelRegistration: () => Promise<void>;
+  /** CPF (dígitos) da inscrição consultada — usado na troca geral↔pernoite. */
+  registrationCpf: string | null;
+  /** Modalidade atual da inscrição consultada: 1 = pernoite, 0 = geral. */
+  sleepAtMonastery: number | null;
   getNextWhatsappUrl: () => Promise<string>;
   /** Limpa o erro de CPF ao editar o campo (check e registro) */
   onCpfChange?: () => void;
@@ -167,6 +172,8 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   registeredAsStaff,
   onViewMyRegistration,
   onCancelRegistration,
+  registrationCpf,
+  sleepAtMonastery,
   onCpfChange,
   onPhoneChangeError,
   onTermsChange,
@@ -208,6 +215,106 @@ const SignupSection: React.FC<SignupSectionProps> = ({
       setIsCanceling(false);
     }
   };
+
+  // ---- Troca geral <-> pernoite (self-service) ----
+  const [localSleep, setLocalSleep] = useState<number | null>(sleepAtMonastery);
+  useEffect(() => {
+    setLocalSleep(sleepAtMonastery);
+  }, [sleepAtMonastery]);
+
+  type SwitchPhase = "idle" | "processing" | "paying" | "done" | "error";
+  const [switchPhase, setSwitchPhase] = useState<SwitchPhase>("idle");
+  const [switchMsg, setSwitchMsg] = useState<string | null>(null);
+  const [switchQr, setSwitchQr] = useState<{
+    text: string | null;
+    image: string | null;
+    target: "monastery" | "general";
+  } | null>(null);
+  const [switchCopied, setSwitchCopied] = useState(false);
+
+  const formatBRLFromCents = (cents: number) =>
+    (Math.max(0, cents) / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const handleSwitchLodging = async (target: "monastery" | "general") => {
+    if (!registrationCpf) return;
+    setSwitchPhase("processing");
+    setSwitchMsg(null);
+    setSwitchQr(null);
+    try {
+      const res = await landingService.changeLodging(registrationCpf, target);
+      if (res.status === "PENDING" && res.needsPayment) {
+        setSwitchQr({ text: res.qrCodeText ?? null, image: res.qrCodeImageUrl ?? null, target });
+        const amount = formatBRLFromCents(res.amount_cents ?? 0);
+        setSwitchMsg(
+          res.kind === "difference"
+            ? t("signup.status.switchPayDiff", { amount })
+            : t("signup.status.switchPayFull", { amount })
+        );
+        setSwitchPhase("paying");
+        return;
+      }
+      if (res.status === "DOWNGRADED") {
+        setLocalSleep(0);
+        setSwitchMsg(
+          t("signup.status.switchDowngraded", { amount: formatBRLFromCents(res.refund_cents ?? 0) })
+        );
+        setSwitchPhase("done");
+        return;
+      }
+      if (res.status === "UPGRADED" || res.status === "ALREADY_MONASTERY") {
+        setLocalSleep(1);
+        setSwitchMsg(t("signup.status.switchDone"));
+        setSwitchPhase("done");
+        return;
+      }
+      if (res.status === "ALREADY_GENERAL") {
+        setLocalSleep(0);
+        setSwitchMsg(t("signup.status.switchDone"));
+        setSwitchPhase("done");
+        return;
+      }
+      setSwitchPhase("error");
+      setSwitchMsg(t("signup.status.switchError"));
+    } catch (err: any) {
+      const status = err?.status ?? err?.response?.status;
+      const body = err?.body ?? err?.data ?? err?.response?.body;
+      setSwitchMsg(
+        status === 409 && body?.error === "monastery_full"
+          ? t("signup.status.switchMonasteryFull")
+          : t("signup.status.switchError")
+      );
+      setSwitchPhase("error");
+    }
+  };
+
+  // Confirma a troca quando o pagamento (diferença ou valor cheio) é compensado.
+  useEffect(() => {
+    if (switchPhase !== "paying" || !registrationCpf || !switchQr) return;
+    let cancelled = false;
+    const targetFlag = switchQr.target === "monastery" ? 1 : 0;
+    const poll = async () => {
+      try {
+        const r = await landingService.checkStatus(registrationCpf);
+        if (cancelled) return;
+        if (r?.status === "PAID" && r.sleep_at_monastery === targetFlag) {
+          setLocalSleep(targetFlag);
+          setSwitchMsg(t("signup.status.switchDone"));
+          setSwitchPhase("done");
+        }
+      } catch {
+        /* mantém aguardando; usuário pode recarregar */
+      }
+    };
+    poll();
+    const id = window.setInterval(poll, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [switchPhase, registrationCpf, switchQr, t]);
 
   const statusRole = statusTone === "error" ? "alert" : "status";
   const statusLive = statusTone === "error" ? "assertive" : "polite";
@@ -1188,8 +1295,130 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </>
               )}
 
-              {currentStatus === "PAID" && (
-                <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
+              {(currentStatus === "PAID" || currentStatus === "PENDING") && (
+                <div
+                  style={{
+                    marginTop: "1.25rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "1rem",
+                  }}
+                >
+                  {/* Troca geral <-> pernoite (self-service) */}
+                  {switchPhase === "idle" && localSleep !== null && (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchLodging(localSleep === 1 ? "general" : "monastery")}
+                      style={{
+                        cursor: "pointer",
+                        color: "#2563eb",
+                        textDecoration: "underline",
+                        fontSize: "0.95rem",
+                        fontWeight: 500,
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        font: "inherit",
+                      }}
+                    >
+                      {localSleep === 1
+                        ? t("signup.status.switchToGeneral")
+                        : t("signup.status.switchToMonastery")}
+                    </button>
+                  )}
+
+                  {switchPhase === "processing" && (
+                    <div style={{ color: "#555" }}>{t("signup.status.switchProcessing")}</div>
+                  )}
+
+                  {switchPhase === "paying" && switchQr && (
+                    <PixBox>
+                      <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+                        <strong>{t("signup.status.switchPayTitle")}</strong>
+                        {switchMsg && <p style={{ color: "#555", marginTop: "0.5rem" }}>{switchMsg}</p>}
+                      </div>
+                      <PixLabelContainer>
+                        <PixLabel htmlFor="switch-pix-code">{t("signup.status.pixCopyLabel")}</PixLabel>
+                        <CopyButton
+                          type="button"
+                          onClick={() => {
+                            if (switchQr.text && navigator.clipboard) {
+                              navigator.clipboard.writeText(switchQr.text);
+                              setSwitchCopied(true);
+                              window.setTimeout(() => setSwitchCopied(false), 2000);
+                            }
+                          }}
+                        >
+                          <span>{switchCopied ? "✓" : "📋"}</span>
+                          <span>
+                            {switchCopied
+                              ? t("signup.status.copyCopied")
+                              : t("signup.status.copyAction")}
+                          </span>
+                        </CopyButton>
+                      </PixLabelContainer>
+                      <PixTextarea
+                        id="switch-pix-code"
+                        readOnly
+                        value={switchQr.text ?? (t("signup.status.pixPendingPlaceholder") as string)}
+                      />
+                      {switchQr.image && (
+                        <QRCodeContainer>
+                          <QRCodeImage src={switchQr.image} alt={t("signup.status.qrCodeAlt")} />
+                        </QRCodeContainer>
+                      )}
+                    </PixBox>
+                  )}
+
+                  {switchPhase === "done" && switchMsg && (
+                    <div
+                      style={{
+                        color: "#166534",
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: 8,
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      {switchMsg}
+                    </div>
+                  )}
+
+                  {switchPhase === "error" && (
+                    <div
+                      style={{
+                        color: "#991b1b",
+                        background: "#fef2f2",
+                        border: "1px solid #fecdd3",
+                        borderRadius: 8,
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      {switchMsg}{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSwitchPhase("idle");
+                          setSwitchMsg(null);
+                        }}
+                        style={{
+                          marginLeft: 6,
+                          textDecoration: "underline",
+                          background: "none",
+                          border: "none",
+                          color: "#991b1b",
+                          cursor: "pointer",
+                          font: "inherit",
+                        }}
+                      >
+                        Tentar de novo
+                      </button>
+                    </div>
+                  )}
+
                   <CancelRegistrationButton type="button" onClick={openCancelModal}>
                     {t("signup.status.cancelRegistration")}
                   </CancelRegistrationButton>

@@ -14,12 +14,21 @@ vi.mock("../../functions/_utils/woovi", () => ({
     },
   })),
   getWooviChargeStatus: vi.fn(async () => ({ charge: { status: "ACTIVE" } })),
+  deleteWooviCharge: vi.fn(async () => ({ deleted: true, status: 200 })),
 }));
 
 import { handleRegister } from "../../functions/api/register";
 import { handleStatus } from "../../functions/api/status";
 import { onRequestPost as webhookPost } from "../../functions/api/webhooks";
 import { createStaffRegistration } from "../../functions/_utils/staffRegistration";
+import { enforceCapacity } from "../../functions/_utils/enforceCapacity";
+import { handleUpgradeMonastery } from "../../functions/api/upgrade-monastery";
+import { handleCancelRegistration } from "../../functions/api/registration/cancel";
+import { handleCancelTshirt } from "../../functions/api/tshirt/cancel";
+import { listRefundRequests, updateRefundStatuses } from "../../functions/_utils/refunds";
+import { deleteWooviCharge } from "../../functions/_utils/woovi";
+import { encryptCpf } from "../../functions/_utils/cpfCrypto";
+import { canonicalizeCpf } from "../../functions/_utils/cpfValidation";
 
 // CPFs válidos (dígitos verificadores corretos).
 const CPF_A = "529.982.247-25";
@@ -54,6 +63,7 @@ interface RegRow {
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
   is_staff: number;
+  monastery_upgrade_ref: string | null;
   registration_number: string | null;
   created_at: string;
   paid_at: string | null;
@@ -79,6 +89,8 @@ interface PaymentRow {
 class InMemoryD1 {
   registrations: RegRow[] = [];
   payments: PaymentRow[] = [];
+  refunds: any[] = [];
+  tshirts: any[] = [];
 
   prepare(query: string) {
     const db = this;
@@ -95,8 +107,7 @@ class InMemoryD1 {
         return db.runExec(query, this._args);
       },
       async all<T = any>() {
-        const row = db.runFirst(query, this._args);
-        return { results: (row ? [row] : []) as T[], success: true };
+        return { results: db.runAll(query, this._args) as T[], success: true };
       },
     };
     return statement as any;
@@ -138,6 +149,10 @@ class InMemoryD1 {
           total: paid.filter((r) => r.sleep_at_monastery === 1 && r.is_staff === 0).length,
         };
       }
+      // countPaidNonStaff: PAGAS de peregrino (sem recorte de mosteiro).
+      if (query.includes("is_staff = 0")) {
+        return { total: paid.filter((r) => r.is_staff === 0).length };
+      }
       return { total: paid.length };
     }
 
@@ -147,6 +162,12 @@ class InMemoryD1 {
         (r) => r.status === "PAID" && r.registration_number
       ).length;
       return { count };
+    }
+
+    // Webhook: inscrição cuja cobrança de diferença (upgrade) foi paga.
+    if (query.startsWith("SELECT id, email FROM registrations WHERE monastery_upgrade_ref = ?")) {
+      const r = this.registrations.find((x) => x.monastery_upgrade_ref === args[0]);
+      return r ? { id: r.id, email: r.email } : null;
     }
 
     // Webhook: busca enxuta por payment_ref.
@@ -181,12 +202,33 @@ class InMemoryD1 {
       return p ? { correlation_id: p.correlation_id, provider_charge_id: p.provider_charge_id } : null;
     }
 
-    // Camiseta: nunca presente neste fluxo.
+    // Camiseta: busca de uma compra por id + CPF (cancelamento).
+    if (query.includes("FROM tshirt_purchase") && query.includes("WHERE id = ? AND cpf_encrypted = ?")) {
+      return this.tshirts.find((t) => t.id === args[0] && t.cpf_encrypted === args[1]) ?? null;
+    }
+    // Camiseta: nunca presente nos demais fluxos.
     if (query.includes("FROM tshirt_purchase")) {
       return null;
     }
 
     return null;
+  }
+
+  private runAll(query: string, args: any[]): any[] {
+    // listRefundRequests (página /admin/estorno).
+    if (query.includes("FROM refund_requests")) {
+      return [...this.refunds];
+    }
+    // listPendingNonStaff: pendentes de peregrino a cancelar quando um pool lota.
+    if (query.startsWith("SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0")) {
+      let rows = this.registrations.filter((r) => r.status === "PENDING" && r.is_staff === 0);
+      if (query.includes("sleep_at_monastery = 1")) {
+        rows = rows.filter((r) => r.sleep_at_monastery === 1);
+      }
+      return rows.map((r) => ({ id: r.id, payment_ref: r.payment_ref }));
+    }
+    const single = this.runFirst(query, args);
+    return single ? [single] : [];
   }
 
   private runExec(query: string, args: any[]) {
@@ -212,7 +254,7 @@ class InMemoryD1 {
         emergency_contact_name, emergency_contact_phone,
         has_allergy_medication, allergy_medication_details,
         has_dietary_restriction, dietary_restriction_details,
-        is_staff: 1, registration_number,
+        is_staff: 1, monastery_upgrade_ref: null, registration_number,
         created_at: new Date().toISOString(), paid_at,
       });
       return { success: true };
@@ -234,7 +276,7 @@ class InMemoryD1 {
         emergency_contact_name, emergency_contact_phone,
         has_allergy_medication, allergy_medication_details,
         has_dietary_restriction, dietary_restriction_details,
-        is_staff: 0, registration_number: null,
+        is_staff: 0, monastery_upgrade_ref: null, registration_number: null,
         created_at: new Date().toISOString(), paid_at: null,
       });
       return { success: true };
@@ -280,6 +322,92 @@ class InMemoryD1 {
     if (query.includes("SET status = 'CANCELED' WHERE id = ?")) {
       const row = this.registrations.find((r) => r.id === args[0]);
       if (row) row.status = "CANCELED";
+      return { success: true };
+    }
+
+    // Troca pendente -> pernoite: reemite no valor cheio e marca sleep.
+    if (query.includes("SET sleep_at_monastery = 1, payment_ref = ?")) {
+      const row = this.registrations.find((r) => r.id === args[1] && r.status === "PENDING");
+      if (row) {
+        row.sleep_at_monastery = 1;
+        row.payment_ref = args[0];
+        row.payment_provider = "woovi";
+        row.monastery_upgrade_ref = null;
+      }
+      return { success: true };
+    }
+
+    // Inicia troca de inscrição PAGA: registra a cobrança da diferença.
+    if (query.includes("SET monastery_upgrade_ref = ? WHERE id = ? AND status = 'PAID'")) {
+      const row = this.registrations.find((r) => r.id === args[1] && r.status === "PAID");
+      if (row) row.monastery_upgrade_ref = args[0];
+      return { success: true };
+    }
+
+    // Promove para pernoite (diferença paga ou sem diferença).
+    if (query.includes("SET sleep_at_monastery = 1, monastery_upgrade_ref = NULL WHERE id = ?")) {
+      const row = this.registrations.find((r) => r.id === args[0]);
+      if (row) {
+        row.sleep_at_monastery = 1;
+        row.monastery_upgrade_ref = null;
+      }
+      return { success: true };
+    }
+
+    // Troca pendente -> geral: reemite no valor de geral e tira o pernoite.
+    if (query.includes("SET sleep_at_monastery = 0, payment_ref = ?")) {
+      const row = this.registrations.find((r) => r.id === args[1] && r.status === "PENDING");
+      if (row) {
+        row.sleep_at_monastery = 0;
+        row.payment_ref = args[0];
+        row.payment_provider = "woovi";
+        row.monastery_upgrade_ref = null;
+      }
+      return { success: true };
+    }
+
+    // Downgrade de PAGA: sai do mosteiro.
+    if (query.includes("SET sleep_at_monastery = 0, monastery_upgrade_ref = NULL WHERE id = ?")) {
+      const row = this.registrations.find((r) => r.id === args[0]);
+      if (row) {
+        row.sleep_at_monastery = 0;
+        row.monastery_upgrade_ref = null;
+      }
+      return { success: true };
+    }
+
+    // Camiseta: cancela a compra.
+    if (query.includes("UPDATE tshirt_purchase SET status = 'CANCELED'")) {
+      const row = this.tshirts.find((t) => t.id === args[1]);
+      if (row) row.status = "CANCELED";
+      return { success: true };
+    }
+
+    // Estorno: cria registro (INSERT OR IGNORE, único por type+source_id).
+    if (query.includes("INSERT OR IGNORE INTO refund_requests")) {
+      const [id, type, source_id, name, phone, email, amount_cents] = args;
+      const exists = this.refunds.some((r) => r.type === type && r.source_id === source_id);
+      if (!exists) {
+        this.refunds.push({
+          id, type, source_id, name, phone, email,
+          amount_cents, refund_status: "PENDENTE",
+          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        });
+      }
+      return { success: true };
+    }
+
+    // Estorno: salva o status escolhido no painel.
+    if (query.includes("UPDATE refund_requests SET refund_status = ?")) {
+      const row = this.refunds.find((r) => r.id === args[1]);
+      if (row) row.refund_status = args[0];
+      return { success: true };
+    }
+
+    // Cobrança de diferença expirada: limpa o vínculo.
+    if (query.includes("SET monastery_upgrade_ref = NULL WHERE monastery_upgrade_ref = ?")) {
+      const row = this.registrations.find((r) => r.monastery_upgrade_ref === args[0]);
+      if (row) row.monastery_upgrade_ref = null;
       return { success: true };
     }
 
@@ -491,5 +619,288 @@ describe("staff capacity (balde independente dos peregrinos)", () => {
     );
     expect(second.ok).toBe(false);
     if (!second.ok) expect(second.error).toBe("staff_full");
+  });
+});
+
+describe("enforceCapacity (lotação por pagamento → cancela pendentes)", () => {
+  const dmock = vi.mocked(deleteWooviCharge);
+
+  beforeEach(() => {
+    dmock.mockClear();
+    dmock.mockResolvedValue({ deleted: true, status: 200 });
+  });
+
+  function makeReg(db: InMemoryD1, over: Partial<RegRow>): RegRow {
+    const base: RegRow = {
+      id: over.id ?? crypto.randomUUID(),
+      email: over.email ?? `${crypto.randomUUID()}@e.com`,
+      name: "X",
+      status: "PENDING",
+      payment_provider: "woovi",
+      payment_ref: null,
+      sleep_at_monastery: 0,
+      companion_name: null,
+      phone: "11999999999",
+      cep: "12345678",
+      address: "R",
+      number: "1",
+      complement: null,
+      city: "SP",
+      state: "SP",
+      cpf_encrypted: null,
+      date_of_birth: null,
+      terms_accepted_at: null,
+      emergency_contact_name: null,
+      emergency_contact_phone: null,
+      has_allergy_medication: 0,
+      allergy_medication_details: null,
+      has_dietary_restriction: 0,
+      dietary_restriction_details: null,
+      is_staff: 0,
+      monastery_upgrade_ref: null,
+      registration_number: null,
+      created_at: new Date().toISOString(),
+      paid_at: null,
+      ...over,
+    };
+    db.registrations.push(base);
+    return base;
+  }
+
+  it("mosteiro lotado: cancela só pendentes de pernoite e invalida o PIX", async () => {
+    const env = makeEnv({ MAX_REGISTRATIONS_SLEEP: "2", MAX_REGISTRATIONS: "500" });
+    const db = env.DB;
+    makeReg(db, { status: "PAID", sleep_at_monastery: 1 });
+    makeReg(db, { status: "PAID", sleep_at_monastery: 1 });
+    const pendSleep = makeReg(db, { status: "PENDING", sleep_at_monastery: 1, payment_ref: "TX-SLEEP" });
+    const pendGeral = makeReg(db, { status: "PENDING", sleep_at_monastery: 0, payment_ref: "TX-GERAL" });
+
+    await enforceCapacity(env as any);
+
+    expect(db.registrations.find((r) => r.id === pendSleep.id)!.status).toBe("CANCELED");
+    expect(db.registrations.find((r) => r.id === pendGeral.id)!.status).toBe("PENDING");
+    expect(dmock).toHaveBeenCalledWith("test-app-id", "TX-SLEEP");
+    expect(dmock).toHaveBeenCalledTimes(1);
+  });
+
+  it("geral lotado: cancela TODOS os pendentes de peregrino", async () => {
+    const env = makeEnv({ MAX_REGISTRATIONS: "2", MAX_REGISTRATIONS_SLEEP: "80" });
+    const db = env.DB;
+    makeReg(db, { status: "PAID", sleep_at_monastery: 0 });
+    makeReg(db, { status: "PAID", sleep_at_monastery: 0 });
+    const pendSleep = makeReg(db, { status: "PENDING", sleep_at_monastery: 1, payment_ref: "TX1" });
+    const pendGeral = makeReg(db, { status: "PENDING", sleep_at_monastery: 0, payment_ref: "TX2" });
+
+    await enforceCapacity(env as any);
+
+    expect(db.registrations.find((r) => r.id === pendSleep.id)!.status).toBe("CANCELED");
+    expect(db.registrations.find((r) => r.id === pendGeral.id)!.status).toBe("CANCELED");
+    expect(dmock).toHaveBeenCalledTimes(2);
+  });
+
+  it("não lotado: não cancela ninguém", async () => {
+    const env = makeEnv({ MAX_REGISTRATIONS: "500", MAX_REGISTRATIONS_SLEEP: "80" });
+    const db = env.DB;
+    makeReg(db, { status: "PAID", sleep_at_monastery: 1 });
+    const pend = makeReg(db, { status: "PENDING", sleep_at_monastery: 1, payment_ref: "TX1" });
+
+    await enforceCapacity(env as any);
+
+    expect(db.registrations.find((r) => r.id === pend.id)!.status).toBe("PENDING");
+    expect(dmock).not.toHaveBeenCalled();
+  });
+
+  it("Woovi recusa o delete (já paga): NÃO cancela, trata como overflow", async () => {
+    dmock.mockResolvedValue({ deleted: false, status: 400 });
+    const env = makeEnv({ MAX_REGISTRATIONS_SLEEP: "1" });
+    const db = env.DB;
+    makeReg(db, { status: "PAID", sleep_at_monastery: 1 });
+    const pend = makeReg(db, { status: "PENDING", sleep_at_monastery: 1, payment_ref: "TX-RACE" });
+
+    await enforceCapacity(env as any);
+
+    expect(db.registrations.find((r) => r.id === pend.id)!.status).toBe("PENDING");
+  });
+});
+
+describe("troca geral -> pernoite (upgrade-monastery)", () => {
+  // Preços: sem pernoite R$150, com pernoite R$200 (diferença R$50).
+  const priceEnv = { REGISTRATION_COST: "150", REGISTRATION_COST_MONASTERY: "200" };
+
+  it("PENDENTE: reemite o PIX no valor cheio do mosteiro e marca sleep", async () => {
+    const env = makeEnv(priceEnv);
+    await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.status).toBe("PENDING");
+    expect(data.kind).toBe("full");
+    expect(data.amount_cents).toBe(20000);
+
+    const row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.sleep_at_monastery).toBe(1);
+    expect(row.status).toBe("PENDING");
+    expect(row.payment_ref).toBe(data.payment_ref);
+  });
+
+  it("PAGO: cobra só a diferença e promove apenas após o webhook confirmar", async () => {
+    const env = makeEnv(priceEnv);
+    const reg = await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+    const { payment_ref } = await reg.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A });
+    const data = await res.json();
+    expect(data.status).toBe("PENDING");
+    expect(data.kind).toBe("difference");
+    expect(data.amount_cents).toBe(5000);
+
+    // Ainda NÃO promoveu: continua geral, com a cobrança da diferença vinculada.
+    let row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.sleep_at_monastery).toBe(0);
+    expect(row.status).toBe("PAID");
+    expect(row.monastery_upgrade_ref).toBe(data.payment_ref);
+
+    // Webhook confirma a diferença -> promove para pernoite.
+    await webhookPost({ request: paidWebhookRequest(data.payment_ref), env } as any);
+    row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.sleep_at_monastery).toBe(1);
+    expect(row.status).toBe("PAID");
+    expect(row.monastery_upgrade_ref).toBeNull();
+  });
+
+  it("bloqueia com monastery_full quando as camas pagas estão no teto", async () => {
+    const env = makeEnv({ ...priceEnv, MAX_REGISTRATIONS_SLEEP: "0" });
+    const reg = await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+    const { payment_ref } = await reg.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A });
+    expect(res.status).toBe(409);
+    const data = await res.json();
+    expect(data.error).toBe("monastery_full");
+  });
+
+  it("sem diferença de preço: promove na hora, sem novo PIX", async () => {
+    const env = makeEnv({ REGISTRATION_COST: "200", REGISTRATION_COST_MONASTERY: "200" });
+    const reg = await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+    const { payment_ref } = await reg.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A });
+    const data = await res.json();
+    expect(data.status).toBe("UPGRADED");
+    expect(data.needsPayment).toBe(false);
+
+    const row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.sleep_at_monastery).toBe(1);
+    expect(row.status).toBe("PAID");
+  });
+
+  it("já é pernoite: retorna ALREADY_MONASTERY sem cobrar nada", async () => {
+    const env = makeEnv(priceEnv);
+    await handleRegister(env as any, validBody({ sleepAtMonastery: true }));
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A });
+    const data = await res.json();
+    expect(data.status).toBe("ALREADY_MONASTERY");
+  });
+});
+
+describe("cancelamento pelo site + estorno", () => {
+  const priceEnv = { REGISTRATION_COST: "150", REGISTRATION_COST_MONASTERY: "200" };
+
+  it("inscrição PAGA cancelada gera estorno (refund_requests)", async () => {
+    const env = makeEnv(priceEnv);
+    const reg = await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+    const { payment_ref } = await reg.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleCancelRegistration(env as any, { cpf: CPF_A });
+    const data = await res.json();
+    expect(data.status).toBe("CANCELED");
+    expect(data.refund).toBe(true);
+
+    const row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.status).toBe("CANCELED");
+    expect(env.DB.refunds).toHaveLength(1);
+    expect(env.DB.refunds[0].type).toBe("inscricao");
+    expect(env.DB.refunds[0].amount_cents).toBe(15000);
+  });
+
+  it("inscrição PENDENTE cancelada NÃO gera estorno e invalida o PIX", async () => {
+    const dmock = vi.mocked(deleteWooviCharge);
+    dmock.mockClear();
+    dmock.mockResolvedValue({ deleted: true, status: 200 });
+
+    const env = makeEnv(priceEnv);
+    await handleRegister(env as any, validBody({ sleepAtMonastery: false }));
+
+    const res = await handleCancelRegistration(env as any, { cpf: CPF_A });
+    const data = await res.json();
+    expect(data.status).toBe("CANCELED");
+    expect(data.refund).toBe(false);
+    expect(env.DB.refunds).toHaveLength(0);
+    expect(dmock).toHaveBeenCalledTimes(1);
+  });
+
+  it("camiseta PAGA cancelada gera estorno", async () => {
+    const env = makeEnv(priceEnv);
+    const cpfEnc = await encryptCpf(canonicalizeCpf(CPF_A), CPF_KEY, CPF_IV);
+    env.DB.tshirts.push({
+      id: "TS-1",
+      customer_name: "Ana",
+      email: "ana@example.com",
+      cpf_encrypted: cpfEnc,
+      status: "PAID",
+      payment_ref: "TS-REF-1",
+      provider_charge_id: "TS-REF-1",
+      amount_cents: 10000,
+    });
+
+    const res = await handleCancelTshirt(env as any, { cpf: CPF_A, purchaseId: "TS-1" });
+    const data = await res.json();
+    expect(data.status).toBe("CANCELED");
+    expect(data.refund).toBe(true);
+    expect(env.DB.tshirts[0].status).toBe("CANCELED");
+    expect(env.DB.refunds).toHaveLength(1);
+    expect(env.DB.refunds[0].type).toBe("camiseta");
+    expect(env.DB.refunds[0].amount_cents).toBe(10000);
+  });
+
+  it("downgrade pernoite -> geral (PAGA) gera estorno de R$50", async () => {
+    const env = makeEnv(priceEnv);
+    const reg = await handleRegister(env as any, validBody({ sleepAtMonastery: true }));
+    const { payment_ref } = await reg.json();
+    await webhookPost({ request: paidWebhookRequest(payment_ref), env } as any);
+
+    const res = await handleUpgradeMonastery(env as any, { cpf: CPF_A, target: "general" });
+    const data = await res.json();
+    expect(data.status).toBe("DOWNGRADED");
+    expect(data.refund_cents).toBe(5000);
+
+    const row = env.DB.registrations.find((r) => r.cpf_encrypted)!;
+    expect(row.sleep_at_monastery).toBe(0);
+    expect(env.DB.refunds).toHaveLength(1);
+    expect(env.DB.refunds[0].type).toBe("downgrade");
+    expect(env.DB.refunds[0].amount_cents).toBe(5000);
+  });
+
+  it("admin: lista e salva status de estorno", async () => {
+    const env = makeEnv();
+    env.DB.refunds.push({
+      id: "R1", type: "inscricao", source_id: "x", name: "Ana",
+      phone: "11999", email: "a@e.com", amount_cents: 15000,
+      refund_status: "PENDENTE", created_at: "", updated_at: "",
+    });
+
+    const list = await listRefundRequests(env.DB as any);
+    expect(list).toHaveLength(1);
+    expect(list[0].refund_status).toBe("PENDENTE");
+
+    const updated = await updateRefundStatuses(env.DB as any, [{ id: "R1", refund_status: "FEITO" }]);
+    expect(updated).toBe(1);
+    expect(env.DB.refunds[0].refund_status).toBe("FEITO");
   });
 });

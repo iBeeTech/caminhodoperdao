@@ -1,4 +1,10 @@
 import { WooviWebhookPayload } from '../../types/woovi';
+import { enforceCapacity } from '../_utils/enforceCapacity';
+import {
+  getByMonasteryUpgradeRef,
+  promoteToMonastery,
+  clearMonasteryUpgradeRef,
+} from '../_utils/registrations';
 
 function getCandidatePaymentRefs(payload: WooviWebhookPayload): string[] {
   const refs = [
@@ -57,6 +63,18 @@ async function findRegistrationByPaymentRefs(
     console.warn('Fallback via tabela payments falhou:', error);
   }
 
+  return null;
+}
+
+// Localiza a inscrição cuja cobrança de DIFERENÇA (troca geral -> pernoite) foi paga.
+async function findMonasteryUpgradeByPaymentRefs(
+  db: any,
+  paymentRefs: string[]
+): Promise<{ id: string; email: string } | null> {
+  for (const ref of paymentRefs) {
+    const found = await getByMonasteryUpgradeRef(db, ref);
+    if (found) return found;
+  }
   return null;
 }
 
@@ -174,6 +192,10 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           console.log(
             `Registro marcado como PAID: ${registration.email} (número: ${registrationNumber})`
           );
+
+          // Acabou de entrar uma vaga paga: se isso bateu o teto de algum pool,
+          // cancela os pendentes (e invalida os PIX deles) para impedir overflow.
+          await enforceCapacity(context.env);
         }
 
         const tshirtPurchase = await findTshirtPurchaseByPaymentRefs(context.env.DB, paymentRefs);
@@ -190,6 +212,17 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
 
           console.log('Resultado do update da camiseta:', updateResult);
           console.log(`Compra de camiseta marcada como PAID: ${tshirtPurchase.customer_name}`);
+        }
+
+        // Pagamento da DIFERENÇA da troca geral -> pernoite: promove a inscrição (já PAGA)
+        // para pernoite. A inscrição em si continua PAID; só passa a dormir no mosteiro.
+        const upgrade = await findMonasteryUpgradeByPaymentRefs(context.env.DB, paymentRefs);
+        if (upgrade) {
+          matchedAny = true;
+          await promoteToMonastery(context.env.DB, upgrade.id);
+          console.log(`Pernoite confirmado (diferença paga): ${upgrade.email}`);
+          // Promoção ocupa uma cama paga: pode ter batido o teto do mosteiro.
+          await enforceCapacity(context.env);
         }
 
         if (!matchedAny) {
@@ -228,6 +261,12 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
 
           console.log('Resultado do update da camiseta (expirado):', updateResult);
           console.log(`Compra de camiseta marcada como CANCELED (expirada): ${tshirtPurchase.customer_name}`);
+        }
+
+        // Cobrança de diferença (upgrade) expirada: a troca não se concretizou. A inscrição
+        // geral PAGA permanece como está; só removemos o vínculo da cobrança pendente.
+        for (const ref of paymentRefs) {
+          await clearMonasteryUpgradeRef(context.env.DB, ref);
         }
 
         if (!matchedAny) {

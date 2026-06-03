@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import AdminNav from "../AdminNav";
 import {
   AdminCard,
   AdminContainer,
@@ -155,6 +156,7 @@ const AdminView: React.FC<AdminViewProps> = ({
       <AdminContainer>
         <AdminCard>
           <AdminTitle>{t("panel.title")}</AdminTitle>
+          <AdminNav />
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>

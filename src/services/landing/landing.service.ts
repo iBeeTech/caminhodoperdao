@@ -1,6 +1,7 @@
 import { httpClient } from "../http/client";
 import {
   AvailabilityResponse,
+  MonasteryUpgradeResponse,
   RegistrationPayload,
   RegistrationResponse,
   RegistrationStatusResponse,
@@ -23,12 +24,33 @@ export const landingService = {
     return httpClient.get<RegistrationStatusResponse>(url);
   },
 
-  async cancelRegistration(cpf: string): Promise<{ status?: string }> {
-    return httpClient.del<{ status?: string }>("/api/status", { cpf });
+  async cancelRegistration(cpf: string): Promise<{ status?: string; refund?: boolean }> {
+    // POST (não DELETE): corpo em DELETE é descartado por alguns proxies.
+    return httpClient.post<{ status?: string; refund?: boolean }>("/api/registration/cancel", {
+      cpf,
+    });
   },
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
+  },
+
+  // Troca a modalidade da inscrição. target "monastery" (geral->pernoite) ou "general"
+  // (pernoite->geral). Pendente reemite o PIX; pago paga diferença (upgrade) ou faz
+  // downgrade na hora + estorno. Exige vaga no mosteiro no caso de upgrade.
+  async changeLodging(
+    cpf: string,
+    target: "monastery" | "general"
+  ): Promise<MonasteryUpgradeResponse> {
+    return httpClient.post<MonasteryUpgradeResponse>("/api/upgrade-monastery", { cpf, target });
+  },
+
+  // Cancela UMA compra de camiseta (pendente ou paga). Paga gera estorno.
+  async cancelTshirt(cpf: string, purchaseId: string): Promise<{ status?: string; refund?: boolean }> {
+    return httpClient.post<{ status?: string; refund?: boolean }>("/api/tshirt/cancel", {
+      cpf,
+      purchaseId,
+    });
   },
 
   async getTshirtConfig(): Promise<TshirtConfigResponse> {

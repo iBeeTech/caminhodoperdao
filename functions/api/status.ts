@@ -6,8 +6,10 @@ import { getPaymentByRef } from "../_utils/payments";
 import { getWooviChargeStatus } from "../_utils/woovi";
 import { encryptCpf } from "../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../_utils/cpfValidation";
+import { enforceCapacity } from "../_utils/enforceCapacity";
+import type { CapacityEnv } from "../_utils/capacity";
 
-interface Env {
+interface Env extends CapacityEnv {
   DB: D1Database;
   WOOVI_APP_ID?: string;
   CPF_ENCRYPTION_KEY?: string;
@@ -73,8 +75,11 @@ export async function handleStatus(
           
           registration.status = "PAID";
           registration.paid_at = new Date(Date.now()).toISOString();
-          
+
           console.log(`Status atualizado via Woovi: ${phoneForReg} -> PAID`);
+
+          // Esse pagamento pode ter batido o teto de um pool: cancela os pendentes.
+          await enforceCapacity(env);
         }
       }
     } catch (error) {

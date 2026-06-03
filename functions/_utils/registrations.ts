@@ -25,13 +25,15 @@ export interface Registration {
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
   is_staff: number;
+  // Ref. da cobrança PIX da diferença na troca geral -> pernoite (null fora desse fluxo).
+  monastery_upgrade_ref: string | null;
   created_at: string;
   paid_at: string | null;
 }
 
 export async function getByEmail(DB: D1Database, email: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE email = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, monastery_upgrade_ref, created_at, paid_at FROM registrations WHERE email = ?"
   ).bind(email.toLowerCase());
   return (await stmt.first<Registration>()) ?? null;
 }
@@ -39,21 +41,21 @@ export async function getByEmail(DB: D1Database, email: string): Promise<Registr
 export async function getByPhone(DB: D1Database, phone: string): Promise<Registration | null> {
   const normalized = phone.replace(/\D/g, "");
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE phone = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, monastery_upgrade_ref, created_at, paid_at FROM registrations WHERE phone = ?"
   ).bind(normalized);
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByPaymentRef(DB: D1Database, paymentRef: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE payment_ref = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, monastery_upgrade_ref, created_at, paid_at FROM registrations WHERE payment_ref = ?"
   ).bind(paymentRef);
   return (await stmt.first<Registration>()) ?? null;
 }
 
 export async function getByCpfEncrypted(DB: D1Database, cpfEncrypted: string): Promise<Registration | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, created_at, paid_at FROM registrations WHERE cpf_encrypted = ?"
+    "SELECT id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, is_staff, monastery_upgrade_ref, created_at, paid_at FROM registrations WHERE cpf_encrypted = ?"
   ).bind(cpfEncrypted);
   return (await stmt.first<Registration>()) ?? null;
 }
@@ -253,6 +255,124 @@ export async function countPaidSleepNonStaff(DB: D1Database): Promise<number> {
     console.error("Error counting paid non-staff sleep registrations:", error);
     return 0;
   }
+}
+
+// Conta as inscrições PAGAS de peregrinos (não-staff), dormindo no mosteiro ou não.
+// É esse número que tranca o pool geral (MAX_REGISTRATIONS): a vaga só é considerada
+// ocupada quando paga, e ao bater o teto os pendentes são cancelados.
+export async function countPaidNonStaff(DB: D1Database): Promise<number> {
+  try {
+    const row = await DB.prepare(
+      "SELECT COUNT(*) as total FROM registrations WHERE status = 'PAID' AND is_staff = 0"
+    ).first<{ total: number }>();
+    return row?.total ?? 0;
+  } catch (error) {
+    console.error("Error counting paid non-staff registrations:", error);
+    return 0;
+  }
+}
+
+// Lista inscrições pendentes (com seu payment_ref) que devem ser canceladas quando um
+// pool lota. `onlySleep` restringe aos pendentes de pernoite (usado quando só o mosteiro
+// lota); sem ele, pega todos os pendentes de peregrino (quando o pool geral lota).
+export async function listPendingNonStaff(
+  DB: D1Database,
+  onlySleep: boolean
+): Promise<Array<{ id: string; payment_ref: string | null }>> {
+  const sql = onlySleep
+    ? "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0 AND sleep_at_monastery = 1"
+    : "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0";
+  const result = await DB.prepare(sql).all<{ id: string; payment_ref: string | null }>();
+  return result.results ?? [];
+}
+
+export async function cancelRegistrationById(DB: D1Database, id: string): Promise<void> {
+  await DB.prepare("UPDATE registrations SET status = 'CANCELED' WHERE id = ? AND status = 'PENDING'")
+    .bind(id)
+    .run();
+}
+
+// Troca geral -> pernoite de uma inscrição AINDA PENDENTE: ela ainda não pagou, então
+// basta marcar o pernoite e apontar a nova cobrança (valor cheio do mosteiro). Continua
+// PENDING; o webhook normal a confirma como PAID já com sleep_at_monastery = 1.
+export async function switchPendingToMonastery(
+  DB: D1Database,
+  id: string,
+  paymentRef: string
+): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET sleep_at_monastery = 1, payment_ref = ?, payment_provider = 'woovi', monastery_upgrade_ref = NULL WHERE id = ? AND status = 'PENDING'"
+  )
+    .bind(paymentRef, id)
+    .run();
+}
+
+// Troca geral <- pernoite de uma inscrição AINDA PENDENTE: reemite no valor de geral.
+export async function switchPendingToGeneral(
+  DB: D1Database,
+  id: string,
+  paymentRef: string
+): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET sleep_at_monastery = 0, payment_ref = ?, payment_provider = 'woovi', monastery_upgrade_ref = NULL WHERE id = ? AND status = 'PENDING'"
+  )
+    .bind(paymentRef, id)
+    .run();
+}
+
+// Downgrade de uma inscrição JÁ PAGA: sai do mosteiro na hora (libera a cama). A
+// diferença paga a mais vira um estorno (tratado fora desta função).
+export async function demoteToGeneral(DB: D1Database, id: string): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET sleep_at_monastery = 0, monastery_upgrade_ref = NULL WHERE id = ?"
+  )
+    .bind(id)
+    .run();
+}
+
+// Inicia a troca de uma inscrição JÁ PAGA: registra a cobrança da diferença em
+// monastery_upgrade_ref, sem tocar no status PAID. O webhook promove ao confirmar.
+export async function setMonasteryUpgradeRef(
+  DB: D1Database,
+  id: string,
+  upgradeRef: string
+): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET monastery_upgrade_ref = ? WHERE id = ? AND status = 'PAID'"
+  )
+    .bind(upgradeRef, id)
+    .run();
+}
+
+// Promove a inscrição para pernoite (diferença paga ou sem diferença a cobrar).
+export async function promoteToMonastery(DB: D1Database, id: string): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET sleep_at_monastery = 1, monastery_upgrade_ref = NULL WHERE id = ?"
+  )
+    .bind(id)
+    .run();
+}
+
+// Webhook: localiza a inscrição cuja cobrança de diferença (upgrade) acabou de ser paga.
+export async function getByMonasteryUpgradeRef(
+  DB: D1Database,
+  upgradeRef: string
+): Promise<{ id: string; email: string } | null> {
+  const row = await DB.prepare(
+    "SELECT id, email FROM registrations WHERE monastery_upgrade_ref = ?"
+  )
+    .bind(upgradeRef)
+    .first<{ id: string; email: string }>();
+  return row ?? null;
+}
+
+// Limpa a referência de upgrade quando a cobrança da diferença expira (troca não concluída).
+export async function clearMonasteryUpgradeRef(DB: D1Database, upgradeRef: string): Promise<void> {
+  await DB.prepare(
+    "UPDATE registrations SET monastery_upgrade_ref = NULL WHERE monastery_upgrade_ref = ?"
+  )
+    .bind(upgradeRef)
+    .run();
 }
 
 export async function countActiveStaff(DB: D1Database): Promise<number> {

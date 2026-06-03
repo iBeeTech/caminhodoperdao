@@ -85,6 +85,8 @@ const LandingController: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusTone, setStatusTone] = useState<LandingTone>(null);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
+  // Modalidade da inscrição consultada (1 = pernoite, 0 = geral) — usada na troca.
+  const [sleepAtMonastery, setSleepAtMonastery] = useState<number | null>(null);
   const [qrCodeText, setQrCodeText] = useState<string | null>(null);
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -497,6 +499,9 @@ const LandingController: React.FC = () => {
 
       const normalizedStatus = result.status ?? (result.expired ? "CANCELED" : null);
       setCurrentStatus(normalizedStatus);
+      setSleepAtMonastery(
+        typeof result.sleep_at_monastery === "number" ? result.sleep_at_monastery : null
+      );
       setQrCodeText(result.qrCodeText ?? null);
       setQrCodeImageUrl(result.qrCodeImageUrl ?? null);
 
@@ -948,6 +953,8 @@ const LandingController: React.FC = () => {
       registeredAsStaff={registeredAsStaff}
       onViewMyRegistration={handleViewMyRegistration}
       onCancelRegistration={handleCancelRegistration}
+      registrationCpf={statusPollingCpf}
+      sleepAtMonastery={sleepAtMonastery}
       getNextWhatsappUrl={getNextWhatsappUrl}
       onCpfChange={clearCpfError}
       onPhoneChangeError={clearPhoneError}

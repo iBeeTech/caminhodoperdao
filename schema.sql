@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   has_dietary_restriction INTEGER NOT NULL DEFAULT 0,
   dietary_restriction_details TEXT,
   is_staff INTEGER NOT NULL DEFAULT 0,
+  -- Ref. da cobrança PIX da diferença na troca geral -> pernoite (ver migration 010).
+  monastery_upgrade_ref TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );
@@ -63,6 +65,24 @@ CREATE TABLE IF NOT EXISTS tshirt_purchase (
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_cpf_encrypted ON tshirt_purchase(cpf_encrypted);
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_status ON tshirt_purchase(status);
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_payment_ref ON tshirt_purchase(payment_ref);
+
+-- Estorno: cancelamentos feitos pelo site que exigem devolução (ver migration 011).
+CREATE TABLE IF NOT EXISTS refund_requests (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL CHECK (type IN ('inscricao', 'camiseta', 'downgrade')),
+  source_id TEXT,
+  name TEXT NOT NULL DEFAULT '',
+  phone TEXT,
+  email TEXT,
+  amount_cents INTEGER NOT NULL DEFAULT 0,
+  refund_status TEXT NOT NULL DEFAULT 'PENDENTE'
+    CHECK (refund_status IN ('PENDENTE', 'FEITO', 'CANCELADO')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_refund_requests_status ON refund_requests(refund_status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_refund_requests_type_source
+  ON refund_requests(type, source_id);
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_correlation_id ON tshirt_purchase(correlation_id);
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_provider_charge_id ON tshirt_purchase(provider_charge_id);
 
