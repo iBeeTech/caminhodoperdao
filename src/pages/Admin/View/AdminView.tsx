@@ -11,14 +11,26 @@ import {
   ErrorText,
   FieldGroup,
   Label,
-  OrangeButton,
   PrimaryButton,
-  PurpleButton,
-  ReportLink,
   SecondaryButton,
   SuccessText,
-  YellowButton,
 } from "./AdminView.styles";
+
+const dropTrigger: React.CSSProperties = {
+  padding: "0.6rem 1.2rem", borderRadius: 8, border: "1px solid #1f7a3d", background: "#1f7a3d",
+  color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem",
+  display: "inline-flex", alignItems: "center", gap: 6,
+};
+const dropMenu: React.CSSProperties = {
+  position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff",
+  border: "1px solid #d1d5db", borderRadius: 10, boxShadow: "0 8px 22px rgba(0,0,0,0.14)",
+  overflow: "hidden", zIndex: 30, minWidth: 240,
+};
+const dropItem: React.CSSProperties = {
+  display: "block", width: "100%", textAlign: "left", padding: "0.65rem 1rem",
+  border: "none", borderBottom: "1px solid #f1f1f1", background: "#fff", color: "#374151",
+  fontWeight: 600, fontSize: "0.9rem", cursor: "pointer",
+};
 
 interface AdminViewProps {
   status: "loading" | "unauthenticated" | "authenticated";
@@ -44,6 +56,9 @@ interface AdminViewProps {
   onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
   onDownloadVendas: () => void;
+  onDownloadCredPeregrinos: () => void;
+  onDownloadCredStaff: () => void;
+  onDownloadRetiradaCamisetas: () => void;
   onLogout: () => void;
   onNewAdminEmailChange: (value: string) => void;
   onAddAdmin: () => void;
@@ -73,11 +88,15 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
   onDownloadVendas,
+  onDownloadCredPeregrinos,
+  onDownloadCredStaff,
+  onDownloadRetiradaCamisetas,
   onLogout,
   onNewAdminEmailChange,
   onAddAdmin,
 }) => {
   const { t } = useTranslation("admin");
+  const [openMenu, setOpenMenu] = React.useState<null | "completas" | "controle">(null);
   if (status === "loading") {
     return (
       <AdminPage>
@@ -157,39 +176,68 @@ const AdminView: React.FC<AdminViewProps> = ({
           {error && <ErrorText>{error}</ErrorText>}
           {success && <SuccessText>{success}</SuccessText>}
           <ButtonRow>
-            <SecondaryButton
-              type="button"
-              onClick={onDownloadPeregrinosGeral}
-              disabled={isDownloading}
-            >
-              {t("panel.reportPeregrinosGeral")}
-            </SecondaryButton>
-            <OrangeButton
-              type="button"
-              onClick={onDownloadPeregrinosMosteiro}
-              disabled={isDownloading}
-            >
-              {t("panel.reportPeregrinosMosteiro")}
-            </OrangeButton>
-            <YellowButton
-              type="button"
-              onClick={onDownloadStaffGeral}
-              disabled={isDownloading}
-            >
-              {t("panel.reportStaffGeral")}
-            </YellowButton>
-            <PurpleButton type="button" onClick={onDownloadTshirt} disabled={isDownloading}>
-              {t("panel.reportTshirt")}
-            </PurpleButton>
+            {/* Planilhas Completas */}
+            <div style={{ position: "relative" }} onMouseLeave={() => setOpenMenu(null)}>
+              <button
+                type="button"
+                style={dropTrigger}
+                disabled={isDownloading}
+                onClick={() => setOpenMenu((m) => (m === "completas" ? null : "completas"))}
+              >
+                Planilhas Completas <span style={{ fontSize: "0.7rem" }}>▾</span>
+              </button>
+              {openMenu === "completas" && (
+                <div style={dropMenu}>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadPeregrinosGeral(); }}>
+                    {t("panel.reportPeregrinosGeral")}
+                  </button>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadPeregrinosMosteiro(); }}>
+                    {t("panel.reportPeregrinosMosteiro")}
+                  </button>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadStaffGeral(); }}>
+                    {t("panel.reportStaffGeral")}
+                  </button>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadTshirt(); }}>
+                    {t("panel.reportTshirt")}
+                  </button>
+                  {canManageAdmins && (
+                    <button style={{ ...dropItem, borderBottom: "none" }} onClick={() => { setOpenMenu(null); onDownloadVendas(); }}>
+                      {t("panel.reportVendas")}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Planilhas de Controle */}
+            <div style={{ position: "relative" }} onMouseLeave={() => setOpenMenu(null)}>
+              <button
+                type="button"
+                style={dropTrigger}
+                disabled={isDownloading}
+                onClick={() => setOpenMenu((m) => (m === "controle" ? null : "controle"))}
+              >
+                Planilhas de Controle <span style={{ fontSize: "0.7rem" }}>▾</span>
+              </button>
+              {openMenu === "controle" && (
+                <div style={dropMenu}>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadCredPeregrinos(); }}>
+                    Credenciamento de Peregrinos
+                  </button>
+                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadCredStaff(); }}>
+                    Credenciamento de Staff
+                  </button>
+                  <button style={{ ...dropItem, borderBottom: "none" }} onClick={() => { setOpenMenu(null); onDownloadRetiradaCamisetas(); }}>
+                    Retirada de Camisetas
+                  </button>
+                </div>
+              )}
+            </div>
+
             <DangerButton type="button" onClick={onLogout} disabled={isDownloading}>
               {t("panel.logout")}
             </DangerButton>
           </ButtonRow>
-          {canManageAdmins && (
-            <ReportLink type="button" onClick={onDownloadVendas} disabled={isDownloading}>
-              {t("panel.reportVendas")}
-            </ReportLink>
-          )}
           {canManageAdmins && (
             <FieldGroup>
               <Label htmlFor="admin-new-email">{t("panel.addAdminLabel")}</Label>

@@ -245,6 +245,24 @@ const AdminController: React.FC = () => {
       onDownloadVendas={() =>
         downloadReport("/api/admin/reports/vendas", "vendas-totais.xls")
       }
+      onDownloadCredPeregrinos={() =>
+        downloadReport(
+          "/api/admin/reports/credenciamento?tipo=peregrinos",
+          "credenciamento-peregrinos.xls"
+        )
+      }
+      onDownloadCredStaff={() =>
+        downloadReport(
+          "/api/admin/reports/credenciamento?tipo=staff",
+          "credenciamento-staff.xls"
+        )
+      }
+      onDownloadRetiradaCamisetas={() =>
+        downloadReport(
+          "/api/admin/reports/credenciamento?tipo=camisetas",
+          "retirada-camisetas.xls"
+        )
+      }
       onLogout={() => {
         localStorage.removeItem(STORAGE_KEY);
         setToken(null);
