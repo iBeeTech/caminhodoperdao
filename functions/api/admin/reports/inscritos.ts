@@ -158,7 +158,6 @@ function buildInscritosSpreadsheet(
     "QUAL RESTRIÇÃO ALIMENTAR",
     "CIDADE",
     "ESTADO",
-    "ASSINATURA RECEBIMENTO KIT",
     "VALOR",
   ];
 
@@ -229,7 +228,6 @@ function buildInscritosSpreadsheet(
         `<td${dietaryStyle}>${dietaryDetails}</td>`,
         `<td>${city}</td>`,
         `<td>${state}</td>`,
-        "<td></td>",
         `<td>${valor}</td>`,
         "</tr>",
       ].join("");

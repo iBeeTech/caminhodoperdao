@@ -16,6 +16,10 @@ interface Row {
   status: string;
   sleep_at_monastery: number;
   is_staff: number;
+  date_of_birth: string | null;
+  allergy_medication_details: string | null;
+  dietary_restriction_details: string | null;
+  city: string | null;
 }
 
 // GET /api/admin/registrations -> TODAS as inscrições (inclui staff) para a tela
@@ -26,7 +30,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (auth instanceof Response) return auth;
 
   const result = await context.env.DB.prepare(
-    `SELECT name, phone, email, status, sleep_at_monastery, is_staff
+    `SELECT name, phone, email, status, sleep_at_monastery, is_staff,
+            date_of_birth, allergy_medication_details, dietary_restriction_details, city
      FROM registrations
      ORDER BY name COLLATE NOCASE`
   ).all<Row>();

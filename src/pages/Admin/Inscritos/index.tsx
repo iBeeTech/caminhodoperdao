@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AdminNav from "../AdminNav";
 
 const STORAGE_KEY = "admin_jwt";
+const PAGE_SIZE = 50;
 
 type Status = "PENDING" | "PAID" | "CANCELED";
 interface Registration {
@@ -12,6 +13,10 @@ interface Registration {
   status: Status;
   sleep_at_monastery: number;
   is_staff: number;
+  date_of_birth: string | null;
+  allergy_medication_details: string | null;
+  dietary_restriction_details: string | null;
+  city: string | null;
 }
 interface Tshirt {
   name: string;
@@ -31,7 +36,7 @@ const STATUS_STYLE: Record<string, React.CSSProperties> = {
 };
 
 const s: Record<string, React.CSSProperties> = {
-  page: { maxWidth: 1100, margin: "0 auto", padding: "1.5rem 1rem", fontFamily: "sans-serif" },
+  page: { maxWidth: 1280, margin: "0 auto", padding: "1.5rem 1rem", fontFamily: "sans-serif" },
   topbar: { display: "flex", alignItems: "center", gap: 12, marginBottom: "1rem", flexWrap: "wrap" },
   title: { fontSize: "1.4rem", margin: 0 },
   refresh: {
@@ -40,7 +45,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   totals: { display: "flex", gap: 12, marginBottom: "1.25rem", flexWrap: "wrap" },
   totalBox: {
-    flex: "1 1 220px", borderRadius: 12, padding: "1rem 1.25rem", border: "1px solid #bbf7d0",
+    flex: "1 1 160px", borderRadius: 12, padding: "1rem 1.25rem", border: "1px solid #bbf7d0",
     background: "#f0fdf4",
   },
   totalNum: { fontSize: "1.8rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 },
@@ -52,16 +57,21 @@ const s: Record<string, React.CSSProperties> = {
     color: "#374151", fontWeight: 600, cursor: "pointer", textAlign: "left", fontSize: "0.95rem",
   },
   sideActive: { background: "#1f7a3d", color: "#fff", borderColor: "#1f7a3d" },
-  tableWrap: { flex: "1 1 600px", overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" },
+  tableWrap: { flex: "1 1 700px", overflowX: "auto" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" },
   th: { textAlign: "left", borderBottom: "2px solid #ddd", padding: "0.5rem", whiteSpace: "nowrap" },
   td: { borderBottom: "1px solid #eee", padding: "0.5rem", verticalAlign: "middle" },
   filterInput: {
     width: "100%", boxSizing: "border-box", padding: "0.3rem 0.4rem", borderRadius: 6,
-    border: "1px solid #d1d5db", fontSize: "0.82rem",
+    border: "1px solid #d1d5db", fontSize: "0.8rem",
   },
   count: { color: "#6b7280", fontSize: "0.85rem", margin: "0 0 0.5rem" },
   empty: { color: "#777", padding: "1.5rem 0" },
+  pager: { display: "flex", alignItems: "center", gap: 12, marginTop: "1rem", flexWrap: "wrap" },
+  pagerBtn: {
+    padding: "0.4rem 0.9rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
+    color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem",
+  },
 };
 
 const badge = (status: string): React.CSSProperties => ({
@@ -72,8 +82,10 @@ const badge = (status: string): React.CSSProperties => ({
 const inc = (v: string | null | undefined, q: string) =>
   (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
 
-// Padroniza o nome em title case (1ª letra de cada palavra maiúscula), mantendo
-// as preposições/conectivos em minúsculo conforme a norma da língua portuguesa.
+// Ordenação que ignora acento e caixa (ex.: "Élida" entra junto do E).
+const byName = (a: { name: string }, b: { name: string }) =>
+  (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" });
+
 const LOWER = new Set(["de", "da", "do", "das", "dos", "e", "di", "du", "del", "della", "van", "von", "y"]);
 const formatName = (raw: string | null | undefined): string => {
   const v = (raw ?? "").trim();
@@ -85,6 +97,12 @@ const formatName = (raw: string | null | undefined): string => {
     .join(" ");
 };
 
+const formatDob = (dob: string | null): string => {
+  if (!dob) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : dob;
+};
+
 const InscritosPage: React.FC = () => {
   const token = React.useMemo(() => localStorage.getItem(STORAGE_KEY), []);
   const [tab, setTab] = React.useState<"inscricoes" | "camisetas">("inscricoes");
@@ -92,6 +110,7 @@ const InscritosPage: React.FC = () => {
   const [tshirts, setTshirts] = React.useState<Tshirt[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [authError, setAuthError] = React.useState(false);
+  const [page, setPage] = React.useState(1);
 
   // filtros inscrições
   const [fNome, setFNome] = React.useState("");
@@ -99,6 +118,10 @@ const InscritosPage: React.FC = () => {
   const [fEmail, setFEmail] = React.useState("");
   const [fStatus, setFStatus] = React.useState("");
   const [fPernoite, setFPernoite] = React.useState("");
+  const [fCidade, setFCidade] = React.useState("");
+  const [fMed, setFMed] = React.useState("");
+  const [fRestr, setFRestr] = React.useState("");
+  const [fAniversariante, setFAniversariante] = React.useState("");
   // filtros camisetas
   const [cNome, setCNome] = React.useState("");
   const [cEmail, setCEmail] = React.useState("");
@@ -134,6 +157,25 @@ const InscritosPage: React.FC = () => {
     load();
   }, [load]);
 
+  // Volta pra página 1 quando muda filtro ou aba.
+  React.useEffect(() => {
+    setPage(1);
+  }, [tab, fNome, fTel, fEmail, fStatus, fPernoite, fCidade, fMed, fRestr, fAniversariante, cNome, cEmail, cStatus]);
+
+  // Aniversariante: aniversário (mês/dia) dentro de ±7 dias de hoje.
+  const birthdayWithinWeek = (dob: string | null): boolean => {
+    const m = dob && /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+    if (!m) return false;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const mo = parseInt(m[2], 10) - 1;
+    const da = parseInt(m[3], 10);
+    return [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].some(
+      (yy) => Math.abs(new Date(yy, mo, da).getTime() - start) <= week
+    );
+  };
+
   // Quebra por status considera só peregrinos (is_staff = 0); staff é contado à parte.
   const isPeregrino = (r: Registration) => r.is_staff === 0;
   const paidTotal = regs.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
@@ -152,17 +194,55 @@ const InscritosPage: React.FC = () => {
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
   ];
 
-  const regsFiltered = regs.filter(
-    (r) =>
-      inc(r.name, fNome) &&
-      inc(r.phone, fTel) &&
-      inc(r.email, fEmail) &&
-      (!fStatus || r.status === fStatus) &&
-      (!fPernoite || String(r.sleep_at_monastery) === fPernoite)
-  );
-  const tshirtsFiltered = tshirts.filter(
-    (t) => inc(t.name, cNome) && inc(t.email, cEmail) && (!cStatus || t.status === cStatus)
-  );
+  const regsFiltered = regs
+    .filter(
+      (r) =>
+        inc(r.name, fNome) &&
+        inc(r.phone, fTel) &&
+        inc(r.email, fEmail) &&
+        inc(r.city, fCidade) &&
+        inc(r.allergy_medication_details, fMed) &&
+        inc(r.dietary_restriction_details, fRestr) &&
+        (!fStatus || r.status === fStatus) &&
+        (!fPernoite || String(r.sleep_at_monastery) === fPernoite) &&
+        (!fAniversariante || birthdayWithinWeek(r.date_of_birth))
+    )
+    .sort(byName);
+  const tshirtsFiltered = tshirts
+    .filter((t) => inc(t.name, cNome) && inc(t.email, cEmail) && (!cStatus || t.status === cStatus))
+    .sort(byName);
+
+  const activeTotal = tab === "inscricoes" ? regsFiltered.length : tshirtsFiltered.length;
+  const totalPages = Math.max(1, Math.ceil(activeTotal / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const sliceStart = (safePage - 1) * PAGE_SIZE;
+  const regsPage = regsFiltered.slice(sliceStart, sliceStart + PAGE_SIZE);
+  const tshirtsPage = tshirtsFiltered.slice(sliceStart, sliceStart + PAGE_SIZE);
+
+  const Pager = () =>
+    activeTotal > PAGE_SIZE ? (
+      <div style={s.pager}>
+        <button
+          type="button"
+          style={{ ...s.pagerBtn, opacity: safePage <= 1 ? 0.5 : 1 }}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={safePage <= 1}
+        >
+          ← Anterior
+        </button>
+        <span style={{ fontSize: "0.85rem", color: "#374151" }}>
+          Página {safePage} de {totalPages} · {activeTotal} no total
+        </span>
+        <button
+          type="button"
+          style={{ ...s.pagerBtn, opacity: safePage >= totalPages ? 0.5 : 1 }}
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={safePage >= totalPages}
+        >
+          Próxima →
+        </button>
+      </div>
+    ) : null;
 
   if (authError) {
     return (
@@ -188,10 +268,7 @@ const InscritosPage: React.FC = () => {
 
       <div style={s.totals}>
         {metrics.map((m) => (
-          <div
-            key={m.label}
-            style={{ ...s.totalBox, flex: "1 1 160px", background: m.bg, borderColor: m.b }}
-          >
+          <div key={m.label} style={{ ...s.totalBox, background: m.bg, borderColor: m.b }}>
             <div style={{ ...s.totalNum, color: m.c }}>{m.num}</div>
             <div style={{ ...s.totalLabel, color: m.c }}>{m.label}</div>
           </div>
@@ -226,18 +303,31 @@ const InscritosPage: React.FC = () => {
                     <th style={s.th}>Nome</th>
                     <th style={s.th}>Telefone</th>
                     <th style={s.th}>E-mail</th>
+                    <th style={s.th}>Data de nascimento</th>
+                    <th style={s.th}>Cidade</th>
                     <th style={s.th}>Status</th>
                     <th style={s.th}>Pernoite</th>
+                    <th style={s.th}>Qual medicação</th>
+                    <th style={s.th}>Qual restrição alimentar</th>
                   </tr>
                   <tr>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar nome" value={fNome} onChange={(e) => setFNome(e.target.value)} />
+                      <input style={s.filterInput} placeholder="Filtrar" value={fNome} onChange={(e) => setFNome(e.target.value)} />
                     </th>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar telefone" value={fTel} onChange={(e) => setFTel(e.target.value)} />
+                      <input style={s.filterInput} placeholder="Filtrar" value={fTel} onChange={(e) => setFTel(e.target.value)} />
                     </th>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar e-mail" value={fEmail} onChange={(e) => setFEmail(e.target.value)} />
+                      <input style={s.filterInput} placeholder="Filtrar" value={fEmail} onChange={(e) => setFEmail(e.target.value)} />
+                    </th>
+                    <th style={s.th}>
+                      <select style={s.filterInput} value={fAniversariante} onChange={(e) => setFAniversariante(e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="1">🎂 Aniversariantes (±7 dias)</option>
+                      </select>
+                    </th>
+                    <th style={s.th}>
+                      <input style={s.filterInput} placeholder="Filtrar" value={fCidade} onChange={(e) => setFCidade(e.target.value)} />
                     </th>
                     <th style={s.th}>
                       <select style={s.filterInput} value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
@@ -254,21 +344,32 @@ const InscritosPage: React.FC = () => {
                         <option value="0">Não</option>
                       </select>
                     </th>
+                    <th style={s.th}>
+                      <input style={s.filterInput} placeholder="Filtrar" value={fMed} onChange={(e) => setFMed(e.target.value)} />
+                    </th>
+                    <th style={s.th}>
+                      <input style={s.filterInput} placeholder="Filtrar" value={fRestr} onChange={(e) => setFRestr(e.target.value)} />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {regsFiltered.map((r, i) => (
+                  {regsPage.map((r, i) => (
                     <tr key={i}>
                       <td style={s.td}>{formatName(r.name)}</td>
                       <td style={s.td}>{r.phone || "—"}</td>
                       <td style={s.td}>{r.email || "—"}</td>
+                      <td style={s.td}>{formatDob(r.date_of_birth)}</td>
+                      <td style={s.td}>{r.city || "—"}</td>
                       <td style={s.td}><span style={badge(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</span></td>
                       <td style={s.td}>{r.sleep_at_monastery === 1 ? "Sim" : "Não"}</td>
+                      <td style={s.td}>{(r.allergy_medication_details || "").trim() || "—"}</td>
+                      <td style={s.td}>{(r.dietary_restriction_details || "").trim() || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {regsFiltered.length === 0 && <p style={s.empty}>Nenhuma inscrição encontrada.</p>}
+              <Pager />
             </>
           ) : (
             <>
@@ -282,10 +383,10 @@ const InscritosPage: React.FC = () => {
                   </tr>
                   <tr>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar nome" value={cNome} onChange={(e) => setCNome(e.target.value)} />
+                      <input style={s.filterInput} placeholder="Filtrar" value={cNome} onChange={(e) => setCNome(e.target.value)} />
                     </th>
                     <th style={s.th}>
-                      <input style={s.filterInput} placeholder="Filtrar e-mail" value={cEmail} onChange={(e) => setCEmail(e.target.value)} />
+                      <input style={s.filterInput} placeholder="Filtrar" value={cEmail} onChange={(e) => setCEmail(e.target.value)} />
                     </th>
                     <th style={s.th}>
                       <select style={s.filterInput} value={cStatus} onChange={(e) => setCStatus(e.target.value)}>
@@ -298,7 +399,7 @@ const InscritosPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tshirtsFiltered.map((t, i) => (
+                  {tshirtsPage.map((t, i) => (
                     <tr key={i}>
                       <td style={s.td}>{formatName(t.name)}</td>
                       <td style={s.td}>{t.email || "—"}</td>
@@ -308,6 +409,7 @@ const InscritosPage: React.FC = () => {
                 </tbody>
               </table>
               {tshirtsFiltered.length === 0 && <p style={s.empty}>Nenhuma compra encontrada.</p>}
+              <Pager />
             </>
           )}
         </div>
