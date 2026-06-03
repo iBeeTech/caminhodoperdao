@@ -37,4 +37,6 @@ export interface CallToActionSection {
 export interface AvailabilityState extends AvailabilityResponse {
   loading: boolean;
   error?: string;
+  // Camas de pernoite ainda livres (monasteryLimit - sleepers), nunca negativo.
+  monasterySpotsLeft?: number;
 }

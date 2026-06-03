@@ -321,8 +321,11 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const pixTextareaId = "pix-code";
 
   const hasAvailabilityError = Boolean(availability.error);
-  const showIntent = !hasAvailabilityError && phase === "intent" && !availability.totalFull && enrollmentEnabled;
-  const showCheckForm = !hasAvailabilityError && phase === "check" && !availability.totalFull && enrollmentEnabled;
+  // Mesmo lotado (totalFull), a intenção e a conferência continuam acessíveis: só o
+  // "Quero me inscrever" é desabilitado, mas o "Já me inscrevi" precisa funcionar para
+  // permitir trocas (geral<->pernoite) e cancelamentos quando o evento está cheio.
+  const showIntent = !hasAvailabilityError && phase === "intent" && enrollmentEnabled;
+  const showCheckForm = !hasAvailabilityError && phase === "check" && enrollmentEnabled;
   const showAlreadyRegistered =
     !hasAvailabilityError && phase === "alreadyRegistered" && enrollmentEnabled;
   const showRegistrationForm = !hasAvailabilityError && phase === "form" && !availability.totalFull && enrollmentEnabled;
@@ -455,9 +458,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
           <EnrollmentCallout />
             {capacityCallout && <Callout variant="warning">{capacityCallout}</Callout>}
             {hasAvailabilityError && <Callout variant="error">{t("signup.callouts.availabilityError")}</Callout>}
-            {availability.totalFull && phase !== "status" && !capacityCallout && (
-              <Callout variant="warning">{t("signup.callouts.full")}</Callout>
-            )}
+            {availability.totalFull &&
+              phase !== "status" &&
+              phase !== "intent" &&
+              phase !== "check" &&
+              !capacityCallout && (
+                <Callout variant="warning">{t("signup.callouts.full")}</Callout>
+              )}
 
           {/* Callout principal para inscrição reservada: mostrar apenas no status pendente, não no formulário inicial */}
           {showStatus && currentStatus === "PENDING" && (
@@ -531,15 +538,43 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 </PricingItem>
               </PricingNote>
               <IntentGrid>
-                <IntentButton type="button" onClick={onChooseRegister}>
-                  <strong>{t("signup.intent.registerTitle")} →</strong>
-                  <span>{t("signup.intent.registerHint")}</span>
-                </IntentButton>
+                {availability.totalFull ? (
+                  <IntentButton
+                    type="button"
+                    disabled
+                    style={{ opacity: 0.55, cursor: "not-allowed" }}
+                  >
+                    <strong>{t("signup.intent.soldOutTitle")}</strong>
+                  </IntentButton>
+                ) : (
+                  <IntentButton type="button" onClick={onChooseRegister}>
+                    <strong>{t("signup.intent.registerTitle")} →</strong>
+                    <span>{t("signup.intent.registerHint")}</span>
+                  </IntentButton>
+                )}
                 <IntentButton type="button" onClick={onChooseCheck}>
                   <strong>{t("signup.intent.checkTitle")} →</strong>
                   <span>{t("signup.intent.checkHint")}</span>
                 </IntentButton>
               </IntentGrid>
+
+              {availability.totalFull &&
+                !availability.monasteryFull &&
+                (availability.monasterySpotsLeft ?? 0) > 0 && (
+                  <p
+                    style={{
+                      marginTop: "1rem",
+                      textAlign: "center",
+                      color: "#a15c00",
+                      fontWeight: 600,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {t("signup.intent.soldOutMonasterySpots", {
+                      count: availability.monasterySpotsLeft ?? 0,
+                    })}
+                  </p>
+                )}
             </IntentContainer>
           )}
 

@@ -381,7 +381,9 @@
             "registerTitle": "Quero me inscrever",
             "registerHint": "Faça sua inscrição no Caminho do Perdão.",
             "checkTitle": "Já me inscrevi",
-            "checkHint": "Conferir o status da minha inscrição."
+            "checkHint": "Conferir o status da minha inscrição.",
+            "soldOutTitle": "Inscrições esgotadas",
+            "soldOutMonasterySpots": "Caso esteja inscrito na caminhada sem pernoite, você pode fazer sua mudança para pernoite pois temos {{count}} vaga(s) ainda"
         },
         "back": "Voltar",
         "alreadyRegistered": {

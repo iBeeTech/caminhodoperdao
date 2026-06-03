@@ -1,6 +1,9 @@
 export interface AvailabilityResponse {
   totalFull: boolean;
   monasteryFull: boolean;
+  // Camas pagas de pernoite ocupadas e teto — usados para calcular vagas livres.
+  sleepers?: number;
+  monasteryLimit?: number;
 }
 
 export interface RegistrationStatusResponse {

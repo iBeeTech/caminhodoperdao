@@ -330,6 +330,12 @@ const LandingController: React.FC = () => {
       error: availabilityError ? t("availability.error") : "",
       totalFull: availabilityData?.totalFull ?? false,
       monasteryFull: availabilityData?.monasteryFull ?? false,
+      sleepers: availabilityData?.sleepers,
+      monasteryLimit: availabilityData?.monasteryLimit,
+      monasterySpotsLeft: Math.max(
+        0,
+        (availabilityData?.monasteryLimit ?? 80) - (availabilityData?.sleepers ?? 0)
+      ),
     }),
     [availabilityData, availabilityError, isAvailabilityLoading, t]
   );
