@@ -135,7 +135,6 @@ const Header: React.FC<HeaderProps> = ({
                     aria-haspopup="true"
                     aria-expanded={tutOpen}
                     onClick={() => setTutOpen((o) => !o)}
-                    onMouseEnter={() => setTutOpen(true)}
                     style={{
                       background: "none",
                       border: "none",
