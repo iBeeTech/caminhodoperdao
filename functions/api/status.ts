@@ -68,9 +68,12 @@ export async function handleStatus(
 
         // Se a Woovi diz que foi pago, atualizar o D1
         if (["COMPLETED", "RECEIVED"].includes(wooviResponse.charge?.status)) {
+          // Marca SOMENTE esta inscrição (a cobrança consultada foi a do payment_ref dela).
+          // Antes usava WHERE phone = ?, o que marcava TODAS as inscrições do mesmo telefone
+          // como pagas (bug do "pago fantasma" quando alguém se inscrevia 2x com o mesmo tel).
           await env.DB
-            .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE phone = ?")
-            .bind(Date.now(), phoneForReg.replace(/\D/g, ""))
+            .prepare("UPDATE registrations SET status = 'PAID', paid_at = ? WHERE id = ?")
+            .bind(Date.now(), registration.id)
             .run();
           
           registration.status = "PAID";
