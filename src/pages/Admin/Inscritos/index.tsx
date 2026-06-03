@@ -355,7 +355,7 @@ const InscritosPage: React.FC = () => {
                 <tbody>
                   {regsPage.map((r, i) => (
                     <tr key={i}>
-                      <td style={s.td}>{formatName(r.name)}</td>
+                      <td style={{ ...s.td, fontWeight: 700 }}>{formatName(r.name)}</td>
                       <td style={s.td}>{r.phone || "—"}</td>
                       <td style={s.td}>{r.email || "—"}</td>
                       <td style={s.td}>{formatDob(r.date_of_birth)}</td>
@@ -401,7 +401,7 @@ const InscritosPage: React.FC = () => {
                 <tbody>
                   {tshirtsPage.map((t, i) => (
                     <tr key={i}>
-                      <td style={s.td}>{formatName(t.name)}</td>
+                      <td style={{ ...s.td, fontWeight: 700 }}>{formatName(t.name)}</td>
                       <td style={s.td}>{t.email || "—"}</td>
                       <td style={s.td}><span style={badge(t.status)}>{STATUS_LABEL[t.status] ?? t.status}</span></td>
                     </tr>
