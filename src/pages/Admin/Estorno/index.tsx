@@ -28,6 +28,13 @@ const TYPE_LABEL: Record<RefundRequest["type"], string> = {
 const formatBRL = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// Cores por status do estorno: Pendente (amarelo), Feito (verde), Cancelado (vermelho).
+const STATUS_STYLE: Record<RefundStatus, React.CSSProperties> = {
+  PENDENTE: { color: "#a16207", borderColor: "#fde68a", background: "#fefce8" },
+  FEITO: { color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" },
+  CANCELADO: { color: "#b91c1c", borderColor: "#fecaca", background: "#fef2f2" },
+};
+
 const styles: Record<string, React.CSSProperties> = {
   page: { maxWidth: 1000, margin: "0 auto", padding: "2rem 1rem", fontFamily: "sans-serif" },
   title: { fontSize: "1.5rem", marginBottom: "0.25rem" },
@@ -162,7 +169,7 @@ const EstornoPage: React.FC = () => {
                   <td style={styles.td}>{formatBRL(r.amount_cents)}</td>
                   <td style={styles.td}>
                     <select
-                      style={styles.select}
+                      style={{ ...styles.select, ...STATUS_STYLE[statusFor(r)], fontWeight: 600 }}
                       value={statusFor(r)}
                       onChange={(e) => handleChange(r.id, e.target.value as RefundStatus)}
                     >
