@@ -164,6 +164,7 @@
             "submit": "Gerar PIX da Camiseta",
             "loading": "Gerando PIX...",
             "check": "Visualizar pedidos de camisetas",
+            "checkHint": "Forneça seu CPF para consultar os pedidos.",
             "checkLoading": "Consultando...",
             "buyMore": "Comprar mais camisetas"
         },

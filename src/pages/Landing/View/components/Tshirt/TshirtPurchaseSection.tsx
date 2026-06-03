@@ -767,6 +767,16 @@ const TshirtPurchaseSection: React.FC = () => {
                 {isChecking ? t("tshirt.form.checkLoading") : t("tshirt.form.check")}
               </TrackedButton>
             </Actions>
+            <p
+              style={{
+                marginTop: "0.5rem",
+                textAlign: "center",
+                fontSize: "0.8rem",
+                color: "#6b7280",
+              }}
+            >
+              {t("tshirt.form.checkHint")}
+            </p>
           </Form>
 
           {hasAnyResult && (
