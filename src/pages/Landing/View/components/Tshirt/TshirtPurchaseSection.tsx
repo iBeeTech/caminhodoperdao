@@ -751,32 +751,34 @@ const TshirtPurchaseSection: React.FC = () => {
                 {isSubmitting ? t("tshirt.form.loading") : t("tshirt.form.submit")}
               </TrackedButton>
 
-              <TrackedButton
-                pageName="landing"
-                ctaId={LANDING_CTAS.TSHIRT_CHECK_STATUS}
-                sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
-                sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
-                position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
-                variant="outline"
-                size="md"
-                type="button"
-                loading={isChecking}
-                disabled={isChecking}
-                onClick={handleCheckStatus}
-              >
-                {isChecking ? t("tshirt.form.checkLoading") : t("tshirt.form.check")}
-              </TrackedButton>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <TrackedButton
+                  pageName="landing"
+                  ctaId={LANDING_CTAS.TSHIRT_CHECK_STATUS}
+                  sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
+                  sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
+                  position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
+                  variant="outline"
+                  size="md"
+                  type="button"
+                  loading={isChecking}
+                  disabled={isChecking}
+                  onClick={handleCheckStatus}
+                >
+                  {isChecking ? t("tshirt.form.checkLoading") : t("tshirt.form.check")}
+                </TrackedButton>
+                <span
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#6b7280",
+                    textAlign: "center",
+                    maxWidth: 260,
+                  }}
+                >
+                  {t("tshirt.form.checkHint")}
+                </span>
+              </div>
             </Actions>
-            <p
-              style={{
-                marginTop: "0.5rem",
-                textAlign: "center",
-                fontSize: "0.8rem",
-                color: "#6b7280",
-              }}
-            >
-              {t("tshirt.form.checkHint")}
-            </p>
           </Form>
 
           {hasAnyResult && (
