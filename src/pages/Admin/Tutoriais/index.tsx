@@ -14,8 +14,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardTitle: { fontSize: "1.15rem", fontWeight: 700, marginBottom: "0.75rem", color: "#1f7a3d" },
   gif: { width: "100%", maxWidth: 440, display: "block", margin: "0 auto", borderRadius: 10, border: "1px solid #eee" },
-  linkRow: { marginTop: "0.85rem", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
-  link: { fontSize: "0.85rem", color: "#2563eb", wordBreak: "break-all" },
 };
 
 const TUTORIAIS = [
@@ -32,19 +30,9 @@ const TUTORIAIS = [
 ];
 
 const TutoriaisPage: React.FC = () => {
-  const [copied, setCopied] = React.useState<string | null>(null);
   const [params] = useSearchParams();
   const tipo = params.get("tipo");
   const lista = TUTORIAIS.filter((t) => !tipo || t.tipo === tipo);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
-  const copy = (url: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url);
-      setCopied(url);
-      window.setTimeout(() => setCopied((c) => (c === url ? null : c)), 2000);
-    }
-  };
 
   return (
     <div style={styles.page}>
@@ -53,36 +41,12 @@ const TutoriaisPage: React.FC = () => {
         Veja o passo a passo de como cancelar sua compra de camiseta ou sua inscrição.
       </p>
 
-      {lista.map((t) => {
-        const fullUrl = `${origin}${t.gif}`;
-        return (
-          <div key={t.gif} style={styles.card}>
-            <div style={styles.cardTitle}>{t.titulo}</div>
-            <img src={t.gif} alt={t.titulo} style={styles.gif} />
-            <div style={styles.linkRow}>
-              <a href={t.gif} target="_blank" rel="noopener noreferrer" style={styles.link}>
-                {fullUrl}
-              </a>
-              <button
-                type="button"
-                onClick={() => copy(fullUrl)}
-                style={{
-                  padding: "0.35rem 0.8rem",
-                  borderRadius: 8,
-                  border: "1px solid #1f7a3d",
-                  background: copied === fullUrl ? "#1f7a3d" : "#fff",
-                  color: copied === fullUrl ? "#fff" : "#1f7a3d",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {copied === fullUrl ? "Copiado!" : "Copiar link"}
-              </button>
-            </div>
-          </div>
-        );
-      })}
+      {lista.map((t) => (
+        <div key={t.gif} style={styles.card}>
+          <div style={styles.cardTitle}>{t.titulo}</div>
+          <img src={t.gif} alt={t.titulo} style={styles.gif} />
+        </div>
+      ))}
     </div>
   );
 };
