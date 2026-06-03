@@ -34,9 +34,9 @@ const AdminNav: React.FC = () => {
     { to: "/admin", label: "Planilhas", active: pathname === "/admin" },
     { to: "/admin/estorno", label: "Estornos", active: pathname.startsWith("/admin/estorno") },
     {
-      to: "/admin/tutoriais",
+      to: "/tutoriais",
       label: "Tutoriais de Cancelamento",
-      active: pathname.startsWith("/admin/tutoriais"),
+      active: pathname.startsWith("/tutoriais"),
     },
   ];
   return (

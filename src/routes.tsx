@@ -10,7 +10,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/gallery/:year" element={<GalleryAlbum />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/estorno" element={<AdminEstorno />} />
-      <Route path="/admin/tutoriais" element={<AdminTutoriais />} />
+      <Route path="/tutoriais" element={<AdminTutoriais />} />
       <Route path="/staff" element={<Staff />} />
       <Route path="/responsabilityTerms" element={<ResponsabilityTerms />} />
       <Route path="/error" element={<ErrorPage />} />

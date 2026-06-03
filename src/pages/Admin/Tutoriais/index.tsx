@@ -1,5 +1,4 @@
 import React from "react";
-import AdminNav from "../AdminNav";
 
 const styles: Record<string, React.CSSProperties> = {
   page: { maxWidth: 760, margin: "0 auto", padding: "2rem 1rem", fontFamily: "sans-serif" },
@@ -43,10 +42,9 @@ const TutoriaisPage: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AdminNav />
       <h1 style={styles.title}>Tutoriais de Cancelamento</h1>
       <p style={styles.subtitle}>
-        GIFs passo a passo para enviar aos participantes (ex.: pelo WhatsApp). Copie o link e compartilhe.
+        Veja o passo a passo de como cancelar sua compra de camiseta ou sua inscrição.
       </p>
 
       {TUTORIAIS.map((t) => {
