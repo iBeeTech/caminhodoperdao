@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import AdminNav from "../AdminNav";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -10,6 +11,7 @@ interface Registration {
   email: string | null;
   status: Status;
   sleep_at_monastery: number;
+  is_staff: number;
 }
 interface Tshirt {
   name: string;
@@ -31,11 +33,11 @@ const STATUS_STYLE: Record<string, React.CSSProperties> = {
 const s: Record<string, React.CSSProperties> = {
   page: { maxWidth: 1100, margin: "0 auto", padding: "1.5rem 1rem", fontFamily: "sans-serif" },
   topbar: { display: "flex", alignItems: "center", gap: 12, marginBottom: "1rem", flexWrap: "wrap" },
-  back: {
-    padding: "0.45rem 1rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
-    color: "#374151", fontWeight: 600, textDecoration: "none", fontSize: "0.9rem",
-  },
   title: { fontSize: "1.4rem", margin: 0 },
+  refresh: {
+    marginLeft: "auto", padding: "0.5rem 1.1rem", borderRadius: 8, border: "none",
+    background: "#1f7a3d", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem",
+  },
   totals: { display: "flex", gap: 12, marginBottom: "1.25rem", flexWrap: "wrap" },
   totalBox: {
     flex: "1 1 220px", borderRadius: 12, padding: "1rem 1.25rem", border: "1px solid #bbf7d0",
@@ -89,16 +91,17 @@ const InscritosPage: React.FC = () => {
   const [cEmail, setCEmail] = React.useState("");
   const [cStatus, setCStatus] = React.useState("");
 
-  React.useEffect(() => {
+  const load = React.useCallback(() => {
     if (!token) {
       setAuthError(true);
       setLoading(false);
       return;
     }
+    setLoading(true);
     const h = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch("/api/admin/registrations", { headers: h }),
-      fetch("/api/admin/tshirts", { headers: h }),
+      fetch(`/api/admin/registrations?t=${Date.now()}`, { headers: h }),
+      fetch(`/api/admin/tshirts?t=${Date.now()}`, { headers: h }),
     ])
       .then(async ([r1, r2]) => {
         if (r1.status === 401 || r1.status === 403) {
@@ -114,8 +117,15 @@ const InscritosPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const paidGeral = regs.filter((r) => r.status === "PAID" && r.sleep_at_monastery === 0).length;
-  const paidPernoite = regs.filter((r) => r.status === "PAID" && r.sleep_at_monastery === 1).length;
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  // Callouts contam só peregrinos pagos (is_staff = 0). O total da tabela inclui todos.
+  const paidTotal = regs.filter((r) => r.status === "PAID" && r.is_staff === 0).length;
+  const paidPernoite = regs.filter(
+    (r) => r.status === "PAID" && r.is_staff === 0 && r.sleep_at_monastery === 1
+  ).length;
 
   const regsFiltered = regs.filter(
     (r) =>
@@ -142,17 +152,19 @@ const InscritosPage: React.FC = () => {
 
   return (
     <div style={s.page}>
+      <AdminNav />
+
       <div style={s.topbar}>
-        <Link to="/admin" style={s.back}>
-          ← Voltar
-        </Link>
         <h1 style={s.title}>Inscritos</h1>
+        <button type="button" style={s.refresh} onClick={load} disabled={loading}>
+          {loading ? "Atualizando…" : "Atualizar informações"}
+        </button>
       </div>
 
       <div style={s.totals}>
         <div style={s.totalBox}>
-          <div style={s.totalNum}>{paidGeral}</div>
-          <div style={s.totalLabel}>Inscritos pagos — Geral (sem pernoite)</div>
+          <div style={s.totalNum}>{paidTotal}</div>
+          <div style={s.totalLabel}>Inscritos pagos — Total</div>
         </div>
         <div style={{ ...s.totalBox, borderColor: "#fde68a", background: "#fffbeb" }}>
           <div style={{ ...s.totalNum, color: "#b45309" }}>{paidPernoite}</div>

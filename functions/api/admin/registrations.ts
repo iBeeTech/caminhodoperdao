@@ -15,17 +15,19 @@ interface Row {
   email: string | null;
   status: string;
   sleep_at_monastery: number;
+  is_staff: number;
 }
 
-// GET /api/admin/registrations -> inscritos (peregrinos, não-staff) para a tela /admin/inscritos.
+// GET /api/admin/registrations -> TODAS as inscrições (inclui staff) para a tela
+// /admin/inscritos. O total bate com a tabela registrations; os callouts de pagos
+// usam is_staff para contar só peregrinos.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authorizeAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   const result = await context.env.DB.prepare(
-    `SELECT name, phone, email, status, sleep_at_monastery
+    `SELECT name, phone, email, status, sleep_at_monastery, is_staff
      FROM registrations
-     WHERE is_staff = 0
      ORDER BY name COLLATE NOCASE`
   ).all<Row>();
 
