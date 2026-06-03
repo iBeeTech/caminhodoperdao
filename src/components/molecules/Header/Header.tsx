@@ -20,6 +20,28 @@ interface HeaderProps {
   showNavigation?: boolean;
 }
 
+const tutMenuStyle: React.CSSProperties = {
+  position: "absolute",
+  top: "100%",
+  left: 0,
+  background: "#fff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 8,
+  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+  zIndex: 50,
+  minWidth: 180,
+  overflow: "hidden",
+};
+
+const tutItemStyle: React.CSSProperties = {
+  display: "block",
+  padding: "0.6rem 1rem",
+  color: "#374151",
+  textDecoration: "none",
+  fontWeight: 600,
+  fontSize: "0.9rem",
+};
+
 const Header: React.FC<HeaderProps> = ({
   title,
   showNavigation = true,
@@ -27,6 +49,7 @@ const Header: React.FC<HeaderProps> = ({
   const { t } = useTranslation("common");
   const { navigationLinkClicked, navigationMenuToggled } = useAnalytics();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [tutOpen, setTutOpen] = useState(false);
   const navigationId = "primary-navigation";
   const navigationLabel = t("header.navigationLabel", { defaultValue: "Navegação principal" }) as string;
   const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
@@ -95,16 +118,75 @@ const Header: React.FC<HeaderProps> = ({
             </MenuToggle>
             <Navigation $open={isMenuOpen} aria-label={navigationLabel} id={navigationId}>
               <NavList>
-                {navigationItems.map((item, index) => {
-                  const LinkComponent = item.isCta ? NavLinkCta : NavLink;
-                  return (
-                    <NavItem key={index}>
-                      <LinkComponent href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
+                {navigationItems
+                  .filter((item) => !item.isCta)
+                  .map((item, index) => (
+                    <NavItem key={`n-${index}`}>
+                      <NavLink href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
                         {item.label}
-                      </LinkComponent>
+                      </NavLink>
                     </NavItem>
-                  );
-                })}
+                  ))}
+
+                <NavItem style={{ position: "relative" }} onMouseLeave={() => setTutOpen(false)}>
+                  <NavLink
+                    as="button"
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded={tutOpen}
+                    onClick={() => setTutOpen((o) => !o)}
+                    onMouseEnter={() => setTutOpen(true)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    Tutoriais de Cancelamento <span style={{ fontSize: "0.7rem" }}>▾</span>
+                  </NavLink>
+                  {tutOpen && (
+                    <div style={tutMenuStyle} role="menu">
+                      <a
+                        href="/tutoriais?tipo=camiseta"
+                        role="menuitem"
+                        style={tutItemStyle}
+                        onClick={() => {
+                          navigationLinkClicked("landing", "Tutoriais - Camisetas", "/tutoriais?tipo=camiseta", "header");
+                          setTutOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        Camisetas
+                      </a>
+                      <a
+                        href="/tutoriais?tipo=inscricao"
+                        role="menuitem"
+                        style={{ ...tutItemStyle, borderTop: "1px solid #f0f0f0" }}
+                        onClick={() => {
+                          navigationLinkClicked("landing", "Tutoriais - Inscrição", "/tutoriais?tipo=inscricao", "header");
+                          setTutOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        Inscrição
+                      </a>
+                    </div>
+                  )}
+                </NavItem>
+
+                {navigationItems
+                  .filter((item) => item.isCta)
+                  .map((item, index) => (
+                    <NavItem key={`c-${index}`}>
+                      <NavLinkCta href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
+                        {item.label}
+                      </NavLinkCta>
+                    </NavItem>
+                  ))}
               </NavList>
             </Navigation>
           </>
