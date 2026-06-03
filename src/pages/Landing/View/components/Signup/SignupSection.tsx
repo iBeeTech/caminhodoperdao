@@ -1213,7 +1213,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     {t("signup.status.canceledDescription")}
                   </span>
 
-                  <PixActions>
+                  <PixActions style={{ justifyContent: "center", width: "100%" }}>
                     <TrackedButton
                       pageName="landing"
                       ctaId={LANDING_CTAS.REOPEN_REGISTRATION}
