@@ -80,19 +80,23 @@ export const Navigation = styled.nav<{ $open: boolean }>`
 
 export const NavList = styled.ul`
   display: flex;
+  align-items: center;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 2rem;
+  gap: 2.25rem;
 
   @media (max-width: 1090px) {
     flex-direction: column;
+    align-items: stretch;
     gap: 0.75rem;
   }
 `;
 
 export const NavItem = styled.li`
   position: relative;
+  display: flex;
+  align-items: center;
 `;
 
 export const NavLink = styled.a`
