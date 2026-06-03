@@ -72,6 +72,19 @@ const badge = (status: string): React.CSSProperties => ({
 const inc = (v: string | null | undefined, q: string) =>
   (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
 
+// Padroniza o nome em title case (1ª letra de cada palavra maiúscula), mantendo
+// as preposições/conectivos em minúsculo conforme a norma da língua portuguesa.
+const LOWER = new Set(["de", "da", "do", "das", "dos", "e", "di", "du", "del", "della", "van", "von", "y"]);
+const formatName = (raw: string | null | undefined): string => {
+  const v = (raw ?? "").trim();
+  if (!v) return "—";
+  return v
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && LOWER.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+};
+
 const InscritosPage: React.FC = () => {
   const token = React.useMemo(() => localStorage.getItem(STORAGE_KEY), []);
   const [tab, setTab] = React.useState<"inscricoes" | "camisetas">("inscricoes");
@@ -233,7 +246,7 @@ const InscritosPage: React.FC = () => {
                 <tbody>
                   {regsFiltered.map((r, i) => (
                     <tr key={i}>
-                      <td style={s.td}>{r.name || "—"}</td>
+                      <td style={s.td}>{formatName(r.name)}</td>
                       <td style={s.td}>{r.phone || "—"}</td>
                       <td style={s.td}>{r.email || "—"}</td>
                       <td style={s.td}><span style={badge(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</span></td>
@@ -274,7 +287,7 @@ const InscritosPage: React.FC = () => {
                 <tbody>
                   {tshirtsFiltered.map((t, i) => (
                     <tr key={i}>
-                      <td style={s.td}>{t.name || "—"}</td>
+                      <td style={s.td}>{formatName(t.name)}</td>
                       <td style={s.td}>{t.email || "—"}</td>
                       <td style={s.td}><span style={badge(t.status)}>{STATUS_LABEL[t.status] ?? t.status}</span></td>
                     </tr>
