@@ -23,6 +23,8 @@
         "reportTshirt": "Planilha de Camisetas",
         "reportCancelados": "Planilha de Inscrições Canceladas",
         "reportVendas": "Ver vendas totais (site × Woovi)",
+        "reconcilePix": "Atualizar status PIX (Woovi)",
+        "reconcilePixLoading": "Consultando a Woovi...",
         "logout": "Sair",
         "addAdminLabel": "Adicionar admin",
         "addAdminPlaceholder": "email@dominio.com",
@@ -42,6 +44,9 @@
         "addAdminNoPermission": "Sem permissão para adicionar admin.",
         "addAdminError": "Não foi possível adicionar admin.",
         "addAdminSuccess": "Admin adicionado com sucesso.",
-        "downloadError": "Não foi possível gerar a planilha. Tente novamente."
+        "downloadError": "Não foi possível gerar a planilha. Tente novamente.",
+        "reconcileSuccess": "Reconciliação concluída: {{checked}} verificadas, {{paid}} confirmadas como PAGAS, {{canceled}} canceladas (expiradas), {{pending}} ainda pendentes, {{errors}} com erro.",
+        "reconcileSuccessGeneric": "Reconciliação concluída com a Woovi.",
+        "reconcileError": "Não foi possível atualizar os status com a Woovi. Tente novamente."
     }
 }
