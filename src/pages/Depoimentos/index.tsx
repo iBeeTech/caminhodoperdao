@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { Header } from "../../components";
@@ -33,6 +33,11 @@ const Depoimentos: React.FC = () => {
   const [errors, setErrors] = useState<{ name?: string; content?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: "success" | "error"; text: string } | null>(null);
+
+  // Ao chegar de outra rota o navegador mantém a rolagem; força o topo (onde está o formulário).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
