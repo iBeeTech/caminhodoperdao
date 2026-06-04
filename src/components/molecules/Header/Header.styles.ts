@@ -51,6 +51,7 @@ export const HeaderTitle = styled.p`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text};
   margin: 0;
+  white-space: nowrap;
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart} 0%, ${({ theme }) => theme.colors.gradientEnd} 100%);
   background-clip: text;
   -webkit-background-clip: text;
@@ -94,7 +95,8 @@ export const NavList = styled.ul`
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 2.25rem;
+  gap: 1.5rem;
+  white-space: nowrap;
 
   @media (max-width: 1090px) {
     flex-direction: column;
