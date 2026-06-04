@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Link as RouterLink } from "react-router-dom";
 import { SectionContainer, SectionTitle } from "../shared";
 
 export const TestimonialsSectionWrapper = styled.section`
@@ -145,6 +146,26 @@ export const CalloutText = styled.p`
 `;
 
 export const WhatsAppLink = styled.a`
+  display: inline-block;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart} 0%, ${({ theme }) => theme.colors.gradientEnd} 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+export const SubmitLink = styled(RouterLink)`
   display: inline-block;
   padding: 0.875rem 2rem;
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.gradientStart} 0%, ${({ theme }) => theme.colors.gradientEnd} 100%);

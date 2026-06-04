@@ -248,7 +248,7 @@ const LandingView: React.FC<LandingViewProps> = ({
           sectionName={LANDING_SECTIONS.TESTIMONIALS.name}
           position={LANDING_SECTIONS.TESTIMONIALS.position}
         >
-          <TestimonialsSection getNextWhatsappUrl={getNextWhatsappUrl} />
+          <TestimonialsSection />
         </TrackSection>
 
         <TrackSection

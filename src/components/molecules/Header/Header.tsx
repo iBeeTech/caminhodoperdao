@@ -53,25 +53,19 @@ const Header: React.FC<HeaderProps> = ({
   const navigationId = "primary-navigation";
   const navigationLabel = t("header.navigationLabel", { defaultValue: "Navegação principal" }) as string;
   const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
-  const isGalleryPage = path === "/gallery";
+  // Na home as âncoras são locais (#secao); em qualquer outra página (galeria,
+  // depoimentos, etc.) elas precisam apontar para a home (/#secao).
+  const isHomePage = path === "/";
+  const anchorBase = isHomePage ? "" : "/";
   const appTitle = title ?? (t("app.title") as string);
-  const navigationItems = isGalleryPage
-    ? [
-        { label: t("nav.home"), href: "/" },
-        { label: t("nav.registration"), href: "/#registration-form" },
-        { label: t("nav.schedule"), href: "/#schedule" },
-        { label: t("nav.about"), href: "/#about" },
-        { label: t("nav.contact"), href: "/#contact" },
-        { label: t("nav.gallery"), href: "/gallery", isCta: true },
-      ]
-    : [
-        { label: t("nav.home"), href: "#home" },
-        { label: t("nav.registration"), href: "#registration-form" },
-        { label: t("nav.schedule"), href: "#schedule" },
-        { label: t("nav.about"), href: "#about" },
-        { label: t("nav.contact"), href: "#contact" },
-        { label: t("nav.gallery"), href: "/gallery", isCta: true },
-      ];
+  const navigationItems = [
+    { label: t("nav.home"), href: isHomePage ? "#home" : "/" },
+    { label: t("nav.registration"), href: `${anchorBase}#registration-form` },
+    { label: t("nav.schedule"), href: `${anchorBase}#schedule` },
+    { label: t("nav.about"), href: `${anchorBase}#about` },
+    { label: t("nav.contact"), href: `${anchorBase}#contact` },
+    { label: t("nav.gallery"), href: "/gallery", isCta: true },
+  ];
 
   const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string, label: string) => {
     const currentPage = typeof window !== "undefined" ? (window.location.pathname === "/gallery" ? "gallery" : "landing") : "landing";

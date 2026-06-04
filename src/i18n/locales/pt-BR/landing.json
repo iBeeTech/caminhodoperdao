@@ -93,9 +93,25 @@
         "error": "Algo deu errado por aqui! Volte mais tarde para ver os depoimentos",
         "callout": {
             "title": "Deixe seu depoimento",
-            "message": "Sua história de transformação é importante para nós! Entre em contato via WhatsApp e compartilhe como o Caminho do Perdão impactou sua vida.",
-            "buttonText": "Falar no WhatsApp",
-            "whatsappUrl": "https://wa.me/5511999999999?text=Olá%21%20Gostaria%20de%20deixar%20meu%20depoimento%20sobre%20o%20Caminho%20do%20Perdão"
+            "message": "Sua história de transformação é importante para nós! Clique abaixo e compartilhe como o Caminho do Perdão impactou sua vida.",
+            "buttonText": "Clique aqui para deixar seu depoimento"
+        },
+        "form": {
+            "title": "Deixe seu depoimento",
+            "subtitle": "Compartilhe como o Caminho do Perdão impactou sua vida. Seu depoimento poderá aparecer na nossa página.",
+            "nameLabel": "Seu nome",
+            "namePlaceholder": "Como você quer ser identificado",
+            "roleLabel": "Como você participou (opcional)",
+            "rolePlaceholder": "Ex.: Peregrino 2025, Voluntário, Staff…",
+            "ratingLabel": "Sua avaliação",
+            "contentLabel": "Seu depoimento",
+            "contentPlaceholder": "Conte sua experiência no Caminho do Perdão…",
+            "submit": "Enviar depoimento",
+            "submitting": "Enviando…",
+            "success": "Obrigado! Seu depoimento foi enviado com sucesso. 🙏",
+            "error": "Não foi possível enviar seu depoimento agora. Tente novamente.",
+            "nameRequired": "Informe seu nome.",
+            "contentRequired": "Escreva seu depoimento."
         },
         "items": []
     },

@@ -21,9 +21,8 @@ import {
   CalloutContainer,
   CalloutTitle,
   CalloutText,
-  WhatsAppLink,
+  SubmitLink,
 } from "./TestimonialsSection.styles";
-import { useAnalytics } from "../../../../../hooks/useAnalytics";
 
 const renderStars = (rating?: number) =>
   Array(rating || 5)
@@ -35,19 +34,14 @@ const renderStars = (rating?: number) =>
     ));
 
 interface TestimonialsSectionProps {
-  getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;
+  // Quando false, oculta o bloco "Deixe seu depoimento" (usado dentro de /depoimentos,
+  // onde o formulário já está logo acima).
+  showSubmitLink?: boolean;
 }
 
-const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ getNextWhatsappUrl }) => {
+const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ showSubmitLink = true }) => {
   const { t } = useTranslation("landing");
   const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
-  const { externalLinkClicked } = useAnalytics();
-  const handleWhatsAppClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    externalLinkClicked("whatsapp_testimonial");
-    const url = await getNextWhatsappUrl({ depoimento: true });
-    window.open(url, "_blank");
-  };
 
   if (isLoading) {
     return (
@@ -106,18 +100,15 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ getNextWhatsa
           ))}
         </TestimonialsGrid>
 
-        <CalloutContainer>
-          <CalloutTitle>{t("testimonials.callout.title")}</CalloutTitle>
-          <CalloutText>{t("testimonials.callout.message")}</CalloutText>
-          <WhatsAppLink 
-            href="#"
-            target="_blank" 
-            rel="noopener noreferrer"
-            onClick={handleWhatsAppClick}
-          >
-            {t("testimonials.callout.buttonText")}
-          </WhatsAppLink>
-        </CalloutContainer>
+        {showSubmitLink && (
+          <CalloutContainer>
+            <CalloutTitle>{t("testimonials.callout.title")}</CalloutTitle>
+            <CalloutText>{t("testimonials.callout.message")}</CalloutText>
+            <SubmitLink to="/depoimentos">
+              {t("testimonials.callout.buttonText")}
+            </SubmitLink>
+          </CalloutContainer>
+        )}
       </Container>
     </TestimonialsSectionWrapper>
   );
