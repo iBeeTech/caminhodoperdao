@@ -47,7 +47,7 @@ export const HeaderHomeLink = styled.a`
 `;
 
 export const HeaderTitle = styled.p`
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text};
   margin: 0;
@@ -168,6 +168,7 @@ export const NavLinkCta = styled(NavLink)`
   padding: 0.45rem 0.95rem;
   border-radius: 999px;
   font-weight: 700;
+  white-space: nowrap;
   box-shadow: 0 10px 24px rgba(102, 126, 234, 0.25);
   overflow: hidden;
 
