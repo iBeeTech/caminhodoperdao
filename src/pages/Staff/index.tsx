@@ -471,14 +471,6 @@ const StaffPageComponent: React.FC = () => {
         </Select>
       </FormField>
 
-      {form.sleepAtMonastery === "yes" && (
-        <FormField label={`${rf("companionBeforeGroup")} ${rf("companionGroup")}`} htmlFor="companionName">
-          <Input id="companionName" type="text" value={form.companionName}
-            placeholder={rf("companionPlaceholder")}
-            onChange={e => update("companionName", e.target.value)} />
-        </FormField>
-      )}
-
       <FormField label={rf("allergyMedicationQuestion")} htmlFor="allergyMedicationYes"
         error={errors.allergyMedication} required>
         <RadioRow>
