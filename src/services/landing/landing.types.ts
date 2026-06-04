@@ -91,6 +91,7 @@ export interface TshirtSizes {
 export interface TshirtPurchasePayload {
   name: string;
   email: string;
+  phone: string;
   cpf: string;
   sizes: TshirtSizes;
 }

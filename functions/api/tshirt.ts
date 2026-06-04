@@ -26,6 +26,7 @@ interface TshirtPurchaseRow {
   id: string;
   customer_name: string;
   email: string | null;
+  phone: string | null;
   cpf_encrypted: string;
   size_p_qty: number;
   size_m_qty: number;
@@ -133,6 +134,7 @@ const PURCHASE_COLUMNS = `
   id,
   customer_name,
   email,
+  phone,
   cpf_encrypted,
   size_p_qty,
   size_m_qty,
@@ -385,6 +387,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
   const name = normalizeName(rawName);
   const cpf = typeof payload.cpf === "string" ? payload.cpf : "";
   const email = (typeof payload.email === "string" ? payload.email : "").trim().toLowerCase();
+  const phoneDigits = (typeof payload.phone === "string" ? payload.phone : "").replace(/\D/g, "");
 
   if (!name) {
     return badRequest("name_required");
@@ -396,6 +399,14 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
 
   if (!isValidEmail(email)) {
     return badRequest("invalid_email");
+  }
+
+  if (!phoneDigits) {
+    return badRequest("phone_required");
+  }
+
+  if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+    return badRequest("invalid_phone");
   }
 
   if (!cpf) {
@@ -472,6 +483,7 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
          id,
          customer_name,
          email,
+         phone,
          cpf_encrypted,
          size_p_qty,
          size_m_qty,
@@ -488,12 +500,13 @@ async function handleCreatePurchase(env: Env, body: unknown): Promise<Response> 
          qr_code_image,
          created_at,
          updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'woovi', ?, ?, ?, ?, ?, ?, ?)`
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'woovi', ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         purchaseId,
         name,
         email,
+        phoneDigits,
         cpfEncrypted,
         sizes.P,
         sizes.M,

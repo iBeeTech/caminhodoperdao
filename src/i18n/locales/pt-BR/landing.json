@@ -174,6 +174,8 @@
             "emailLabel": "E-mail",
             "emailPlaceholder": "seu@email.com",
             "emailHint": "Enviaremos o comprovante de pagamento para este e-mail.",
+            "phoneLabel": "WhatsApp",
+            "phonePlaceholder": "(16) 9XXXX-XXXX",
             "cpfLabel": "CPF",
             "cpfPlaceholder": "000.000.000-00",
             "sizeLabel": "Tamanho {{size}}",
@@ -211,6 +213,7 @@
             "required": "Obrigatório",
             "invalidCpf": "CPF inválido",
             "invalidEmail": "E-mail inválido",
+            "invalidPhone": "Telefone inválido",
             "quantityRequired": "Selecione ao menos 1 camiseta.",
             "cpfUsedByOtherName": "Este CPF já está vinculado a outro nome nas compras de camiseta.",
             "cpfUsedByOtherNameNamed": "Este CPF já está vinculado ao nome \"{{name}}\" nas compras de camiseta. Use o mesmo nome para consultar ou comprar."

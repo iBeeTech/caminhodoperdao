@@ -20,6 +20,7 @@ import {
 import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
 import { formatCpfBR } from "../../../../../utils/formatters/cpf";
+import { formatPhoneBR } from "../../../../../utils/formatters/phone";
 import { canonicalizeCpf, isValidCpf } from "../../../../../utils/validators/cpf";
 import { isEmailValid } from "../../../../../utils/validators/email";
 import camisetaFrente from "../../../../../assets/camiseta-frente.png";
@@ -71,7 +72,7 @@ import {
   ZoomClose,
 } from "./TshirtPurchaseSection.styles";
 
-type TshirtErrorKey = "name" | "email" | "cpf" | "quantities";
+type TshirtErrorKey = "name" | "email" | "phone" | "cpf" | "quantities";
 type TshirtErrors = Partial<Record<TshirtErrorKey, string>>;
 
 const DEFAULT_PRICE_PER_TSHIRT_CENTS = 10_000;
@@ -125,6 +126,7 @@ const TshirtPurchaseSection: React.FC = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [sizes, setSizes] = useState<TshirtSizes>({ P: 0, M: 0, G: 0, GG: 0 });
   const [pricePerUnitCents, setPricePerUnitCents] = useState<number>(
@@ -398,6 +400,13 @@ const TshirtPurchaseSection: React.FC = () => {
       nextErrors.email = t("tshirt.errors.invalidEmail");
     }
 
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (!phoneDigits) {
+      nextErrors.phone = t("tshirt.errors.required");
+    } else if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      nextErrors.phone = t("tshirt.errors.invalidPhone");
+    }
+
     const cpfDigits = canonicalizeCpf(cpf);
     if (!cpfDigits) {
       nextErrors.cpf = t("tshirt.errors.required");
@@ -453,6 +462,16 @@ const TshirtPurchaseSection: React.FC = () => {
       return;
     }
 
+    if (payload.error === "phone_required") {
+      setErrors((prev) => ({ ...prev, phone: t("tshirt.errors.required") }));
+      return;
+    }
+
+    if (payload.error === "invalid_phone") {
+      setErrors((prev) => ({ ...prev, phone: t("tshirt.errors.invalidPhone") }));
+      return;
+    }
+
     if (payload.error === "quantity_required" || payload.error === "invalid_quantity") {
       setErrors((prev) => ({ ...prev, quantities: t("tshirt.errors.quantityRequired") }));
       return;
@@ -497,6 +516,7 @@ const TshirtPurchaseSection: React.FC = () => {
       const result = await landingService.purchaseTshirt({
         name: normalizeName(name),
         email: email.trim().toLowerCase(),
+        phone: phone.replace(/\D/g, ""),
         cpf: normalizedCpf,
         sizes,
       });
@@ -703,6 +723,22 @@ const TshirtPurchaseSection: React.FC = () => {
             {!errors.email && (
               <FieldHint>{t("tshirt.form.emailHint")}</FieldHint>
             )}
+
+            <FormField label={t("tshirt.form.phoneLabel")} htmlFor="tshirt-phone" error={errors.phone} required>
+              <Input
+                id="tshirt-phone"
+                name="tshirt-phone"
+                type="tel"
+                value={phone}
+                placeholder={t("tshirt.form.phonePlaceholder")}
+                inputMode="tel"
+                autoComplete="tel"
+                onChange={(event) => {
+                  setPhone(formatPhoneBR(event.target.value));
+                  setErrors((prev) => ({ ...prev, phone: undefined }));
+                }}
+              />
+            </FormField>
 
             <FormField label={t("tshirt.form.cpfLabel")} htmlFor="tshirt-cpf" error={errors.cpf} required>
               <Input

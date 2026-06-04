@@ -16,6 +16,7 @@ interface PurchaseRow {
   id: string;
   customer_name: string;
   email: string | null;
+  phone: string | null;
   status: "PENDING" | "PAID" | "CANCELED";
   payment_ref: string | null;
   provider_charge_id: string | null;
@@ -54,7 +55,7 @@ export async function handleCancelTshirt(env: Env, body: unknown): Promise<Respo
 
   // A compra precisa pertencer ao CPF informado (evita cancelar pedido de terceiro).
   const purchase = await env.DB.prepare(
-    `SELECT id, customer_name, email, status, payment_ref, provider_charge_id, amount_cents
+    `SELECT id, customer_name, email, phone, status, payment_ref, provider_charge_id, amount_cents
      FROM tshirt_purchase
      WHERE id = ? AND cpf_encrypted = ?`
   )
@@ -94,7 +95,7 @@ export async function handleCancelTshirt(env: Env, body: unknown): Promise<Respo
       type: "camiseta",
       sourceId: purchase.id,
       name: purchase.customer_name,
-      phone: null, // compra de camiseta não coleta telefone
+      phone: purchase.phone,
       email: purchase.email,
       amountCents: purchase.amount_cents,
     });
