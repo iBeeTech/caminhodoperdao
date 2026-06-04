@@ -13,11 +13,17 @@ export const HeaderContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   height: 70px;
   gap: 1rem;
+
+  /* Tablet/mobile mantém o comportamento atual: logo à esquerda e menu hambúrguer à direita. */
+  @media (max-width: 1090px) {
+    display: flex;
+    justify-content: space-between;
+  }
 
   @media (max-width: 768px) {
     padding: 0 15px;
@@ -27,7 +33,11 @@ export const HeaderContainer = styled.div`
 
 export const HeaderLogo = styled.div`
   flex-shrink: 0;
-  margin-right: auto;
+  justify-self: start;
+
+  @media (max-width: 1090px) {
+    margin-right: auto;
+  }
 `;
 
 export const HeaderHomeLink = styled.a`
@@ -57,7 +67,7 @@ export const HeaderTitle = styled.p`
 
 export const Navigation = styled.nav<{ $open: boolean }>`
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 
   @media (max-width: 1090px) {
     position: absolute;
@@ -97,6 +107,28 @@ export const NavItem = styled.li`
   position: relative;
   display: flex;
   align-items: center;
+`;
+
+/* Item da galeria que só aparece dentro do menu dropdown no tablet/mobile.
+   No desktop a galeria é renderizada à direita via HeaderActions. */
+export const MobileNavItem = styled(NavItem)`
+  display: none;
+
+  @media (max-width: 1090px) {
+    display: flex;
+  }
+`;
+
+/* Slot à direita da header no desktop (galeria de fotos). Escondido no
+   tablet/mobile, onde a galeria volta para dentro do menu hambúrguer. */
+export const HeaderActions = styled.div`
+  justify-self: end;
+  display: flex;
+  align-items: center;
+
+  @media (max-width: 1090px) {
+    display: none;
+  }
 `;
 
 export const NavLink = styled.a`

@@ -10,8 +10,10 @@ import {
   Navigation,
   NavList,
   NavItem,
+  MobileNavItem,
   NavLink,
   NavLinkCta,
+  HeaderActions,
   MenuToggle,
 } from "./Header.styles";
 
@@ -64,6 +66,7 @@ const Header: React.FC<HeaderProps> = ({
     { label: t("nav.schedule"), href: `${anchorBase}#schedule` },
     { label: t("nav.about"), href: `${anchorBase}#about` },
     { label: t("nav.contact"), href: `${anchorBase}#contact` },
+    { label: t("nav.testimonials"), href: "/depoimentos" },
     { label: t("nav.gallery"), href: "/gallery", isCta: true },
   ];
 
@@ -174,14 +177,27 @@ const Header: React.FC<HeaderProps> = ({
                 {navigationItems
                   .filter((item) => item.isCta)
                   .map((item, index) => (
-                    <NavItem key={`c-${index}`}>
+                    <MobileNavItem key={`c-${index}`}>
                       <NavLinkCta href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
                         {item.label}
                       </NavLinkCta>
-                    </NavItem>
+                    </MobileNavItem>
                   ))}
               </NavList>
             </Navigation>
+            <HeaderActions>
+              {navigationItems
+                .filter((item) => item.isCta)
+                .map((item, index) => (
+                  <NavLinkCta
+                    key={`cta-${index}`}
+                    href={item.href}
+                    onClick={(event) => handleNavClick(event, item.href, item.label)}
+                  >
+                    {item.label}
+                  </NavLinkCta>
+                ))}
+            </HeaderActions>
           </>
         )}
       </HeaderContainer>
