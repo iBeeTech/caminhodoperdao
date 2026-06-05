@@ -100,6 +100,68 @@ export async function deleteWooviCharge(
   return { deleted: true, status: response.status };
 }
 
+export interface WooviListedCharge {
+  status?: string;
+  correlationID?: string;
+  transactionID?: string;
+  value?: number;
+  customer?: { name?: string; email?: string; taxID?: string | { taxID?: string } };
+}
+
+/**
+ * Lista as cobranças COMPLETED (pagas) da Woovi, paginando até o fim.
+ *
+ * Rede de segurança na reconciliação: quando o GET direto de uma cobrança (por payment_ref)
+ * falha — ex.: a cobrança foi apagada/expirada do lado da Woovi mas o PIX entrou —, dá pra
+ * varrer as cobranças pagas e casar por referência (correlationID / transactionID) ou pelo
+ * e-mail do cliente.
+ *
+ * `startISO`: data inicial em RFC 3339 (ex.: "2026-05-01T00:00:00Z") para limitar o período.
+ */
+export async function listWooviCompletedCharges(
+  appId: string,
+  startISO?: string
+): Promise<WooviListedCharge[]> {
+  const all: WooviListedCharge[] = [];
+  const limit = 100;
+  let skip = 0;
+
+  // Cap de segurança (50 páginas) para nunca rodar infinito.
+  for (let page = 0; page < 50; page += 1) {
+    const params = new URLSearchParams({
+      status: 'COMPLETED',
+      skip: String(skip),
+      limit: String(limit),
+    });
+    if (startISO) params.set('start', startISO);
+
+    const response = await fetch(`${WOOVI_API_BASE}/api/v1/charge?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: appId,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Woovi listCharges falhou (status ${response.status}) na página ${page}`);
+      break;
+    }
+
+    const data = (await response.json()) as {
+      charges?: WooviListedCharge[];
+      data?: WooviListedCharge[];
+    };
+    const charges = data.charges ?? data.data ?? [];
+    all.push(...charges);
+
+    if (charges.length < limit) break;
+    skip += limit;
+  }
+
+  return all;
+}
+
 /**
  * Hash an email for logging purposes (LGPD compliance)
  */

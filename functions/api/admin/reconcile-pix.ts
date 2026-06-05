@@ -5,7 +5,11 @@ import {
   getAdminDefaults,
 } from "../../_utils/adminAuth";
 import { json, serverError, unauthorized } from "../../_utils/responses";
-import { getWooviChargeStatus } from "../../_utils/woovi";
+import {
+  getWooviChargeStatus,
+  listWooviCompletedCharges,
+} from "../../_utils/woovi";
+import type { WooviListedCharge } from "../../_utils/woovi";
 import { enforceCapacity } from "../../_utils/enforceCapacity";
 
 interface ReconcileEnv extends AdminAuthEnv {
@@ -18,6 +22,7 @@ interface PendingRegistrationRow {
   email: string;
   name: string | null;
   payment_ref: string | null;
+  expected_cents: number | null;
 }
 
 interface PendingTshirtRow {
@@ -59,6 +64,10 @@ async function generateRegistrationNumber(db: D1Database): Promise<string> {
  *  - EXPIRED   -> marca como CANCELED.
  *  - ACTIVE    -> permanece pendente.
  *
+ * Quando o GET direto da cobrança falha (ex.: cobrança apagada/expirada na Woovi, mas o PIX
+ * entrou), há um fallback: lista as cobranças PAGAS e casa por referência (correlationID/
+ * transactionID) ou por e-mail + valor, recuperando esses casos automaticamente.
+ *
  * Serve de rede de segurança para webhooks perdidos. Restrito ao admin geral.
  *
  * POST /api/admin/reconcile-pix
@@ -89,7 +98,10 @@ export const onRequestPost: PagesFunction<ReconcileEnv> = async context => {
   try {
     const res = await db
       .prepare(
-        "SELECT id, email, name, payment_ref FROM registrations WHERE status = 'PENDING' AND payment_ref IS NOT NULL AND payment_ref != ''"
+        `SELECT r.id, r.email, r.name, r.payment_ref, p.amount_cents AS expected_cents
+         FROM registrations r
+         LEFT JOIN payments p ON p.correlation_id = r.payment_ref
+         WHERE r.status = 'PENDING' AND r.payment_ref IS NOT NULL AND r.payment_ref != ''`
       )
       .all<PendingRegistrationRow>();
     pendingRegistrations = res.results ?? [];
@@ -97,6 +109,9 @@ export const onRequestPost: PagesFunction<ReconcileEnv> = async context => {
     console.error("Erro ao listar inscrições pendentes:", error);
     return serverError("list_pending_failed");
   }
+
+  // Inscrições cujo GET direto da cobrança falhou — resolvidas depois pelo fallback.
+  const erroredRegs: { reg: PendingRegistrationRow; idx: number; label: string }[] = [];
 
   for (const reg of pendingRegistrations) {
     const ref = reg.payment_ref as string;
@@ -147,15 +162,81 @@ export const onRequestPost: PagesFunction<ReconcileEnv> = async context => {
         });
       }
     } catch (error: any) {
-      console.warn(`Reconciliação falhou para inscrição ${ref}:`, error?.message);
-      results.push({
-        type: "registration",
-        name: label,
-        email: reg.email,
-        payment_ref: ref,
-        action: "error",
-        detail: error?.message ? String(error.message).slice(0, 200) : "woovi_error",
-      });
+      console.warn(`GET direto da cobrança falhou para inscrição ${ref}:`, error?.message);
+      const idx =
+        results.push({
+          type: "registration",
+          name: label,
+          email: reg.email,
+          payment_ref: ref,
+          action: "error",
+          detail: error?.message ? String(error.message).slice(0, 200) : "woovi_error",
+        }) - 1;
+      erroredRegs.push({ reg, idx, label });
+    }
+  }
+
+  // ===== Fallback: busca por cliente quando o GET direto da cobrança falhou =====
+  // Caso típico: a cobrança foi apagada/expirada na Woovi, mas o PIX entrou. Varremos as
+  // cobranças PAGAS e casamos por referência (correlationID/transactionID) ou por e-mail+valor.
+  if (erroredRegs.length > 0) {
+    let completed: WooviListedCharge[] = [];
+    try {
+      completed = await listWooviCompletedCharges(appId, "2026-05-01T00:00:00Z");
+    } catch (error) {
+      console.warn("Listagem de cobranças pagas (fallback) falhou:", error);
+    }
+
+    if (completed.length > 0) {
+      const byRef = new Map<string, WooviListedCharge>();
+      const byEmail = new Map<string, WooviListedCharge[]>();
+      for (const charge of completed) {
+        if (charge.correlationID) byRef.set(charge.correlationID, charge);
+        if (charge.transactionID) byRef.set(charge.transactionID, charge);
+        const em = (charge.customer?.email || "").trim().toLowerCase();
+        if (em) {
+          const arr = byEmail.get(em) ?? [];
+          arr.push(charge);
+          byEmail.set(em, arr);
+        }
+      }
+
+      const usedCharges = new Set<string>();
+      const chargeKey = (c: WooviListedCharge) => c.correlationID || c.transactionID || "";
+
+      for (const { reg, idx, label } of erroredRegs) {
+        const ref = reg.payment_ref as string;
+
+        // 1) Casa por referência (preciso): cobrança paga com o mesmo correlationID/transactionID.
+        let matched = byRef.get(ref);
+
+        // 2) Senão, casa por e-mail + valor, só quando há exatamente 1 candidata paga não usada.
+        if (!matched) {
+          const em = (reg.email || "").trim().toLowerCase();
+          const candidates = (byEmail.get(em) ?? []).filter(c => {
+            if (usedCharges.has(chargeKey(c))) return false;
+            if (reg.expected_cents != null && c.value != null) return c.value === reg.expected_cents;
+            return true;
+          });
+          if (candidates.length === 1) matched = candidates[0];
+        }
+
+        if (matched) {
+          usedCharges.add(chargeKey(matched));
+          const registrationNumber = await generateRegistrationNumber(db);
+          await db
+            .prepare(
+              "UPDATE registrations SET status = 'PAID', paid_at = ?, registration_number = ? WHERE id = ? AND status = 'PENDING'"
+            )
+            .bind(Date.now(), registrationNumber, reg.id)
+            .run();
+          paidCount += 1;
+          results[idx].action = "paid";
+          results[idx].wooviStatus = "COMPLETED (via busca por cliente)";
+          results[idx].detail = registrationNumber;
+          console.log(`Inscrição recuperada via fallback: ${label} (${registrationNumber})`);
+        }
+      }
     }
   }
 
