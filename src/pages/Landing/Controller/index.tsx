@@ -11,6 +11,7 @@ import { RegistrationPayload, RegistrationStatusResponse } from "../../../servic
 // Utils imports
 import { formatPhoneBR } from "../../../utils/formatters/phone";
 import { formatCepBR } from "../../../utils/formatters/cep";
+import { formatCpfBR } from "../../../utils/formatters/cpf";
 import { getFieldValue, focusFirstError } from "../../../utils/dom/forms";
 import { featureIconMap } from "../../../utils/landing/featureIcons";
 import { validateCheckForm, validateRegistrationForm } from "../../../utils/landing/validation";
@@ -817,11 +818,20 @@ const LandingController: React.FC = () => {
   const handleReopenRegistration = async () => {
     setCapacityCallout(null);
     resetStatusState();
+
+    // O CPF já foi conferido para chegar até aqui: guarda os dados da inscrição
+    // anterior (cancelada/expirada) para pré-preencher o formulário e vai direto
+    // para ele, sem voltar para a etapa de conferência de CPF.
+    const previous = existingDataRef.current;
+    const previousCpf = statusPollingCpf;
     setStatusPollingCpf(null);
 
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("landing_registration_name");
       sessionStorage.removeItem("landing_registration_email");
+      if (previous?.name) localStorage.setItem("landing_form_name", previous.name);
+      if (previousCpf) localStorage.setItem("landing_form_cpf", formatCpfBR(previousCpf));
+      if (previous?.email) localStorage.setItem("landing_form_email", previous.email);
     }
 
     try {
@@ -831,7 +841,8 @@ const LandingController: React.FC = () => {
         setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
-      setPhase("check");
+      setIntent("register");
+      setPhase("form");
     } catch (error) {
       setStatusMessage(t("signup.status.reopenError"));
       setStatusTone("error");
