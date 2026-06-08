@@ -17,6 +17,7 @@ export interface RegistrationStatusResponse {
   qrCodeImageUrl?: string | null;
   payment_ref?: string | null;
   sleep_at_monastery?: number;
+  companion_name?: string;
   phone?: string;
   cep?: string;
   address?: string;

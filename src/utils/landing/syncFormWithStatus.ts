@@ -6,13 +6,25 @@ import { formatPhoneBR } from "../formatters/phone";
 import { formatCepBR } from "../formatters/cep";
 import type { FieldRefsType, RegistrationStatusResponse } from "./types";
 
+interface SyncFormOptions {
+  /**
+   * Quando false, não preenche alergia/medicação nem restrição alimentar —
+   * usado ao refazer a inscrição, em que o usuário precisa reconfirmar esses
+   * dados (e o termo de responsabilidade).
+   */
+  includeHealthAndDietary?: boolean;
+}
+
 /**
  * Mapeia dados de resposta do backend para os refs do formulário
  */
 export function syncFormWithStatus(
   data: RegistrationStatusResponse,
-  refs: FieldRefsType
+  refs: FieldRefsType,
+  options: SyncFormOptions = {}
 ): void {
+  const { includeHealthAndDietary = true } = options;
+
   const assign = (ref: FieldRefsType[keyof FieldRefsType], value?: string | null) => {
     const element = ref.current as HTMLInputElement | HTMLSelectElement | null;
     if (element) {
@@ -31,18 +43,22 @@ export function syncFormWithStatus(
   assign(refs.city, data.city ?? "");
   assign(refs.state, data.state ?? "");
 
+  if (refs.companionRef && data.companion_name) assign(refs.companionRef, data.companion_name);
+
   if (refs.emergencyContactName && data.emergency_contact_name) assign(refs.emergencyContactName, data.emergency_contact_name);
   if (refs.emergencyContactPhone && data.emergency_contact_phone) assign(refs.emergencyContactPhone, data.emergency_contact_phone);
 
-  const hasAllergyMedication = data.has_allergy_medication === 1;
-  if (refs.allergyMedicationYes?.current) refs.allergyMedicationYes.current.checked = hasAllergyMedication;
-  if (refs.allergyMedicationNo?.current) refs.allergyMedicationNo.current.checked = data.has_allergy_medication === 0;
-  assign(refs.allergyMedicationDetails, data.allergy_medication_details ?? "");
+  if (includeHealthAndDietary) {
+    const hasAllergyMedication = data.has_allergy_medication === 1;
+    if (refs.allergyMedicationYes?.current) refs.allergyMedicationYes.current.checked = hasAllergyMedication;
+    if (refs.allergyMedicationNo?.current) refs.allergyMedicationNo.current.checked = data.has_allergy_medication === 0;
+    assign(refs.allergyMedicationDetails, data.allergy_medication_details ?? "");
 
-  const hasDietaryRestriction = data.has_dietary_restriction === 1;
-  if (refs.dietaryRestrictionYes?.current) refs.dietaryRestrictionYes.current.checked = hasDietaryRestriction;
-  if (refs.dietaryRestrictionNo?.current) refs.dietaryRestrictionNo.current.checked = data.has_dietary_restriction === 0;
-  assign(refs.dietaryRestrictionDetails, data.dietary_restriction_details ?? "");
+    const hasDietaryRestriction = data.has_dietary_restriction === 1;
+    if (refs.dietaryRestrictionYes?.current) refs.dietaryRestrictionYes.current.checked = hasDietaryRestriction;
+    if (refs.dietaryRestrictionNo?.current) refs.dietaryRestrictionNo.current.checked = data.has_dietary_restriction === 0;
+    assign(refs.dietaryRestrictionDetails, data.dietary_restriction_details ?? "");
+  }
 
   if (refs.sleepAtMonastery.current) {
     refs.sleepAtMonastery.current.value =

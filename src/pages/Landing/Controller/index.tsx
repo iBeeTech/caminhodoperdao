@@ -96,6 +96,9 @@ const LandingController: React.FC = () => {
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
   const pageViewTrackedRef = useRef(false);
+  // Sinaliza que, ao abrir o formulário, ele deve ser pré-preenchido com os
+  // dados da inscrição anterior (fluxo "Refazer inscrição").
+  const reopenPrefillRef = useRef(false);
 
   // -------- Helpers (robustos: não dependem de instanceof) --------
   const getHttpInfo = (err: any) => {
@@ -261,7 +264,19 @@ const LandingController: React.FC = () => {
       localStorage.removeItem("landing_form_name");
       localStorage.removeItem("landing_form_cpf");
       localStorage.removeItem("landing_form_email");
+
+      // Refazer inscrição: preenche todo o restante do formulário com os dados
+      // da inscrição anterior, exceto alergia/medicação, restrição alimentar e
+      // o termo de responsabilidade (que o usuário precisa reconfirmar).
+      if (reopenPrefillRef.current && existingDataRef.current) {
+        syncFormWithStatus(existingDataRef.current, fieldRefs, {
+          includeHealthAndDietary: false,
+        });
+      }
+      reopenPrefillRef.current = false;
     }
+    // fieldRefs e os refs individuais são estáveis (useRef); só reagimos à fase.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -841,6 +856,8 @@ const LandingController: React.FC = () => {
         setCapacityCallout(t("signup.callouts.capacityFull"));
         return;
       }
+      // Pré-preenche o formulário (exceto saúde/alimentar/termo) ao abri-lo.
+      reopenPrefillRef.current = Boolean(previous);
       setIntent("register");
       setPhase("form");
     } catch (error) {

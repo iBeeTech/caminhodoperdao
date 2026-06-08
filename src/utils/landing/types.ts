@@ -75,6 +75,7 @@ export type RegistrationStatusResponse = {
   state?: string;
   date_of_birth?: string;
   sleep_at_monastery?: 0 | 1 | number;
+  companion_name?: string | null;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   has_allergy_medication?: 0 | 1 | number;

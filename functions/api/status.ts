@@ -118,6 +118,7 @@ export async function handleStatus(
     qrCodeText,
     qrCodeImageUrl: qrCodeImage,
     sleep_at_monastery: registration.sleep_at_monastery,
+    companion_name: registration.companion_name ?? undefined,
     phone: registration.phone,
     cep: registration.cep,
     address: registration.address,
