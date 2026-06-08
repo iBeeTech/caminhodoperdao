@@ -17,6 +17,7 @@
     },
     "panel": {
         "title": "Central de Planilhas",
+        "reportTotal": "Planilha Total (todos os inscritos)",
         "reportPeregrinosGeral": "Planilha Peregrinos - Geral",
         "reportPeregrinosMosteiro": "Planilha Peregrinos - Mosteiro",
         "reportStaffGeral": "Planilha Staff",

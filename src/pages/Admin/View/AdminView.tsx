@@ -51,6 +51,7 @@ interface AdminViewProps {
   onSubmit: () => void;
   onToggleChangePassword: () => void;
   onChangePassword: () => void;
+  onDownloadTotal: () => void;
   onDownloadStaffGeral: () => void;
   onDownloadPeregrinosGeral: () => void;
   onDownloadPeregrinosMosteiro: () => void;
@@ -84,6 +85,7 @@ const AdminView: React.FC<AdminViewProps> = ({
   onSubmit,
   onToggleChangePassword,
   onChangePassword,
+  onDownloadTotal,
   onDownloadStaffGeral,
   onDownloadPeregrinosGeral,
   onDownloadPeregrinosMosteiro,
@@ -209,6 +211,9 @@ const AdminView: React.FC<AdminViewProps> = ({
               </button>
               {openMenu === "completas" && (
                 <div style={dropMenu}>
+                  <button style={{ ...dropItem, fontWeight: 700, color: "#1f7a3d" }} onClick={() => { setOpenMenu(null); onDownloadTotal(); }}>
+                    {t("panel.reportTotal")}
+                  </button>
                   <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadPeregrinosGeral(); }}>
                     {t("panel.reportPeregrinosGeral")}
                   </button>

@@ -271,6 +271,9 @@ const AdminController: React.FC = () => {
         setIsChangingPassword(prev => !prev);
       }}
       onChangePassword={handleChangePassword}
+      onDownloadTotal={() =>
+        downloadReport("/api/admin/reports/total", "planilha-total.xls")
+      }
       onDownloadPeregrinosGeral={() =>
         downloadReport(
           "/api/admin/reports/inscritos?staff=0",
