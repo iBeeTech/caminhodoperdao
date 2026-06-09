@@ -410,6 +410,25 @@
             "soldOutTitle": "Inscrições esgotadas",
             "soldOutMonasterySpots": "Caso esteja inscrito na caminhada sem pernoite, você pode fazer sua mudança para pernoite pois temos {{count}} vaga(s) ainda"
         },
+        "waitlist": {
+            "title": "Lista de espera",
+            "description": "As inscrições estão esgotadas, mas desistências podem abrir vagas. Deixe seus dados e, se uma vaga abrir, avisaremos pelo WhatsApp por ordem de entrada na lista.",
+            "nameLabel": "Nome completo",
+            "namePlaceholder": "Seu nome completo",
+            "cpfLabel": "CPF",
+            "cpfPlaceholder": "000.000.000-00",
+            "whatsappLabel": "WhatsApp",
+            "whatsappPlaceholder": "(00) 00000-0000",
+            "submit": "Entrar na lista de espera",
+            "loading": "Enviando...",
+            "success": "Pronto! Você está na lista de espera. Se uma vaga abrir, avisaremos pelo WhatsApp.",
+            "alreadyOnList": "Você já está na lista de espera — sua posição foi mantida e seus dados de contato foram atualizados. Se uma vaga abrir, avisaremos pelo WhatsApp.",
+            "alreadyRegistered": "Este CPF já possui uma inscrição ativa. Confira o status na opção \"Já me inscrevi\".",
+            "errors": {
+                "phoneInvalid": "Informe um WhatsApp válido com DDD.",
+                "generic": "Não foi possível entrar na lista de espera agora. Tente novamente em instantes."
+            }
+        },
         "back": "Voltar",
         "alreadyRegistered": {
             "message": "Você já está inscrito. Vá para a seção \"Já me inscrevi\" para ver os detalhes da sua inscrição.",

@@ -86,6 +86,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_refund_requests_type_source
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_correlation_id ON tshirt_purchase(correlation_id);
 CREATE INDEX IF NOT EXISTS idx_tshirt_purchase_provider_charge_id ON tshirt_purchase(provider_charge_id);
 
+-- Lista de espera quando as inscrições lotam (ver migration 013). O admin avisa
+-- pelo WhatsApp por ordem de entrada e marca notified_at.
+CREATE TABLE IF NOT EXISTS waitlist (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  cpf_encrypted TEXT NOT NULL UNIQUE,
+  phone TEXT NOT NULL,
+  notified_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON waitlist(created_at);
+CREATE INDEX IF NOT EXISTS idx_waitlist_notified_at ON waitlist(notified_at);
+
 -- D1 schema for testimonials
 CREATE TABLE IF NOT EXISTS testimonials (
   id TEXT PRIMARY KEY,

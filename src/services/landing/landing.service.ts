@@ -9,6 +9,8 @@ import {
   TshirtPurchasePayload,
   TshirtPurchaseResponse,
   TshirtStatusResponse,
+  WaitlistPayload,
+  WaitlistJoinResponse,
 } from "./landing.types";
 
 export const landingService = {
@@ -33,6 +35,11 @@ export const landingService = {
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
+  },
+
+  // Lista de espera (evento esgotado): nome + CPF + WhatsApp para avisar se abrir vaga.
+  async joinWaitlist(payload: WaitlistPayload): Promise<WaitlistJoinResponse> {
+    return httpClient.post<WaitlistJoinResponse>("/api/waitlist", payload);
   },
 
   // Troca a modalidade da inscrição. target "monastery" (geral->pernoite) ou "general"

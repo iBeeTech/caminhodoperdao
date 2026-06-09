@@ -6,6 +6,7 @@ import { Callout, FormField, Input, Select } from "../../../../../components";
 import { ErrorText } from "../../../../../components/molecules/FormField/FormField.styles";
 import TrackedButton from "../../../../../components/analytics/TrackedButton";
 import EnrollmentCallout from "../../../../../components/molecules/EnrollmentCallout/EnrollmentCallout";
+import WaitlistForm from "./WaitlistForm";
 import { useFeatureFlags } from "../../../../../hooks/useFeatureFlags";
 import { LANDING_CTAS } from "../../../../../utils/analytics/catalog/ctas";
 import { LANDING_SECTIONS } from "../../../../../utils/analytics/catalog/sections";
@@ -580,6 +581,9 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                     })}
                   </p>
                 )}
+
+              {/* Evento esgotado: oferece a lista de espera (nome + CPF + WhatsApp). */}
+              {availability.totalFull && <WaitlistForm />}
             </IntentContainer>
           )}
 

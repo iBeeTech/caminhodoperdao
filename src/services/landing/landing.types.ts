@@ -82,6 +82,18 @@ export interface MonasteryUpgradeResponse {
   error?: string;
 }
 
+export interface WaitlistPayload {
+  name: string;
+  cpf: string;
+  phone: string;
+}
+
+// status "ADDED" = entrou agora; "ALREADY_ON_WAITLIST" = já estava (posição mantida).
+export interface WaitlistJoinResponse {
+  status?: "ADDED" | "ALREADY_ON_WAITLIST";
+  error?: string;
+}
+
 export interface TshirtSizes {
   P: number;
   M: number;
