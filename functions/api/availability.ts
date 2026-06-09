@@ -3,6 +3,7 @@ import { json, serverError } from "../_utils/responses";
 import { getCapacityLimits, CapacityEnv } from "../_utils/capacity";
 import {
   countActive,
+  countPaidNonStaff,
   countPaidSleepNonStaff,
   countActiveStaff,
   expirePending,
@@ -26,7 +27,9 @@ async function handleAvailability(env: Env): Promise<Response> {
     // à parte e as pendentes não reservam vaga no mosteiro.
     const sleepers = await countPaidSleepNonStaff(env.DB);
     const staff = await countActiveStaff(env.DB);
-    const nonStaff = Math.max(0, total - staff);
+    // Lotação geral conta só PAGAS — pendentes não reservam vaga (igual ao mosteiro
+    // e ao enforceCapacity). `total` segue informando o ativo (PENDING+PAID).
+    const nonStaff = await countPaidNonStaff(env.DB);
     // Endpoint público (peregrino): vagas de não-staff esgotadas trancam a inscrição.
     const nonStaffFull = nonStaff >= maxRegistrationsNonStaff;
     const monasteryFull = sleepers >= maxRegistrationsSleep;
