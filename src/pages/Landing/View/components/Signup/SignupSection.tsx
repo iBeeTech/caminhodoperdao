@@ -582,8 +582,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   </p>
                 )}
 
-              {/* Evento esgotado: oferece a lista de espera (nome + CPF + WhatsApp). */}
-              {availability.totalFull && <WaitlistForm />}
+              {/* Evento esgotado: oferece a lista de espera (nome + CPF + WhatsApp).
+                  O id permite link direto: https://caminhodoperdao.com.br/#listaDeEspera */}
+              {availability.totalFull && (
+                <div id="listaDeEspera" style={{ scrollMarginTop: "80px" }}>
+                  <WaitlistForm />
+                </div>
+              )}
             </IntentContainer>
           )}
 

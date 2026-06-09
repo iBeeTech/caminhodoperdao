@@ -17,6 +17,7 @@ import { featureIconMap } from "../../../utils/landing/featureIcons";
 import { validateCheckForm, validateRegistrationForm } from "../../../utils/landing/validation";
 import { syncFormWithStatus } from "../../../utils/landing/syncFormWithStatus";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
+import { useScrollToHash } from "../../../hooks/useScrollToHash";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 import { isEmailValid } from "../../../utils/validators/email";
@@ -51,6 +52,8 @@ const LandingController: React.FC = () => {
   const { t } = useTranslation("landing");
   const { pageViewed, formSubmitted, formError, enrollmentReserved, paymentConfirmed } = useAnalytics();
   const { fetchAddress } = useAddressByCep();
+  // Links diretos para seções (ex.: /#listaDeEspera) rolam quando a seção renderiza.
+  useScrollToHash();
 
   const landingContent: LandingContent = useMemo(() => {
     const featuresWithoutIcon = t("features.items", { returnObjects: true }) as Array<Omit<FeatureSection, "icon">>;
