@@ -61,7 +61,7 @@ const Testemunhos: React.FC = () => {
   const { t } = useTranslation("landing");
   const recorder = useAudioRecorder();
 
-  const [mode, setMode] = useState<Mode>("audio");
+  const [mode, setMode] = useState<Mode>("text");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [consent, setConsent] = useState(false);
