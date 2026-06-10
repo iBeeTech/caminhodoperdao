@@ -10,3 +10,5 @@ export { default as AdminListaEspera } from "./Admin/ListaEspera";
 export { default as Staff } from "./Staff";
 export { default as ResponsabilityTerms } from "./ResponsabilityTerms";
 export { default as Depoimentos } from "./Depoimentos";
+export { default as Testemunhos } from "./Testemunhos";
+export { default as AdminTestemunhos } from "./Admin/Testemunhos";

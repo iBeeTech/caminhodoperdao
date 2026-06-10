@@ -14,7 +14,15 @@ binding = "DB"
 database_name = "caminhodoperdao-db"
 database_id = "784a0aec-8695-48d4-8ede-df680660735e"
 
+## Áudios dos testemunhos (graças e milagres) gravados pelo público.
+## KV (plano gratuito, sem cartão) — guarda o áudio para a moderação ouvir.
+[[env.production.kv_namespaces]]
+binding = "TESTIMONY_AUDIO"
+id = "c1cd94516ced4c65b0addd643bff355e"
 
+## Workers AI: transcrição dos áudios de testemunho (Whisper).
+[env.production.ai]
+binding = "AI"
 
 
 [env.preview]
@@ -24,5 +32,12 @@ vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_AP
 binding = "DB"
 database_name = "caminhodoperdao-db"
 database_id = "784a0aec-8695-48d4-8ede-df680660735e"
+
+[[env.preview.kv_namespaces]]
+binding = "TESTIMONY_AUDIO"
+id = "c1cd94516ced4c65b0addd643bff355e"
+
+[env.preview.ai]
+binding = "AI"
 
 

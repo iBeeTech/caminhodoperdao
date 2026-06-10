@@ -67,6 +67,7 @@ const Header: React.FC<HeaderProps> = ({
     { label: t("nav.about"), href: `${anchorBase}#about` },
     { label: t("nav.contact"), href: `${anchorBase}#contact` },
     { label: t("nav.testimonials"), href: "/depoimentos" },
+    { label: t("nav.testimonies"), href: "/testemunhos" },
     { label: t("nav.gallery"), href: "/gallery", isCta: true },
   ];
 

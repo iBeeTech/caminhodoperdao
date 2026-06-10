@@ -115,6 +115,50 @@
         },
         "items": []
     },
+    "testimony": {
+        "form": {
+            "title": "Compartilhe seu testemunho",
+            "subtitle": "Recebeu uma graça ou um milagre no Caminho do Perdão? Conte para nós. Você pode gravar um áudio ou escrever — o que for mais fácil para você.",
+            "nameLabel": "Seu nome",
+            "namePlaceholder": "Como você quer ser identificado",
+            "howLabel": "Como você quer compartilhar?",
+            "tabAudio": "Gravar áudio",
+            "tabText": "Escrever",
+            "contentLabel": "Seu testemunho",
+            "contentPlaceholder": "Conte a graça ou o milagre que você recebeu…",
+            "transcriptLabel": "Texto do seu testemunho",
+            "transcriptPlaceholder": "Grave o áudio acima e o texto aparecerá aqui para você revisar — ou escreva você mesmo.",
+            "consent": "Autorizo a publicação do meu testemunho (texto e/ou áudio) na página do Caminho do Perdão.",
+            "moderationNote": "Seu testemunho passa por uma revisão da organização antes de aparecer no site.",
+            "submit": "Enviar testemunho",
+            "submitting": "Enviando…",
+            "success": "Obrigado! Seu testemunho foi enviado e aparecerá no site após a revisão. 🙏",
+            "error": "Não foi possível enviar seu testemunho agora. Tente novamente.",
+            "nameRequired": "Informe seu nome.",
+            "contentRequired": "Escreva ou grave seu testemunho (mínimo de 10 caracteres)."
+        },
+        "audio": {
+            "limitNote": "Você pode gravar até 3 minutos. A gravação para sozinha ao chegar nesse tempo.",
+            "start": "Começar a gravar",
+            "stop": "Parar gravação",
+            "recordingHint": "Gravando… fale com calma. A gravação para sozinha aos 3 minutos.",
+            "transcribe": "Transcrever áudio",
+            "transcribing": "Transcrevendo…",
+            "transcriptionDone": "Pronto! Revise o texto abaixo e corrija o que for preciso antes de enviar.",
+            "transcriptionFailed": "Não conseguimos transcrever automaticamente. Você pode escrever o texto abaixo — o áudio foi guardado.",
+            "transcriptionError": "Erro ao transcrever. O áudio foi guardado; você pode escrever o texto abaixo e enviar.",
+            "reviewHint": "Revise o texto abaixo e corrija o que for preciso antes de enviar.",
+            "discard": "Descartar e gravar de novo",
+            "denied": "Não foi possível acessar o microfone. Verifique a permissão do navegador ou escreva seu testemunho.",
+            "unsupported": "Seu navegador não permite gravar áudio aqui. Use a opção \"Escrever\" para enviar seu testemunho."
+        },
+        "list": {
+            "title": "Testemunhos de graças e milagres",
+            "loading": "Carregando testemunhos…",
+            "empty": "Ainda não há testemunhos publicados. Seja o primeiro a compartilhar!",
+            "audioBadge": "Áudio"
+        }
+    },
     "cta": {
         "title": "Pronto para Começar sua Jornada?",
         "description": "Dê o primeiro passo em direção à sua transformação pessoal e espiritual. Junte-se a milhares de pessoas que já encontraram o caminho do perdão.",
