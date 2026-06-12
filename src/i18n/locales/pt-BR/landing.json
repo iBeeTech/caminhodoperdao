@@ -171,6 +171,10 @@
         "title": "Compre a Camiseta Exclusiva da Caminhada do Perdão",
         "titleNote": "(a camiseta não está inclusa na taxa da inscrição)",
         "description": "Escolha os tamanhos, gere o PIX e finalize sua compra. Cada camiseta custa R$100.",
+        "closed": {
+            "title": "Camiseta Exclusiva da Caminhada do Perdão",
+            "message": "As vendas das camisetas foram encerradas. Não estamos mais recebendo novos pedidos. Agradecemos a todos que adquiriram a camiseta exclusiva da Caminhada do Perdão!"
+        },
         "images": {
             "frontAlt": "Camiseta exclusiva - frente",
             "frontCaption": "Frente",

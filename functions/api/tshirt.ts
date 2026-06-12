@@ -598,15 +598,10 @@ async function handlePurchaseStatus(env: Env, requestUrl: string): Promise<Respo
   });
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  let body: unknown;
-  try {
-    body = await context.request.json();
-  } catch {
-    return badRequest("invalid_json");
-  }
-
-  return handleCreatePurchase(context.env, body);
+export const onRequestPost: PagesFunction<Env> = async () => {
+  // Vendas de camisetas encerradas: não aceitamos novos pedidos. A consulta de
+  // pedidos existentes (GET) e o cancelamento continuam funcionando.
+  return json(403, { error: "tshirt_sales_closed" });
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
