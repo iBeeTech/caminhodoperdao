@@ -125,7 +125,7 @@ const ListaEsperaPage: React.FC = () => {
     }
   };
 
-  // Baixa a planilha .xls da fila (mesmo fluxo dos relatórios do /admin).
+  // Baixa a planilha .xlsx da fila (mesmo fluxo dos relatórios do /admin).
   const handleDownload = async () => {
     if (!token) return;
     setActionError(null);
@@ -138,7 +138,7 @@ const ListaEsperaPage: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "lista-espera.xls";
+      link.download = "lista-espera.xlsx";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -196,7 +196,7 @@ const ListaEsperaPage: React.FC = () => {
           onClick={handleDownload}
           disabled={loading || entries.length === 0}
         >
-          Baixar planilha (.xls)
+          Baixar planilha (.xlsx)
         </button>
       </div>
 

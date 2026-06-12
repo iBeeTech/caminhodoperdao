@@ -2,11 +2,15 @@
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
 import { listWaitlist, WaitlistEntry } from "../../../_utils/waitlist";
+import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type ListaEsperaEnv = AdminAuthEnv & {
   CPF_ENCRYPTION_KEY?: string;
   CPF_ENCRYPTION_IV?: string;
 };
+
+const HEADER_FILL = "F0F0F0";
+const NOTIFIED_COLOR = "15803D";
 
 // GET /api/admin/reports/lista-espera -> planilha da fila, em ordem de entrada.
 export const onRequestGet: PagesFunction<ListaEsperaEnv> = async (context) => {
@@ -34,23 +38,8 @@ export const onRequestGet: PagesFunction<ListaEsperaEnv> = async (context) => {
     rows.push({ ...entry, cpfDecrypted });
   }
 
-  return new Response(buildSpreadsheet(rows), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": "attachment; filename=lista-espera.xls",
-    },
-  });
+  return xlsxResponse(buildSheet(rows), "lista-espera.xlsx");
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 // Datas do SQLite vêm em UTC ("YYYY-MM-DD HH:MM:SS"); exibe como DD/MM/YYYY HH:MM.
 function formatDateTime(value: string | null): string {
@@ -61,35 +50,27 @@ function formatDateTime(value: string | null): string {
   return `${d}/${m}/${y} ${hh}:${mm}`;
 }
 
-function buildSpreadsheet(rows: Array<WaitlistEntry & { cpfDecrypted: string }>): string {
-  const headerCells = ["POSIÇÃO", "NOME", "CPF", "WHATSAPP", "ENTROU EM", "AVISADO", "AVISADO EM"];
-  const header = headerCells.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
+function buildSheet(
+  rows: Array<WaitlistEntry & { cpfDecrypted: string }>
+): SheetSpec {
+  const header = ["POSIÇÃO", "NOME", "CPF", "WHATSAPP", "ENTROU EM", "AVISADO", "AVISADO EM"];
+  const headerRow: CellInput[] = header.map(value => ({
+    value,
+    style: { bold: true, fill: HEADER_FILL },
+  }));
 
-  const rowsHtml = rows
-    .map((row, index) => {
-      const notified = row.notified_at ? "Sim" : "Não";
-      const notifiedStyle = row.notified_at
-        ? " style=\"font-weight:700;color:#15803d;\""
-        : "";
-      return [
-        "<tr>",
-        `<td>${index + 1}</td>`,
-        `<td>${escapeHtml(row.name || "")}</td>`,
-        `<td>${escapeHtml(row.cpfDecrypted || "")}</td>`,
-        `<td>${escapeHtml(row.phone || "")}</td>`,
-        `<td>${escapeHtml(formatDateTime(row.created_at))}</td>`,
-        `<td${notifiedStyle}>${notified}</td>`,
-        `<td>${escapeHtml(formatDateTime(row.notified_at))}</td>`,
-        "</tr>",
-      ].join("");
-    })
-    .join("");
+  const dataRows: CellInput[][] = rows.map((row, index) => [
+    index + 1,
+    row.name || "",
+    row.cpfDecrypted || "",
+    row.phone || "",
+    formatDateTime(row.created_at),
+    {
+      value: row.notified_at ? "Sim" : "Não",
+      style: row.notified_at ? { bold: true, color: NOTIFIED_COLOR } : undefined,
+    },
+    formatDateTime(row.notified_at),
+  ]);
 
-  return [
-    "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}</tbody>`,
-    "</table></body></html>",
-  ].join("");
+  return { sheetName: "Lista de espera", rows: [headerRow, ...dataRows] };
 }

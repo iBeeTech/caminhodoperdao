@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import { CellInput, CellValue, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type TshirtReportEnv = AdminAuthEnv & {
   CPF_ENCRYPTION_KEY?: string;
@@ -28,6 +29,9 @@ interface TshirtBuyerGroup {
   quantity: number;
   amount: number;
 }
+
+const HEADER_FILL = "F0F0F0";
+const TOTALS_FILL = "F0F0F0";
 
 export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
   const authResult = await authorizeAdminRequest(context.request, context.env);
@@ -71,14 +75,7 @@ export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
   }
 
   const groups = groupByBuyer(rowsWithCpf);
-  const spreadsheet = buildTshirtSpreadsheet(groups);
-  return new Response(spreadsheet, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": "attachment; filename=planilha-camisetas.xls",
-    },
-  });
+  return xlsxResponse(buildTshirtSheet(groups), "planilha-camisetas.xlsx");
 };
 
 // Junta todas as compras pagas de um mesmo comprador (mesmo CPF) numa unica
@@ -121,21 +118,12 @@ function formatCurrencyBRL(valueInCents: number): string {
   return `R$ ${(valueInCents / 100).toFixed(2).replace(".", ",")}`;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildTshirtSpreadsheet(groups: TshirtBuyerGroup[]): string {
-  const headerCells = ["NOME", "CPF", "P", "M", "G", "GG", "TOTAL", "VALOR"];
-
-  const header = headerCells
-    .map(cell => `<th>${escapeHtml(cell)}</th>`)
-    .join("");
+function buildTshirtSheet(groups: TshirtBuyerGroup[]): SheetSpec {
+  const header = ["NOME", "CPF", "P", "M", "G", "GG", "TOTAL", "VALOR"];
+  const headerRow: CellInput[] = header.map(value => ({
+    value,
+    style: { bold: true, fill: HEADER_FILL },
+  }));
 
   const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -152,43 +140,35 @@ function buildTshirtSpreadsheet(groups: TshirtBuyerGroup[]): string {
     { p: 0, m: 0, g: 0, gg: 0, quantity: 0, amount: 0 }
   );
 
-  const rowsHtml = sorted
-    .map(group => {
-      const name = escapeHtml(group.name || "");
-      const cpf = escapeHtml(group.cpf || "");
-      return [
-        "<tr>",
-        `<td>${name}</td>`,
-        `<td>${cpf}</td>`,
-        `<td>${group.p}</td>`,
-        `<td>${group.m}</td>`,
-        `<td>${group.g}</td>`,
-        `<td>${group.gg}</td>`,
-        `<td>${group.quantity}</td>`,
-        `<td>${escapeHtml(formatCurrencyBRL(group.amount))}</td>`,
-        "</tr>",
-      ].join("");
-    })
-    .join("");
+  const dataRows: CellInput[][] = sorted.map(group => [
+    group.name || "",
+    group.cpf || "",
+    group.p,
+    group.m,
+    group.g,
+    group.gg,
+    group.quantity,
+    formatCurrencyBRL(group.amount),
+  ]);
 
-  const totalsRow = [
-    "<tr style=\"font-weight:700;background:#f0f0f0;\">",
-    "<td>TOTAIS</td>",
-    "<td></td>",
-    `<td>${totals.p}</td>`,
-    `<td>${totals.m}</td>`,
-    `<td>${totals.g}</td>`,
-    `<td>${totals.gg}</td>`,
-    `<td>${totals.quantity}</td>`,
-    `<td>${escapeHtml(formatCurrencyBRL(totals.amount))}</td>`,
-    "</tr>",
-  ].join("");
+  const sheetRows: CellInput[][] = [headerRow, ...dataRows];
 
-  return [
-    "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}${sorted.length ? totalsRow : ""}</tbody>`,
-    "</table></body></html>",
-  ].join("");
+  if (sorted.length) {
+    const totalsCell = (value: CellValue): CellInput => ({
+      value,
+      style: { bold: true, fill: TOTALS_FILL },
+    });
+    sheetRows.push([
+      totalsCell("TOTAIS"),
+      totalsCell(""),
+      totalsCell(totals.p),
+      totalsCell(totals.m),
+      totalsCell(totals.g),
+      totalsCell(totals.gg),
+      totalsCell(totals.quantity),
+      totalsCell(formatCurrencyBRL(totals.amount)),
+    ]);
+  }
+
+  return { sheetName: "Camisetas", rows: sheetRows };
 }

@@ -272,45 +272,45 @@ const AdminController: React.FC = () => {
       }}
       onChangePassword={handleChangePassword}
       onDownloadTotal={() =>
-        downloadReport("/api/admin/reports/total", "planilha-total.xls")
+        downloadReport("/api/admin/reports/total", "planilha-total.xlsx")
       }
       onDownloadPeregrinosGeral={() =>
         downloadReport(
           "/api/admin/reports/inscritos?staff=0",
-          "peregrinos-geral.xls"
+          "peregrinos-geral.xlsx"
         )
       }
       onDownloadPeregrinosMosteiro={() =>
         downloadReport(
           "/api/admin/reports/inscritos?staff=0&sleep=1",
-          "peregrinos-mosteiro.xls"
+          "peregrinos-mosteiro.xlsx"
         )
       }
       onDownloadStaffGeral={() =>
-        downloadReport("/api/admin/reports/inscritos?staff=1", "staff-geral.xls")
+        downloadReport("/api/admin/reports/inscritos?staff=1", "staff-geral.xlsx")
       }
       onDownloadTshirt={() =>
-        downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xls")
+        downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xlsx")
       }
       onDownloadVendas={() =>
-        downloadReport("/api/admin/reports/vendas", "vendas-totais.xls")
+        downloadReport("/api/admin/reports/vendas", "vendas-totais.xlsx")
       }
       onDownloadCredPeregrinos={() =>
         downloadReport(
           "/api/admin/reports/credenciamento?tipo=peregrinos",
-          "credenciamento-peregrinos.xls"
+          "credenciamento-peregrinos.xlsx"
         )
       }
       onDownloadCredStaff={() =>
         downloadReport(
           "/api/admin/reports/credenciamento?tipo=staff",
-          "credenciamento-staff.xls"
+          "credenciamento-staff.xlsx"
         )
       }
       onDownloadRetiradaCamisetas={() =>
         downloadReport(
           "/api/admin/reports/credenciamento?tipo=camisetas",
-          "retirada-camisetas.xls"
+          "retirada-camisetas.xlsx"
         )
       }
       canManageAdmins={adminEmail?.toLowerCase() === DEFAULT_EMAIL}

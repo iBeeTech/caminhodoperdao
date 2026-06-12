@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type InscritosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
 
@@ -24,6 +25,11 @@ interface InscritoRow {
   amount_cents: number | null;
 }
 
+// Cores reaproveitadas dos relatórios (hex RRGGBB).
+const HEADER_FILL = "F0F0F0";
+const STAFF_COLOR = "1D2C5E";
+const ALERT_COLOR = "C62828";
+
 // Converte um parâmetro de query (0/1) em filtro opcional. Retorna undefined quando ausente.
 function parseFlag(value: string | null): 0 | 1 | undefined {
   if (value === "0") return 0;
@@ -34,7 +40,7 @@ function parseFlag(value: string | null): 0 | 1 | undefined {
 function buildFilename(staff: 0 | 1 | undefined, sleep: 0 | 1 | undefined): string {
   const grupo = staff === 1 ? "staff" : staff === 0 ? "peregrinos" : "inscritos";
   const local = sleep === 1 ? "mosteiro" : sleep === 0 ? "geral" : "todos";
-  return `${grupo}-${local}.xls`;
+  return `${grupo}-${local}.xlsx`;
 }
 
 export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
@@ -107,15 +113,10 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
 
   const spreadsheet =
     sleepFilter === 1
-      ? buildMonasterySpreadsheet(rowsWithCpf)
-      : buildInscritosSpreadsheet(rowsWithCpf);
-  return new Response(spreadsheet, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": `attachment; filename=${buildFilename(staffFilter, sleepFilter)}`,
-    },
-  });
+      ? buildMonasterySheet(rowsWithCpf)
+      : buildInscritosSheet(rowsWithCpf);
+
+  return xlsxResponse(spreadsheet, buildFilename(staffFilter, sleepFilter));
 };
 
 function formatBRL(cents: number): string {
@@ -129,19 +130,14 @@ function formatDateOfBirth(value: string | null): string {
   return `${d}/${m}/${y}`;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function headerRow(cells: string[]): CellInput[] {
+  return cells.map(value => ({ value, style: { bold: true, fill: HEADER_FILL } }));
 }
 
-function buildInscritosSpreadsheet(
+function buildInscritosSheet(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
-): string {
-  const headerCells = [
+): SheetSpec {
+  const header = [
     "Nº INSCRIÇÃO",
     "STAFF",
     "NOME",
@@ -161,117 +157,71 @@ function buildInscritosSpreadsheet(
     "VALOR",
   ];
 
-  const header = headerCells
-    .map(cell => `<th>${escapeHtml(cell)}</th>`)
-    .join("");
-
-  if (!rows.length) {
-    return [
-      "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
-      "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-      `<thead><tr>${header}</tr></thead>`,
-      "<tbody></tbody>",
-      "</table></body></html>",
-    ].join("");
-  }
-
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
   let totalCents = 0;
-  const rowsHtml = sorted
-    .map(row => {
-      const registrationNumber = escapeHtml(row.registration_number ?? "");
-      const isStaff = row.is_staff === 1 ? "Sim" : "Não";
-      const name = escapeHtml(row.name || "");
-      const email = escapeHtml(row.email || "");
-      const cpf = escapeHtml(row.cpfDecrypted || "");
-      const dateOfBirth = escapeHtml(formatDateOfBirth(row.date_of_birth));
-      const phone = escapeHtml(row.phone ?? "");
-      const emergencyName = escapeHtml(row.emergency_contact_name ?? "");
-      const emergencyPhone = escapeHtml(row.emergency_contact_phone ?? "");
-      const dorme = row.sleep_at_monastery === 1 ? "Sim" : "Não";
-      const hasMedication = row.has_allergy_medication === 1 ? "Sim" : "Não";
-      const medicationDetails = escapeHtml((row.allergy_medication_details ?? "").trim());
-      const hasDietaryRestriction = row.has_dietary_restriction === 1 ? "Sim" : "Não";
-      const dietaryDetails = escapeHtml((row.dietary_restriction_details ?? "").trim());
-      const city = escapeHtml(row.city ?? "");
-      const state = escapeHtml(row.state ?? "");
-      const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
-      totalCents += amountCents;
-      const valor = amountCents > 0 ? escapeHtml(formatBRL(amountCents)) : "";
+  const dataRows: CellInput[][] = sorted.map(row => {
+    const medicationDetails = (row.allergy_medication_details ?? "").trim();
+    const dietaryDetails = (row.dietary_restriction_details ?? "").trim();
+    const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
+    totalCents += amountCents;
 
-      const medicationStyle = medicationDetails
-        ? " style=\"font-weight:700;color:#c62828;\""
-        : "";
-      const dietaryStyle = dietaryDetails
-        ? " style=\"font-weight:700;color:#c62828;\""
-        : "";
+    return [
+      row.registration_number ?? "",
+      {
+        value: row.is_staff === 1 ? "Sim" : "Não",
+        style: row.is_staff === 1 ? { bold: true, color: STAFF_COLOR } : undefined,
+      },
+      row.name || "",
+      row.email || "",
+      row.cpfDecrypted || "",
+      formatDateOfBirth(row.date_of_birth),
+      row.phone ?? "",
+      row.emergency_contact_name ?? "",
+      row.emergency_contact_phone ?? "",
+      row.sleep_at_monastery === 1 ? "Sim" : "Não",
+      row.has_allergy_medication === 1 ? "Sim" : "Não",
+      {
+        value: medicationDetails,
+        style: medicationDetails ? { bold: true, color: ALERT_COLOR } : undefined,
+      },
+      row.has_dietary_restriction === 1 ? "Sim" : "Não",
+      {
+        value: dietaryDetails,
+        style: dietaryDetails ? { bold: true, color: ALERT_COLOR } : undefined,
+      },
+      row.city ?? "",
+      row.state ?? "",
+      amountCents > 0 ? formatBRL(amountCents) : "",
+    ];
+  });
 
-      const staffStyle = row.is_staff === 1
-        ? " style=\"font-weight:700;color:#1d2c5e;\""
-        : "";
+  const totalRow: CellInput[] = new Array(header.length).fill("");
+  totalRow[header.length - 2] = {
+    value: "TOTAL",
+    style: { bold: true, align: "right" },
+  };
+  totalRow[header.length - 1] = {
+    value: formatBRL(totalCents),
+    style: { bold: true },
+  };
 
-      return [
-        "<tr>",
-        `<td>${registrationNumber}</td>`,
-        `<td${staffStyle}>${isStaff}</td>`,
-        `<td>${name}</td>`,
-        `<td>${email}</td>`,
-        `<td>${cpf}</td>`,
-        `<td>${dateOfBirth}</td>`,
-        `<td>${phone}</td>`,
-        `<td>${emergencyName}</td>`,
-        `<td>${emergencyPhone}</td>`,
-        `<td>${dorme}</td>`,
-        `<td>${hasMedication}</td>`,
-        `<td${medicationStyle}>${medicationDetails}</td>`,
-        `<td>${hasDietaryRestriction}</td>`,
-        `<td${dietaryStyle}>${dietaryDetails}</td>`,
-        `<td>${city}</td>`,
-        `<td>${state}</td>`,
-        `<td>${valor}</td>`,
-        "</tr>",
-      ].join("");
-    })
-    .join("");
-
-  const totalColspan = headerCells.length - 1;
-  const totalRow = [
-    "<tr>",
-    `<td colspan="${totalColspan}" style="text-align:right;font-weight:700;">TOTAL</td>`,
-    `<td style="font-weight:700;">${escapeHtml(formatBRL(totalCents))}</td>`,
-    "</tr>",
-  ].join("");
-
-  return [
-    "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}${totalRow}</tbody>`,
-    "</table></body></html>",
-  ].join("");
+  return {
+    sheetName: "Inscritos",
+    rows: [headerRow(header), ...dataRows, totalRow],
+  };
 }
 
-function buildMonasterySpreadsheet(
+function buildMonasterySheet(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
-): string {
-  const headerCells = ["NOME", "CPF"];
-  const header = headerCells.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
-
+): SheetSpec {
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
-  const rowsHtml = sorted
-    .map(row => {
-      const name = escapeHtml(row.name || "");
-      const cpf = escapeHtml(row.cpfDecrypted || "");
-      return `<tr><td>${name}</td><td>${cpf}</td></tr>`;
-    })
-    .join("");
+  const dataRows: CellInput[][] = sorted.map(row => [
+    row.name || "",
+    row.cpfDecrypted || "",
+  ]);
 
-  return [
-    "\uFEFF<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}</tbody>`,
-    "</table></body></html>",
-  ].join("");
+  return {
+    sheetName: "Mosteiro",
+    rows: [headerRow(["NOME", "CPF"]), ...dataRows],
+  };
 }
-

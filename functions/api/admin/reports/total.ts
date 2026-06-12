@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import { CellInput, CellStyle, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type TotalEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
 
@@ -31,6 +32,13 @@ interface TotalRow {
   paid_at: string | null;
   amount_cents: number | null;
 }
+
+const HEADER_FILL = "F0F0F0";
+const STAFF_COLOR = "1D2C5E";
+const ALERT_COLOR = "C62828";
+const PAID_COLOR = "1F7A3D";
+const PENDING_COLOR = "B45309";
+const CANCELED_COLOR = "C62828";
 
 export const onRequestGet: PagesFunction<TotalEnv> = async context => {
   const authResult = await authorizeAdminRequest(context.request, context.env);
@@ -92,14 +100,7 @@ export const onRequestGet: PagesFunction<TotalEnv> = async context => {
     rowsWithCpf.push({ ...row, cpfDecrypted });
   }
 
-  const spreadsheet = buildTotalSpreadsheet(rowsWithCpf);
-  return new Response(spreadsheet, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": "attachment; filename=planilha-total.xls",
-    },
-  });
+  return xlsxResponse(buildTotalSheet(rowsWithCpf), "planilha-total.xlsx");
 };
 
 function formatBRL(cents: number): string {
@@ -141,32 +142,23 @@ function statusLabel(status: string): string {
   }
 }
 
-function statusStyle(status: string): string {
+function statusStyle(status: string): CellStyle | undefined {
   switch (status) {
     case "PAID":
-      return " style=\"font-weight:700;color:#1f7a3d;\"";
+      return { bold: true, color: PAID_COLOR };
     case "PENDING":
-      return " style=\"font-weight:700;color:#b45309;\"";
+      return { bold: true, color: PENDING_COLOR };
     case "CANCELED":
-      return " style=\"font-weight:700;color:#c62828;\"";
+      return { bold: true, color: CANCELED_COLOR };
     default:
-      return "";
+      return undefined;
   }
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildTotalSpreadsheet(
+function buildTotalSheet(
   rows: Array<TotalRow & { cpfDecrypted: string }>
-): string {
-  const headerCells = [
+): SheetSpec {
+  const header = [
     "Nº INSCRIÇÃO",
     "STATUS",
     "STAFF",
@@ -193,113 +185,68 @@ function buildTotalSpreadsheet(
     "DATA DO PAGAMENTO",
     "VALOR",
   ];
-
-  const header = headerCells.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
-
-  if (!rows.length) {
-    return [
-      "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-      "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-      `<thead><tr>${header}</tr></thead>`,
-      "<tbody></tbody>",
-      "</table>",
-      "<p style=\"font-size:12px;color:#555;margin-top:8px;\">Nenhuma inscrição encontrada.</p>",
-      "</body></html>",
-    ].join("");
-  }
+  const headerRow: CellInput[] = header.map(value => ({
+    value,
+    style: { bold: true, fill: HEADER_FILL },
+  }));
 
   let totalCents = 0;
-  const rowsHtml = rows
-    .map(row => {
-      const registrationNumber = escapeHtml(row.registration_number ?? "");
-      const status = escapeHtml(statusLabel(row.status));
-      const isStaff = row.is_staff === 1 ? "Sim" : "Não";
-      const name = escapeHtml(row.name || "");
-      const email = escapeHtml(row.email || "");
-      const cpf = escapeHtml(row.cpfDecrypted || "");
-      const dateOfBirth = escapeHtml(formatDateOfBirth(row.date_of_birth));
-      const phone = escapeHtml(row.phone ?? "");
-      const companion = escapeHtml(row.companion_name ?? "");
-      const emergencyName = escapeHtml(row.emergency_contact_name ?? "");
-      const emergencyPhone = escapeHtml(row.emergency_contact_phone ?? "");
-      const dorme = row.sleep_at_monastery === 1 ? "Sim" : "Não";
-      const hasMedication = row.has_allergy_medication === 1 ? "Sim" : "Não";
-      const medicationDetails = escapeHtml((row.allergy_medication_details ?? "").trim());
-      const hasDietaryRestriction = row.has_dietary_restriction === 1 ? "Sim" : "Não";
-      const dietaryDetails = escapeHtml((row.dietary_restriction_details ?? "").trim());
-      const cep = escapeHtml(row.cep ?? "");
-      const address = escapeHtml(row.address ?? "");
-      const number = escapeHtml(row.number ?? "");
-      const complement = escapeHtml(row.complement ?? "");
-      const city = escapeHtml(row.city ?? "");
-      const state = escapeHtml(row.state ?? "");
-      const createdAt = escapeHtml(formatDateTime(row.created_at));
-      const paidAt = escapeHtml(formatDateTime(row.paid_at));
-      const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
-      // Soma apenas os pagamentos efetivamente concluídos.
-      if (row.status === "PAID") totalCents += amountCents;
-      const valor = amountCents > 0 ? escapeHtml(formatBRL(amountCents)) : "";
+  const dataRows: CellInput[][] = rows.map(row => {
+    const medicationDetails = (row.allergy_medication_details ?? "").trim();
+    const dietaryDetails = (row.dietary_restriction_details ?? "").trim();
+    const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
+    // Soma apenas os pagamentos efetivamente concluídos.
+    if (row.status === "PAID") totalCents += amountCents;
 
-      const medicationCellStyle = medicationDetails
-        ? " style=\"font-weight:700;color:#c62828;\""
-        : "";
-      const dietaryCellStyle = dietaryDetails
-        ? " style=\"font-weight:700;color:#c62828;\""
-        : "";
-      const staffCellStyle = row.is_staff === 1
-        ? " style=\"font-weight:700;color:#1d2c5e;\""
-        : "";
+    return [
+      row.registration_number ?? "",
+      { value: statusLabel(row.status), style: statusStyle(row.status) },
+      {
+        value: row.is_staff === 1 ? "Sim" : "Não",
+        style: row.is_staff === 1 ? { bold: true, color: STAFF_COLOR } : undefined,
+      },
+      row.name || "",
+      row.email || "",
+      row.cpfDecrypted || "",
+      formatDateOfBirth(row.date_of_birth),
+      row.phone ?? "",
+      row.companion_name ?? "",
+      row.emergency_contact_name ?? "",
+      row.emergency_contact_phone ?? "",
+      row.sleep_at_monastery === 1 ? "Sim" : "Não",
+      row.has_allergy_medication === 1 ? "Sim" : "Não",
+      {
+        value: medicationDetails,
+        style: medicationDetails ? { bold: true, color: ALERT_COLOR } : undefined,
+      },
+      row.has_dietary_restriction === 1 ? "Sim" : "Não",
+      {
+        value: dietaryDetails,
+        style: dietaryDetails ? { bold: true, color: ALERT_COLOR } : undefined,
+      },
+      row.cep ?? "",
+      row.address ?? "",
+      row.number ?? "",
+      row.complement ?? "",
+      row.city ?? "",
+      row.state ?? "",
+      formatDateTime(row.created_at),
+      formatDateTime(row.paid_at),
+      amountCents > 0 ? formatBRL(amountCents) : "",
+    ];
+  });
 
-      return [
-        "<tr>",
-        `<td>${registrationNumber}</td>`,
-        `<td${statusStyle(row.status)}>${status}</td>`,
-        `<td${staffCellStyle}>${isStaff}</td>`,
-        `<td>${name}</td>`,
-        `<td>${email}</td>`,
-        `<td>${cpf}</td>`,
-        `<td>${dateOfBirth}</td>`,
-        `<td>${phone}</td>`,
-        `<td>${companion}</td>`,
-        `<td>${emergencyName}</td>`,
-        `<td>${emergencyPhone}</td>`,
-        `<td>${dorme}</td>`,
-        `<td>${hasMedication}</td>`,
-        `<td${medicationCellStyle}>${medicationDetails}</td>`,
-        `<td>${hasDietaryRestriction}</td>`,
-        `<td${dietaryCellStyle}>${dietaryDetails}</td>`,
-        `<td>${cep}</td>`,
-        `<td>${address}</td>`,
-        `<td>${number}</td>`,
-        `<td>${complement}</td>`,
-        `<td>${city}</td>`,
-        `<td>${state}</td>`,
-        `<td>${createdAt}</td>`,
-        `<td>${paidAt}</td>`,
-        `<td>${valor}</td>`,
-        "</tr>",
-      ].join("");
-    })
-    .join("");
+  const sheetRows: CellInput[][] = [headerRow, ...dataRows];
 
-  const totalColspan = headerCells.length - 1;
-  const totalRow = [
-    "<tr>",
-    `<td colspan="${totalColspan}" style="text-align:right;font-weight:700;">TOTAL PAGO</td>`,
-    `<td style="font-weight:700;">${escapeHtml(formatBRL(totalCents))}</td>`,
-    "</tr>",
-  ].join("");
+  if (rows.length) {
+    const totalRow: CellInput[] = new Array(header.length).fill("");
+    totalRow[header.length - 2] = {
+      value: "TOTAL PAGO",
+      style: { bold: true, align: "right" },
+    };
+    totalRow[header.length - 1] = { value: formatBRL(totalCents), style: { bold: true } };
+    sheetRows.push(totalRow);
+  }
 
-  return [
-    "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}${totalRow}</tbody>`,
-    "</table>",
-    "<p style=\"font-size:12px;color:#555;margin-top:8px;\">",
-    "Todas as inscrições, incluindo PAGAS, PENDENTES e CANCELADAS. ",
-    "O TOTAL considera apenas inscrições pagas.",
-    "</p>",
-    "</body></html>",
-  ].join("");
+  return { sheetName: "Total", rows: sheetRows };
 }

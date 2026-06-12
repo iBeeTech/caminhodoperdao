@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type CanceladosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
 
@@ -16,6 +17,10 @@ interface CanceladoRow {
   created_at: string | null;
   paid_at: string | null;
 }
+
+const HEADER_FILL = "F0F0F0";
+const STAFF_COLOR = "1D2C5E";
+const ALERT_COLOR = "C62828";
 
 export const onRequestGet: PagesFunction<CanceladosEnv> = async context => {
   const authResult = await authorizeAdminRequest(context.request, context.env);
@@ -60,14 +65,7 @@ export const onRequestGet: PagesFunction<CanceladosEnv> = async context => {
     rowsWithCpf.push({ ...row, cpfDecrypted });
   }
 
-  const spreadsheet = buildCanceladosSpreadsheet(rowsWithCpf);
-  return new Response(spreadsheet, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": "attachment; filename=inscricoes-canceladas.xls",
-    },
-  });
+  return xlsxResponse(buildCanceladosSheet(rowsWithCpf), "inscricoes-canceladas.xlsx");
 };
 
 function formatDateTime(value: string | null): string {
@@ -87,19 +85,10 @@ function formatDateTime(value: string | null): string {
   return value;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildCanceladosSpreadsheet(
+function buildCanceladosSheet(
   rows: Array<CanceladoRow & { cpfDecrypted: string }>
-): string {
-  const headerCells = [
+): SheetSpec {
+  const header = [
     "Nº INSCRIÇÃO",
     "STAFF",
     "NOME",
@@ -112,67 +101,31 @@ function buildCanceladosSpreadsheet(
     "JÁ TINHA PAGO?",
     "DATA DO PAGAMENTO",
   ];
-
-  const header = headerCells.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
-
-  if (!rows.length) {
-    return [
-      "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-      "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-      `<thead><tr>${header}</tr></thead>`,
-      "<tbody></tbody>",
-      "</table>",
-      "<p style=\"font-size:12px;color:#555;margin-top:8px;\">Nenhuma inscrição cancelada.</p>",
-      "</body></html>",
-    ].join("");
-  }
+  const headerRow: CellInput[] = header.map(value => ({
+    value,
+    style: { bold: true, fill: HEADER_FILL },
+  }));
 
   const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
-  const rowsHtml = sorted
-    .map(row => {
-      const registrationNumber = escapeHtml(row.registration_number ?? "");
-      const isStaff = row.is_staff === 1 ? "Sim" : "Não";
-      const name = escapeHtml(row.name || "");
-      const email = escapeHtml(row.email || "");
-      const cpf = escapeHtml(row.cpfDecrypted || "");
-      const phone = escapeHtml(row.phone ?? "");
-      const city = escapeHtml(row.city ?? "");
-      const state = escapeHtml(row.state ?? "");
-      const createdAt = escapeHtml(formatDateTime(row.created_at));
-      const wasPaid = row.paid_at ? "Sim" : "Não";
-      const paidAt = escapeHtml(formatDateTime(row.paid_at));
+  const dataRows: CellInput[][] = sorted.map(row => [
+    row.registration_number ?? "",
+    {
+      value: row.is_staff === 1 ? "Sim" : "Não",
+      style: row.is_staff === 1 ? { bold: true, color: STAFF_COLOR } : undefined,
+    },
+    row.name || "",
+    row.email || "",
+    row.cpfDecrypted || "",
+    row.phone ?? "",
+    row.city ?? "",
+    row.state ?? "",
+    formatDateTime(row.created_at),
+    {
+      value: row.paid_at ? "Sim" : "Não",
+      style: row.paid_at ? { bold: true, color: ALERT_COLOR } : undefined,
+    },
+    formatDateTime(row.paid_at),
+  ]);
 
-      const staffStyle = row.is_staff === 1 ? " style=\"font-weight:700;color:#1d2c5e;\"" : "";
-      const paidStyle = row.paid_at ? " style=\"font-weight:700;color:#c62828;\"" : "";
-
-      return [
-        "<tr>",
-        `<td>${registrationNumber}</td>`,
-        `<td${staffStyle}>${isStaff}</td>`,
-        `<td>${name}</td>`,
-        `<td>${email}</td>`,
-        `<td>${cpf}</td>`,
-        `<td>${phone}</td>`,
-        `<td>${city}</td>`,
-        `<td>${state}</td>`,
-        `<td>${createdAt}</td>`,
-        `<td${paidStyle}>${wasPaid}</td>`,
-        `<td>${paidAt}</td>`,
-        "</tr>",
-      ].join("");
-    })
-    .join("");
-
-  return [
-    "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${rowsHtml}</tbody>`,
-    "</table>",
-    "<p style=\"font-size:12px;color:#555;margin-top:8px;\">",
-    "Inscrições com status CANCELADO. \"JÁ TINHA PAGO? = Sim\" indica cancelamento após pagamento; ",
-    "\"Não\" geralmente é PIX que expirou sem pagamento.",
-    "</p>",
-    "</body></html>",
-  ].join("");
+  return { sheetName: "Cancelados", rows: [headerRow, ...dataRows] };
 }

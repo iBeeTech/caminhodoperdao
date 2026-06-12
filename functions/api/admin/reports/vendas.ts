@@ -5,12 +5,17 @@ import {
   getAdminDefaults,
 } from "../../../_utils/adminAuth";
 import { unauthorized } from "../../../_utils/responses";
+import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 // Parâmetros financeiros padrão (em reais). Podem ser sobrescritos via query string,
 // ex.: /api/admin/reports/vendas?retiradas=30000&saldoInicial=1.60&taxa=0.85
 const DEFAULT_FEE_PER_RECEIPT_REAIS = 0.85; // taxa fixa da Woovi por recebimento
 const DEFAULT_STARTING_BALANCE_REAIS = 1.6; // saldo inicial da conta Woovi
 const DEFAULT_WITHDRAWALS_REAIS = 25000; // total já retirado para a conta bancária
+
+const TITLE_COLOR = "1D2C5E";
+const HEADER_FILL = "F0F0F0";
+const NOTE_COLOR = "555555";
 
 interface RegistrationsAggRow {
   is_staff: number;
@@ -87,7 +92,7 @@ export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
   // Nº de recebimentos efetivos na Woovi (cada cobrança paga gera 1 taxa).
   const receiptsCount = peregrinos.receipts + staff.receipts + tshirt.qtd_compras;
 
-  const spreadsheet = buildVendasSpreadsheet({
+  const sheet = buildVendasSheet({
     peregrinosQtd: peregrinos.qtd,
     peregrinosCents: peregrinos.total_cents,
     staffQtd: staff.qtd,
@@ -101,13 +106,7 @@ export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
     withdrawalsCents,
   });
 
-  return new Response(spreadsheet, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": "attachment; filename=vendas-totais.xls",
-    },
-  });
+  return xlsxResponse(sheet, "vendas-totais.xlsx");
 };
 
 function formatBRL(cents: number): string {
@@ -129,15 +128,6 @@ function reaisParamToCents(raw: string | null, defaultReais: number): number {
   return Math.round(defaultReais * 100);
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 interface VendasTotais {
   peregrinosQtd: number;
   peregrinosCents: number;
@@ -152,27 +142,45 @@ interface VendasTotais {
   withdrawalsCents: number;
 }
 
-function buildVendasSpreadsheet(t: VendasTotais): string {
+function buildVendasSheet(t: VendasTotais): SheetSpec {
   const inscricoesQtd = t.peregrinosQtd + t.staffQtd;
   const inscricoesCents = t.peregrinosCents + t.staffCents;
   const totalGeralCents = inscricoesCents + t.tshirtCents;
 
-  const dataRow = (categoria: string, qtd: string, valorCents: number, bold = false) => {
-    const style = bold ? ' style="font-weight:700;"' : "";
-    return [
-      "<tr>",
-      `<td${style}>${escapeHtml(categoria)}</td>`,
-      `<td${style} style="text-align:center;">${escapeHtml(qtd)}</td>`,
-      `<td${style}>${escapeHtml(formatBRL(valorCents))}</td>`,
-      "</tr>",
-    ].join("");
-  };
+  const dataRow = (
+    categoria: string,
+    qtd: string,
+    valorCents: number,
+    bold = false
+  ): CellInput[] => [
+    { value: categoria, style: bold ? { bold: true } : undefined },
+    { value: qtd, style: { bold, align: "center" } },
+    { value: formatBRL(valorCents), style: bold ? { bold: true } : undefined },
+  ];
 
-  const header = ["CATEGORIA", "QUANTIDADE", "VALOR RECEBIDO"]
-    .map(cell => `<th>${escapeHtml(cell)}</th>`)
-    .join("");
+  const titleRow = (text: string): CellInput[] => [
+    { value: text, style: { bold: true, color: TITLE_COLOR } },
+    "",
+    "",
+  ];
 
-  const body = [
+  const headerRow = (cells: string[]): CellInput[] =>
+    cells.map(value => ({ value, style: { bold: true, fill: HEADER_FILL } }));
+
+  const noteRow = (text: string): CellInput[] => [
+    { value: text, style: { color: NOTE_COLOR } },
+    "",
+    "",
+  ];
+
+  // --- Conciliação do saldo Woovi ---
+  const feeTotalCents = t.receiptsCount * t.feePerReceiptCents;
+  const saldoLiquidoCents =
+    totalGeralCents + t.startingBalanceCents - feeTotalCents - t.withdrawalsCents;
+
+  const rows: CellInput[][] = [
+    titleRow("Vendas (valores brutos)"),
+    headerRow(["CATEGORIA", "QUANTIDADE", "VALOR RECEBIDO"]),
     dataRow("Inscrições — Peregrinos (pagas)", String(t.peregrinosQtd), t.peregrinosCents),
     dataRow("Inscrições — Staff (pagas)", String(t.staffQtd), t.staffCents),
     dataRow("Inscrições — Subtotal", String(inscricoesQtd), inscricoesCents, true),
@@ -182,18 +190,9 @@ function buildVendasSpreadsheet(t: VendasTotais): string {
       t.tshirtCents
     ),
     dataRow("TOTAL BRUTO RECEBIDO (site)", "", totalGeralCents, true),
-  ].join("");
-
-  // --- Conciliação do saldo Woovi ---
-  const feeTotalCents = t.receiptsCount * t.feePerReceiptCents;
-  const saldoLiquidoCents =
-    totalGeralCents + t.startingBalanceCents - feeTotalCents - t.withdrawalsCents;
-
-  const reconHeader = ["MOVIMENTO", "DETALHE", "VALOR"]
-    .map(cell => `<th>${escapeHtml(cell)}</th>`)
-    .join("");
-
-  const reconBody = [
+    ["", "", ""],
+    titleRow("Conciliação do saldo Woovi"),
+    headerRow(["MOVIMENTO", "DETALHE", "VALOR"]),
     dataRow("(+) Total bruto recebido (site)", "", totalGeralCents),
     dataRow("(+) Saldo inicial", "", t.startingBalanceCents),
     dataRow(
@@ -203,25 +202,19 @@ function buildVendasSpreadsheet(t: VendasTotais): string {
     ),
     dataRow("(−) Retiradas para conta bancária", "", -t.withdrawalsCents),
     dataRow("(=) SALDO LÍQUIDO ESTIMADO NA WOOVI", "", saldoLiquidoCents, true),
-  ].join("");
+    ["", "", ""],
+    noteRow("Valores conforme registros marcados como PAGOS no site."),
+    noteRow(
+      `Taxa de ${formatBRL(t.feePerReceiptCents)} aplicada a cada um dos ${t.receiptsCount} recebimentos.`
+    ),
+    noteRow(
+      "O SALDO LÍQUIDO ESTIMADO deve bater com o saldo atual disponível no painel da Woovi."
+    ),
+  ];
 
-  return [
-    "﻿<html><head><meta charset=\"UTF-8\"></head><body>",
-    "<h3 style=\"font-family:sans-serif;margin:0 0 8px;\">Vendas (valores brutos)</h3>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"6\">",
-    `<thead><tr>${header}</tr></thead>`,
-    `<tbody>${body}</tbody>`,
-    "</table>",
-    "<h3 style=\"font-family:sans-serif;margin:20px 0 8px;\">Conciliação do saldo Woovi</h3>",
-    "<table border=\"1\" cellspacing=\"0\" cellpadding=\"6\">",
-    `<thead><tr>${reconHeader}</tr></thead>`,
-    `<tbody>${reconBody}</tbody>`,
-    "</table>",
-    "<p style=\"font-size:12px;color:#555;margin-top:8px;\">",
-    "Valores conforme registros marcados como PAGOS no site. ",
-    `Taxa de ${formatBRL(t.feePerReceiptCents)} aplicada a cada um dos ${t.receiptsCount} recebimentos. `,
-    "O SALDO LÍQUIDO ESTIMADO deve bater com o saldo atual disponível no painel da Woovi.",
-    "</p>",
-    "</body></html>",
-  ].join("");
+  return {
+    sheetName: "Vendas",
+    rows,
+    columnWidths: [42, 26, 18],
+  };
 }
