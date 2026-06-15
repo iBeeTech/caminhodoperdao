@@ -256,11 +256,22 @@ const InscritosPage: React.FC = () => {
   const cancelados = regs.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
   const staffCount = regs.filter((r) => r.is_staff === 1).length;
   const pernoiteConcedida = regs.filter((r) => r.status === "PAID" && r.pernoite_granted === 1).length;
+  // Staff pago que vai dormir no mosteiro (não entra na conta de peregrinos).
+  const staffPernoite = regs.filter(
+    (r) => r.status === "PAID" && r.is_staff === 1 && r.sleep_at_monastery === 1
+  ).length;
+  // Total real de pessoas que vão dormir no mosteiro (pagas): peregrinos com pernoite
+  // (que já INCLUI as 'pernoite concedida') + staff que dorme. Sem dupla contagem.
+  const dormindoNoMosteiro = regs.filter(
+    (r) => r.status === "PAID" && r.sleep_at_monastery === 1
+  ).length;
 
   const metrics = [
+    { num: dormindoNoMosteiro, label: "🏠 Dormindo no mosteiro (total)", c: "#9a3412", bg: "#fff7ed", b: "#fed7aa" },
     { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
     { num: paidPernoite, label: "Pagos — com pernoite", c: "#b45309", bg: "#fffbeb", b: "#fde68a" },
     { num: pernoiteConcedida, label: "Pernoite concedida", c: "#6d28d9", bg: "#f5f3ff", b: "#ddd6fe" },
+    { num: staffPernoite, label: "Staff — com pernoite", c: "#3730a3", bg: "#eef2ff", b: "#c7d2fe" },
     { num: pendentes, label: "Pendentes", c: "#a16207", bg: "#fefce8", b: "#fde68a" },
     { num: cancelados, label: "Cancelados", c: "#b91c1c", bg: "#fef2f2", b: "#fecaca" },
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
@@ -378,6 +389,10 @@ const InscritosPage: React.FC = () => {
           </div>
         ))}
       </div>
+      <p style={{ margin: "-0.4rem 0 1rem", color: "#9a3412", fontSize: "0.85rem", fontWeight: 600 }}>
+        🛏️ Dormindo no mosteiro: <strong>{dormindoNoMosteiro}</strong> = peregrinos com pernoite {paidPernoite}
+        {pernoiteConcedida > 0 ? ` (inclui ${pernoiteConcedida} concedida${pernoiteConcedida > 1 ? "s" : ""})` : ""} + staff {staffPernoite}.
+      </p>
 
       <div style={s.tabs}>
         <button style={{ ...s.tab, ...(tab === "inscricoes" ? s.tabActive : {}) }} onClick={() => setTab("inscricoes")}>
