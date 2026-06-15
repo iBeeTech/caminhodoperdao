@@ -46,6 +46,21 @@ const s: Record<string, React.CSSProperties> = {
     background: "#1f7a3d", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem",
   },
   totals: { display: "flex", gap: 10, marginBottom: "1rem", flexWrap: "wrap" },
+  totalsGrid: {
+    display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 10, marginBottom: "0.75rem",
+  },
+  groupTitle: {
+    fontSize: "0.75rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase",
+    letterSpacing: "0.05em", margin: "0.75rem 0 0.4rem",
+  },
+  hero: {
+    display: "flex", alignItems: "center", gap: 14, borderRadius: 14, padding: "0.9rem 1.2rem",
+    border: "2px solid #fed7aa", background: "#fff7ed", marginBottom: "0.75rem",
+  },
+  heroNum: { fontSize: "2.4rem", fontWeight: 900, color: "#9a3412", lineHeight: 1 },
+  heroLabel: { fontSize: "0.95rem", fontWeight: 800, color: "#9a3412", lineHeight: 1.3 },
+  heroHint: { fontSize: "0.8rem", fontWeight: 600, color: "#b45309" },
   totalBox: {
     flex: "1 1 150px", borderRadius: 12, padding: "0.8rem 1rem", border: "1px solid #bbf7d0",
     background: "#f0fdf4",
@@ -249,8 +264,14 @@ const InscritosPage: React.FC = () => {
 
   const isPeregrino = (r: Registration) => r.is_staff === 0;
   const paidTotal = regs.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
+  // "Pagos — com pernoite" = peregrinos que se INSCREVERAM com pernoite. As pernoites
+  // concedidas pelo admin NÃO entram aqui (contam só em 'Pernoite concedida' e no total).
   const paidPernoite = regs.filter(
-    (r) => r.status === "PAID" && isPeregrino(r) && r.sleep_at_monastery === 1
+    (r) =>
+      r.status === "PAID" &&
+      isPeregrino(r) &&
+      r.sleep_at_monastery === 1 &&
+      r.pernoite_granted === 0
   ).length;
   const pendentes = regs.filter((r) => r.status === "PENDING" && isPeregrino(r)).length;
   const cancelados = regs.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
@@ -260,18 +281,22 @@ const InscritosPage: React.FC = () => {
   const staffPernoite = regs.filter(
     (r) => r.status === "PAID" && r.is_staff === 1 && r.sleep_at_monastery === 1
   ).length;
-  // Total real de pessoas que vão dormir no mosteiro (pagas): peregrinos com pernoite
-  // (que já INCLUI as 'pernoite concedida') + staff que dorme. Sem dupla contagem.
+  // Total de pessoas que vão dormir no mosteiro (pagas): com pernoite (inscrição) +
+  // pernoite concedida + staff que dorme. = todos PAID com sleep_at_monastery = 1.
   const dormindoNoMosteiro = regs.filter(
     (r) => r.status === "PAID" && r.sleep_at_monastery === 1
   ).length;
 
-  const metrics = [
-    { num: dormindoNoMosteiro, label: "🏠 Dormindo no mosteiro (total)", c: "#9a3412", bg: "#fff7ed", b: "#fed7aa" },
-    { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
-    { num: paidPernoite, label: "Pagos — com pernoite", c: "#b45309", bg: "#fffbeb", b: "#fde68a" },
+  // Grupo "No mosteiro": os três somam o total dormindoNoMosteiro.
+  const mosteiroMetrics = [
+    { num: paidPernoite, label: "Com pernoite (inscrição)", c: "#b45309", bg: "#fffbeb", b: "#fde68a" },
     { num: pernoiteConcedida, label: "Pernoite concedida", c: "#6d28d9", bg: "#f5f3ff", b: "#ddd6fe" },
     { num: staffPernoite, label: "Staff — com pernoite", c: "#3730a3", bg: "#eef2ff", b: "#c7d2fe" },
+  ];
+
+  // Grupo "Inscrições" (visão geral, independente de mosteiro).
+  const geralMetrics = [
+    { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
     { num: pendentes, label: "Pendentes", c: "#a16207", bg: "#fefce8", b: "#fde68a" },
     { num: cancelados, label: "Cancelados", c: "#b91c1c", bg: "#fef2f2", b: "#fecaca" },
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
@@ -381,18 +406,35 @@ const InscritosPage: React.FC = () => {
         </p>
       )}
 
-      <div style={s.totals}>
-        {metrics.map((m) => (
+      <div style={s.hero}>
+        <span style={s.heroNum}>{dormindoNoMosteiro}</span>
+        <span>
+          <div style={s.heroLabel}>🏠 Dormindo no mosteiro (total)</div>
+          <div style={s.heroHint}>
+            com pernoite {paidPernoite} + concedida {pernoiteConcedida} + staff {staffPernoite}
+          </div>
+        </span>
+      </div>
+
+      <div style={s.groupTitle}>No mosteiro</div>
+      <div style={s.totalsGrid}>
+        {mosteiroMetrics.map((m) => (
           <div key={m.label} style={{ ...s.totalBox, background: m.bg, borderColor: m.b }}>
             <div style={{ ...s.totalNum, color: m.c }}>{m.num}</div>
             <div style={{ ...s.totalLabel, color: m.c }}>{m.label}</div>
           </div>
         ))}
       </div>
-      <p style={{ margin: "-0.4rem 0 1rem", color: "#9a3412", fontSize: "0.85rem", fontWeight: 600 }}>
-        🛏️ Dormindo no mosteiro: <strong>{dormindoNoMosteiro}</strong> = peregrinos com pernoite {paidPernoite}
-        {pernoiteConcedida > 0 ? ` (inclui ${pernoiteConcedida} concedida${pernoiteConcedida > 1 ? "s" : ""})` : ""} + staff {staffPernoite}.
-      </p>
+
+      <div style={s.groupTitle}>Inscrições</div>
+      <div style={s.totalsGrid}>
+        {geralMetrics.map((m) => (
+          <div key={m.label} style={{ ...s.totalBox, background: m.bg, borderColor: m.b }}>
+            <div style={{ ...s.totalNum, color: m.c }}>{m.num}</div>
+            <div style={{ ...s.totalLabel, color: m.c }}>{m.label}</div>
+          </div>
+        ))}
+      </div>
 
       <div style={s.tabs}>
         <button style={{ ...s.tab, ...(tab === "inscricoes" ? s.tabActive : {}) }} onClick={() => setTab("inscricoes")}>
