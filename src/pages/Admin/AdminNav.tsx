@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { isSuperAdmin } from "../../utils/auth/superAdmin";
 
 const navStyle: React.CSSProperties = {
   display: "flex",
@@ -74,12 +75,14 @@ const AdminNav: React.FC = () => {
       >
         Pernoite extra
       </Link>
-      <Link
-        to="/admin/convites"
-        style={pathname.startsWith("/admin/convites") ? activeItem : baseItem}
-      >
-        Convites
-      </Link>
+      {isSuperAdmin() && (
+        <Link
+          to="/admin/convites"
+          style={pathname.startsWith("/admin/convites") ? activeItem : baseItem}
+        >
+          Convites
+        </Link>
+      )}
       <Link
         to="/admin/testemunhos"
         style={pathname.startsWith("/admin/testemunhos") ? activeItem : baseItem}

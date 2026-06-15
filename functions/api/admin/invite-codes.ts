@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { AdminAuthEnv, authorizeAdminRequest } from "../../_utils/adminAuth";
+import { AdminAuthEnv, authorizeSuperAdminRequest } from "../../_utils/adminAuth";
 import {
   createInviteCodes,
   listInviteCodes,
@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200) =>
 // GET /api/admin/invite-codes -> lista todos os códigos com status (disponível/pendente/
 // usado/revogado) e o nome de quem usou.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const auth = await authorizeAdminRequest(context.request, context.env);
+  const auth = await authorizeSuperAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   const codes = await listInviteCodes(context.env.DB);
@@ -34,7 +34,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 //   { action: "create", count?: number, note?: string }  -> gera N códigos.
 //   { action: "revoke", code: string }                    -> revoga um código não usado.
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const auth = await authorizeAdminRequest(context.request, context.env);
+  const auth = await authorizeSuperAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   let body: { action?: unknown; count?: unknown; note?: unknown; code?: unknown };

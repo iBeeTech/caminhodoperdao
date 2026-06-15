@@ -21,6 +21,10 @@ export function unauthorized(message: string): Response {
   return json(401, { error: message });
 }
 
+export function forbidden(message: string): Response {
+  return json(403, { error: message });
+}
+
 export function serverError(message = "internal_error"): Response {
   return json(500, { error: message });
 }

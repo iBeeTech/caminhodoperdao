@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { unauthorized, serverError } from "./responses";
+import { unauthorized, serverError, forbidden } from "./responses";
 import { isValidEmail } from "./validation";
 
 export interface AdminAuthEnv {
@@ -156,6 +156,23 @@ export async function authorizeAdminRequest(
     return unauthorized("invalid_token");
   }
   return payload;
+}
+
+// Igual ao authorizeAdminRequest, mas exige que seja o ADMIN GERAL (ADMIN_DEFAULT_EMAIL,
+// padrão cassiotakarada7@gmail.com). Usado em ações reservadas a ele (ex.: convites).
+export async function authorizeSuperAdminRequest(
+  request: Request,
+  env: AdminAuthEnv
+): Promise<AdminTokenPayload | Response> {
+  const result = await authorizeAdminRequest(request, env);
+  if (result instanceof Response) {
+    return result;
+  }
+  const superEmail = getAdminDefaults(env).email;
+  if (result.sub.trim().toLowerCase() !== superEmail) {
+    return forbidden("forbidden_not_super_admin");
+  }
+  return result;
 }
 
 async function signHmac(value: string, secret: string): Promise<string> {

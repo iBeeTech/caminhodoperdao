@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import AdminNav from "../AdminNav";
+import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -81,6 +82,7 @@ const inviteLink = (code: string) => `${window.location.origin}/convite?convite=
 
 const ConvitesPage: React.FC = () => {
   const token = React.useMemo(() => localStorage.getItem(STORAGE_KEY), []);
+  const superAdmin = React.useMemo(() => isSuperAdmin(), []);
   const [codes, setCodes] = React.useState<InviteCode[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [authError, setAuthError] = React.useState(false);
@@ -91,7 +93,7 @@ const ConvitesPage: React.FC = () => {
   const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
 
   const load = React.useCallback(() => {
-    if (!token) {
+    if (!token || !superAdmin) {
       setAuthError(true);
       setLoading(false);
       return;
@@ -110,7 +112,7 @@ const ConvitesPage: React.FC = () => {
       })
       .catch(() => setAuthError(true))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, superAdmin]);
 
   React.useEffect(() => {
     load();
@@ -168,6 +170,18 @@ const ConvitesPage: React.FC = () => {
       /* clipboard indisponível */
     }
   };
+
+  if (token && !superAdmin) {
+    return (
+      <div style={s.page}>
+        <AdminNav />
+        <h1 style={s.title}>Convites</h1>
+        <p style={s.subtitle}>
+          Esta área é restrita ao administrador geral. <Link to="/admin">Voltar</Link>.
+        </p>
+      </div>
+    );
+  }
 
   if (authError) {
     return (
