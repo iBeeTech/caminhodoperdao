@@ -279,9 +279,11 @@ export async function listPendingNonStaff(
   DB: D1Database,
   onlySleep: boolean
 ): Promise<Array<{ id: string; payment_ref: string | null }>> {
+  // invite_code IS NULL: inscrições por convite são vagas extras autorizadas de propósito,
+  // então não entram na varredura que cancela pendentes quando um pool lota.
   const sql = onlySleep
-    ? "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0 AND sleep_at_monastery = 1"
-    : "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0";
+    ? "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0 AND sleep_at_monastery = 1 AND invite_code IS NULL"
+    : "SELECT id, payment_ref FROM registrations WHERE status = 'PENDING' AND is_staff = 0 AND invite_code IS NULL";
   const result = await DB.prepare(sql).all<{ id: string; payment_ref: string | null }>();
   return result.results ?? [];
 }
@@ -372,6 +374,18 @@ export async function clearMonasteryUpgradeRef(DB: D1Database, upgradeRef: strin
     "UPDATE registrations SET monastery_upgrade_ref = NULL WHERE monastery_upgrade_ref = ?"
   )
     .bind(upgradeRef)
+    .run();
+}
+
+// Marca a inscrição como criada por convite (override do teto). Mantém o vínculo do
+// código com a inscrição e blinda-a da varredura de lotação (ver listPendingNonStaff).
+export async function setRegistrationInviteCode(
+  DB: D1Database,
+  id: string,
+  inviteCode: string
+): Promise<void> {
+  await DB.prepare("UPDATE registrations SET invite_code = ?1 WHERE id = ?2")
+    .bind(inviteCode, id)
     .run();
 }
 

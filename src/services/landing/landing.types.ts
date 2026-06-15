@@ -56,6 +56,13 @@ export interface RegistrationPayload {
   allergyMedicationDetails?: string;
   hasDietaryRestriction: boolean;
   dietaryRestrictionDetails?: string;
+  // Código de convite (inscrição extra além do teto). Quando enviado e válido, o
+  // servidor libera a vaga mesmo com as 500 esgotadas (sempre sem pernoite).
+  inviteCode?: string;
+}
+
+export interface InviteValidateResponse {
+  valid: boolean;
 }
 
 export interface RegistrationResponse {

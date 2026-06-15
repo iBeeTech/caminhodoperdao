@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminListaEspera, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites } from "./pages";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -13,6 +13,9 @@ const AppRoutes: React.FC = () => {
       <Route path="/tutoriais" element={<AdminTutoriais />} />
       <Route path="/admin/inscritos" element={<AdminInscritos />} />
       <Route path="/admin/lista-espera" element={<AdminListaEspera />} />
+      <Route path="/admin/pernoiteExtra" element={<AdminPernoiteExtra />} />
+      <Route path="/convite" element={<Convite />} />
+      <Route path="/admin/convites" element={<AdminConvites />} />
       <Route path="/staff" element={<Staff />} />
       <Route path="/depoimentos" element={<Depoimentos />} />
       <Route path="/testemunhos" element={<Testemunhos />} />

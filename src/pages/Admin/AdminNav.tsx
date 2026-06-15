@@ -69,6 +69,18 @@ const AdminNav: React.FC = () => {
         Lista de espera
       </Link>
       <Link
+        to="/admin/pernoiteExtra"
+        style={pathname.startsWith("/admin/pernoiteExtra") ? activeItem : baseItem}
+      >
+        Pernoite extra
+      </Link>
+      <Link
+        to="/admin/convites"
+        style={pathname.startsWith("/admin/convites") ? activeItem : baseItem}
+      >
+        Convites
+      </Link>
+      <Link
         to="/admin/testemunhos"
         style={pathname.startsWith("/admin/testemunhos") ? activeItem : baseItem}
       >

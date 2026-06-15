@@ -1,6 +1,7 @@
 import { httpClient } from "../http/client";
 import {
   AvailabilityResponse,
+  InviteValidateResponse,
   MonasteryUpgradeResponse,
   RegistrationPayload,
   RegistrationResponse,
@@ -35,6 +36,11 @@ export const landingService = {
 
   async register(payload: RegistrationPayload): Promise<RegistrationResponse> {
     return httpClient.post<RegistrationResponse>("/api/register", payload);
+  },
+
+  // Valida um código de convite (tela /convite) antes de liberar o formulário.
+  async validateInvite(code: string): Promise<InviteValidateResponse> {
+    return httpClient.get<InviteValidateResponse>(`/api/invite?code=${encodeURIComponent(code)}`);
   },
 
   // Lista de espera (evento esgotado): nome + CPF + WhatsApp para avisar se abrir vaga.

@@ -167,6 +167,20 @@
     "availability": {
         "error": "Não foi possível verificar vagas agora."
     },
+    "invite": {
+        "title": "Inscrição por convite",
+        "subtitle": "Você recebeu um convite para se inscrever na Caminhada do Perdão. Insira o código abaixo para liberar o formulário de inscrição (sem pernoite).",
+        "codeLabel": "Código do convite",
+        "submitCode": "Validar código",
+        "validating": "Validando…",
+        "validBanner": "Convite válido! Preencha seus dados para concluir a inscrição (sem pernoite).",
+        "errors": {
+            "required": "Digite o código do convite.",
+            "invalid": "Código inválido ou já utilizado. Confira com quem te enviou o link.",
+            "generic": "Não foi possível validar o código agora. Tente novamente.",
+            "consumed": "Este convite não está mais disponível (já foi utilizado). Fale com quem te enviou o link."
+        }
+    },
     "tshirt": {
         "title": "Compre a Camiseta Exclusiva da Caminhada do Perdão",
         "titleNote": "(a camiseta não está inclusa na taxa da inscrição)",

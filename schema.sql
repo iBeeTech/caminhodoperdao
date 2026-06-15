@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS registrations (
   is_staff INTEGER NOT NULL DEFAULT 0,
   -- Ref. da cobrança PIX da diferença na troca geral -> pernoite (ver migration 010).
   monastery_upgrade_ref TEXT,
+  -- Pernoite concedida pelo admin (overrule): inscrito geral autorizado a dormir
+  -- no mosteiro manualmente. Ao conceder, sleep_at_monastery vira 1 (ver migration 015).
+  pernoite_granted INTEGER NOT NULL DEFAULT 0,
+  -- Código de convite que liberou esta inscrição extra (override do teto). Quando
+  -- preenchido, a inscrição não é cancelada pela varredura de lotação (ver migration 016).
+  invite_code TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );
@@ -36,6 +42,8 @@ CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
 CREATE INDEX IF NOT EXISTS idx_registrations_payment_ref ON registrations(payment_ref);
 CREATE INDEX IF NOT EXISTS idx_registrations_status_sleep ON registrations(status, sleep_at_monastery);
 CREATE INDEX IF NOT EXISTS idx_registrations_is_staff ON registrations(is_staff);
+CREATE INDEX IF NOT EXISTS idx_registrations_pernoite_granted ON registrations(pernoite_granted);
+CREATE INDEX IF NOT EXISTS idx_registrations_invite_code ON registrations(invite_code);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_cpf_encrypted ON registrations(cpf_encrypted) WHERE cpf_encrypted IS NOT NULL;
 
 -- D1 schema for t-shirt purchases (Caminhada do Perdao)
@@ -134,6 +142,19 @@ CREATE TABLE IF NOT EXISTS testimonies (
 CREATE INDEX IF NOT EXISTS idx_testimonies_status ON testimonies(status);
 CREATE INDEX IF NOT EXISTS idx_testimonies_created_at ON testimonies(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_testimonies_audio_key ON testimonies(audio_key);
+
+-- Convites de inscrição extra (override do teto de 500). Um código por pessoa, uso
+-- único, válido só sem pernoite. O admin gera no /admin/convites e envia /convite?... (ver migration 016).
+CREATE TABLE IF NOT EXISTS invite_codes (
+  code TEXT PRIMARY KEY,
+  note TEXT,
+  used_at TEXT,
+  used_by_registration_id TEXT,
+  revoked_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_invite_codes_used_at ON invite_codes(used_at);
+CREATE INDEX IF NOT EXISTS idx_invite_codes_created_at ON invite_codes(created_at DESC);
 
 -- Admin users table
 CREATE TABLE IF NOT EXISTS admin_users (

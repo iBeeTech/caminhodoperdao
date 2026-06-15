@@ -14,7 +14,13 @@ import {
   getByCpfEncrypted,
   insertRegistration,
   updateRegistration,
+  setRegistrationInviteCode,
 } from "../_utils/registrations";
+import {
+  getInviteCode,
+  bindInviteCode,
+  normalizeInviteCode,
+} from "../_utils/inviteCodes";
 import type { CapacityEnv } from "../_utils/capacity";
 
 interface Env extends CapacityEnv {
@@ -55,6 +61,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     allergyMedicationDetails,
     hasDietaryRestriction,
     dietaryRestrictionDetails,
+    inviteCode,
   } = body as {
     name?: string;
     email?: string;
@@ -76,7 +83,13 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     allergyMedicationDetails?: string;
     hasDietaryRestriction?: boolean;
     dietaryRestrictionDetails?: string;
+    inviteCode?: string;
   };
+
+  // Convite (override do teto de 500): quando presente, a inscrição é sempre SEM
+  // pernoite e fura o teto geral, desde que o código seja válido (checado adiante).
+  const normalizedInviteCode = normalizeInviteCode(inviteCode);
+  const hasInvite = normalizedInviteCode.length > 0;
 
   if (!email || !isValidEmail(email)) {
     return badRequest("invalid_email");
@@ -145,7 +158,8 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
 
   const termsAcceptedAt = new Date().toISOString();
 
-  const sleepFlag = sleepAtMonastery ? 1 : 0;
+  // Convite é válido só para inscrição geral (sem pernoite): ignora o pedido de pernoite.
+  const sleepFlag = sleepAtMonastery && !hasInvite ? 1 : 0;
 
   let cpfEncrypted: string;
   try {
@@ -194,11 +208,29 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
   // Conta só PAGAS — pendentes não reservam vaga (alinhado ao mosteiro e ao enforceCapacity).
   const nonStaff = await countPaidNonStaff(env.DB);
 
-  // Teto de peregrinos (não-staff) tranca a inscrição por completo.
-  if (nonStaff >= maxRegistrationsNonStaff) {
+  // Convite: valida o código antes de liberar a vaga extra. Uso único — bloqueia se
+  // o código não existe, foi revogado, ou já foi consumido por OUTRA inscrição (a
+  // mesma pessoa pode reabrir/retentar pelo próprio CPF, pois o vínculo aponta para ela).
+  if (hasInvite) {
+    const inviteRow = await getInviteCode(env.DB, normalizedInviteCode);
+    if (!inviteRow || inviteRow.revoked_at) {
+      return conflict("invalid_invite");
+    }
+    if (
+      inviteRow.used_by_registration_id &&
+      inviteRow.used_by_registration_id !== existing?.id
+    ) {
+      return conflict("invite_already_used");
+    }
+  }
+
+  // Teto de peregrinos (não-staff) tranca a inscrição por completo — exceto com convite
+  // válido, que autoriza a vaga extra além do teto.
+  if (!hasInvite && nonStaff >= maxRegistrationsNonStaff) {
     return conflict("registrations_full");
   }
-  // Pool do mosteiro dos peregrinos (não-staff), por ordem de chegada.
+  // Pool do mosteiro dos peregrinos (não-staff), por ordem de chegada. Convite é só geral
+  // (sleepFlag já forçado a 0), então este teto não se aplica a ele.
   if (sleepFlag && sleepers >= maxRegistrationsSleep) {
     return conflict("monastery_full");
   }
@@ -321,6 +353,18 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
       return conflict("registration_exists", {});
     }
     return serverError();
+  }
+
+  // Inscrição por convite: marca a inscrição (blinda da varredura de lotação) e consome
+  // o código (uso único, amarrado a esta inscrição). Idempotente em retentativas do mesmo CPF.
+  if (hasInvite) {
+    const registrationId = existing && existing.status !== "PAID" ? existing.id : id;
+    try {
+      await setRegistrationInviteCode(env.DB, registrationId, normalizedInviteCode);
+      await bindInviteCode(env.DB, normalizedInviteCode, registrationId);
+    } catch (error) {
+      console.error("Erro ao vincular convite à inscrição:", error);
+    }
   }
 
   // Buscar o pagamento salvo para garantir que usamos o campo do banco
