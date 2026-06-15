@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import AdminNav from "../AdminNav";
+import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
 const PAGE_SIZE = 50;
@@ -144,6 +145,11 @@ const formatDob = (dob: string | null): string => {
 
 const InscritosPage: React.FC = () => {
   const token = React.useMemo(() => localStorage.getItem(STORAGE_KEY), []);
+  // "Atualizar status PIX (Woovi)" é restrito ao admin geral (gating de UI; a API
+  // /api/admin/reconcile-pix também valida no servidor).
+  const superAdmin = React.useMemo(() => isSuperAdmin(), []);
+  const [isReconciling, setIsReconciling] = React.useState(false);
+  const [reconcileMsg, setReconcileMsg] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<"inscricoes" | "camisetas">("inscricoes");
   const [regs, setRegs] = React.useState<Registration[]>([]);
   const [tshirts, setTshirts] = React.useState<Tshirt[]>([]);
@@ -191,6 +197,41 @@ const InscritosPage: React.FC = () => {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // Consulta a Woovi e atualiza o status (PAID/CANCELED) das inscrições pendentes.
+  const handleReconcilePix = React.useCallback(async () => {
+    if (!token) return;
+    setIsReconciling(true);
+    setReconcileMsg(null);
+    try {
+      const res = await fetch("/api/admin/reconcile-pix", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setReconcileMsg(
+          res.status === 401 || res.status === 403
+            ? "Sem permissão para esta ação."
+            : "Erro ao atualizar o status PIX."
+        );
+        return;
+      }
+      const data = (await res.json()) as {
+        summary?: { checked: number; paid: number; canceled: number; stillPending: number; errors: number };
+      };
+      const sm = data.summary;
+      setReconcileMsg(
+        sm
+          ? `Verificadas ${sm.checked} · pagas ${sm.paid} · canceladas ${sm.canceled} · pendentes ${sm.stillPending} · erros ${sm.errors}.`
+          : "Status PIX atualizado."
+      );
+      load();
+    } catch {
+      setReconcileMsg("Erro ao atualizar o status PIX.");
+    } finally {
+      setIsReconciling(false);
+    }
+  }, [token, load]);
 
   React.useEffect(() => {
     setPage(1);
@@ -300,10 +341,34 @@ const InscritosPage: React.FC = () => {
 
       <div style={s.topbar}>
         <h1 style={s.title}>Inscritos</h1>
-        <button type="button" style={s.refresh} onClick={load} disabled={loading}>
+        {superAdmin && (
+          <button
+            type="button"
+            style={{
+              padding: "0.55rem 1.1rem", borderRadius: 8, border: "none", background: "#4338ca",
+              color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem",
+              marginLeft: "auto", opacity: isReconciling ? 0.7 : 1,
+            }}
+            onClick={handleReconcilePix}
+            disabled={isReconciling}
+          >
+            {isReconciling ? "Atualizando PIX…" : "Atualizar status PIX (Woovi)"}
+          </button>
+        )}
+        <button
+          type="button"
+          style={{ ...s.refresh, marginLeft: superAdmin ? 0 : "auto" }}
+          onClick={load}
+          disabled={loading}
+        >
           {loading ? "Atualizando…" : "Atualizar informações"}
         </button>
       </div>
+      {reconcileMsg && (
+        <p style={{ margin: "0 0 1rem", color: "#4338ca", fontWeight: 600, fontSize: "0.9rem" }}>
+          {reconcileMsg}
+        </p>
+      )}
 
       <div style={s.totals}>
         {metrics.map((m) => (

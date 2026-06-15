@@ -43,7 +43,6 @@ interface AdminViewProps {
   isChangingPassword: boolean;
   isAddingAdmin: boolean;
   canManageAdmins: boolean;
-  isReconciling: boolean;
   newAdminEmail: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
@@ -56,8 +55,6 @@ interface AdminViewProps {
   onDownloadPeregrinosGeral: () => void;
   onDownloadPeregrinosMosteiro: () => void;
   onDownloadTshirt: () => void;
-  onDownloadVendas: () => void;
-  onReconcilePix: () => void;
   onDownloadCredPeregrinos: () => void;
   onDownloadCredStaff: () => void;
   onDownloadRetiradaCamisetas: () => void;
@@ -77,7 +74,6 @@ const AdminView: React.FC<AdminViewProps> = ({
   isChangingPassword,
   isAddingAdmin,
   canManageAdmins,
-  isReconciling,
   newAdminEmail,
   onEmailChange,
   onPasswordChange,
@@ -90,8 +86,6 @@ const AdminView: React.FC<AdminViewProps> = ({
   onDownloadPeregrinosGeral,
   onDownloadPeregrinosMosteiro,
   onDownloadTshirt,
-  onDownloadVendas,
-  onReconcilePix,
   onDownloadCredPeregrinos,
   onDownloadCredStaff,
   onDownloadRetiradaCamisetas,
@@ -223,23 +217,9 @@ const AdminView: React.FC<AdminViewProps> = ({
                   <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadStaffGeral(); }}>
                     {t("panel.reportStaffGeral")}
                   </button>
-                  <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadTshirt(); }}>
+                  <button style={{ ...dropItem, borderBottom: "none" }} onClick={() => { setOpenMenu(null); onDownloadTshirt(); }}>
                     {t("panel.reportTshirt")}
                   </button>
-                  {canManageAdmins && (
-                    <>
-                      <button style={dropItem} onClick={() => { setOpenMenu(null); onDownloadVendas(); }}>
-                        {t("panel.reportVendas")}
-                      </button>
-                      <button
-                        style={{ ...dropItem, borderBottom: "none", fontWeight: 700, color: "#4338ca" }}
-                        disabled={isReconciling}
-                        onClick={() => { onReconcilePix(); }}
-                      >
-                        {isReconciling ? t("panel.reconcilePixLoading") : t("panel.reconcilePix")}
-                      </button>
-                    </>
-                  )}
                 </div>
               )}
             </div>

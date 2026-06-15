@@ -22,7 +22,6 @@ const AdminController: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isAddingAdmin, setIsAddingAdmin] = React.useState(false);
-  const [isReconciling, setIsReconciling] = React.useState(false);
 
   const verifyToken = React.useCallback(async (jwt: string) => {
     try {
@@ -204,52 +203,6 @@ const AdminController: React.FC = () => {
     }
   };
 
-  const handleReconcilePix = async () => {
-    if (!token) {
-      setError(t("messages.reauth"));
-      setStatus("unauthenticated");
-      return;
-    }
-    setIsReconciling(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await fetch("/api/admin/reconcile-pix", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          setError(t("messages.addAdminNoPermission"));
-        } else {
-          setError(t("messages.reconcileError"));
-        }
-        return;
-      }
-      const data = (await response.json()) as {
-        summary?: { checked: number; paid: number; canceled: number; stillPending: number; errors: number };
-      };
-      const s = data.summary;
-      if (s) {
-        setSuccess(
-          t("messages.reconcileSuccess", {
-            checked: s.checked,
-            paid: s.paid,
-            canceled: s.canceled,
-            pending: s.stillPending,
-            errors: s.errors,
-          })
-        );
-      } else {
-        setSuccess(t("messages.reconcileSuccessGeneric"));
-      }
-    } catch {
-      setError(t("messages.reconcileError"));
-    } finally {
-      setIsReconciling(false);
-    }
-  };
-
   return (
     <AdminView
       status={status}
@@ -292,9 +245,6 @@ const AdminController: React.FC = () => {
       onDownloadTshirt={() =>
         downloadReport("/api/admin/reports/tshirt", "planilha-camisetas.xlsx")
       }
-      onDownloadVendas={() =>
-        downloadReport("/api/admin/reports/vendas", "vendas-totais.xlsx")
-      }
       onDownloadCredPeregrinos={() =>
         downloadReport(
           "/api/admin/reports/credenciamento?tipo=peregrinos",
@@ -314,8 +264,6 @@ const AdminController: React.FC = () => {
         )
       }
       canManageAdmins={adminEmail?.toLowerCase() === DEFAULT_EMAIL}
-      onReconcilePix={handleReconcilePix}
-      isReconciling={isReconciling}
       newAdminEmail={newAdminEmail}
       isAddingAdmin={isAddingAdmin}
       onNewAdminEmailChange={setNewAdminEmail}
