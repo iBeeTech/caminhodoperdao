@@ -15,6 +15,7 @@ interface Row {
   email: string | null;
   status: string;
   sleep_at_monastery: number;
+  pernoite_granted: number;
   is_staff: number;
   date_of_birth: string | null;
   allergy_medication_details: string | null;
@@ -30,7 +31,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (auth instanceof Response) return auth;
 
   const result = await context.env.DB.prepare(
-    `SELECT name, phone, email, status, sleep_at_monastery, is_staff,
+    `SELECT name, phone, email, status, sleep_at_monastery, pernoite_granted, is_staff,
             date_of_birth, allergy_medication_details, dietary_restriction_details, city
      FROM registrations
      ORDER BY name COLLATE NOCASE`

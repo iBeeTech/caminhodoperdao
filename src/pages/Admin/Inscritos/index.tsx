@@ -12,6 +12,7 @@ interface Registration {
   email: string | null;
   status: Status;
   sleep_at_monastery: number;
+  pernoite_granted: number;
   is_staff: number;
   date_of_birth: string | null;
   allergy_medication_details: string | null;
@@ -213,10 +214,12 @@ const InscritosPage: React.FC = () => {
   const pendentes = regs.filter((r) => r.status === "PENDING" && isPeregrino(r)).length;
   const cancelados = regs.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
   const staffCount = regs.filter((r) => r.is_staff === 1).length;
+  const pernoiteConcedida = regs.filter((r) => r.status === "PAID" && r.pernoite_granted === 1).length;
 
   const metrics = [
     { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
     { num: paidPernoite, label: "Pagos — com pernoite", c: "#b45309", bg: "#fffbeb", b: "#fde68a" },
+    { num: pernoiteConcedida, label: "Pernoite concedida", c: "#6d28d9", bg: "#f5f3ff", b: "#ddd6fe" },
     { num: pendentes, label: "Pendentes", c: "#a16207", bg: "#fefce8", b: "#fde68a" },
     { num: cancelados, label: "Cancelados", c: "#b91c1c", bg: "#fef2f2", b: "#fecaca" },
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
@@ -247,7 +250,10 @@ const InscritosPage: React.FC = () => {
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
         (!fStatus || r.status === fStatus) &&
-        (!fPernoite || String(r.sleep_at_monastery) === fPernoite) &&
+        (!fPernoite ||
+          (fPernoite === "granted"
+            ? r.pernoite_granted === 1
+            : String(r.sleep_at_monastery) === fPernoite)) &&
         (!fAniversariante || birthdayWithinWeek(r.date_of_birth))
     )
     .sort(byName);
@@ -351,6 +357,7 @@ const InscritosPage: React.FC = () => {
                   <option value="">Todos</option>
                   <option value="1">Sim</option>
                   <option value="0">Não</option>
+                  <option value="granted">Pernoite Concedida</option>
                 </select>
               </label>
               <label style={s.field}>
@@ -396,7 +403,9 @@ const InscritosPage: React.FC = () => {
                   <div style={s.cardName}>{formatName(r.name)}</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <span style={badge(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</span>
-                    {r.sleep_at_monastery === 1 ? (
+                    {r.pernoite_granted === 1 ? (
+                      <span style={tag("#6d28d9", "#f5f3ff", "#ddd6fe")}>🌙 Pernoite Concedida</span>
+                    ) : r.sleep_at_monastery === 1 ? (
                       <span style={tag("#b45309", "#fffbeb", "#fde68a")}>🏠 Pernoite</span>
                     ) : (
                       <span style={tag("#374151", "#f3f4f6", "#e5e7eb")}>🚶 Sem pernoite</span>
