@@ -11,11 +11,19 @@ type Env = AdminAuthEnv & {
 
 interface Row {
   name: string;
+  date_of_birth: string | null;
+  email: string | null;
   phone: string | null;
   cpf_encrypted: string | null;
 }
 
 const HEADER_FILL = "F0F0F0";
+
+function formatDateOfBirth(value: string | null): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value ?? "";
+  const [y, m, d] = value.split("-");
+  return `${d}/${m}/${y}`;
+}
 
 // Planilhas de Controle (credenciamento). ?tipo=peregrinos | staff | camisetas
 // Listas de PAGOS com campo de assinatura em branco (para conferência presencial).
@@ -35,18 +43,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const withPhone = tipo !== "camisetas";
 
   if (tipo === "staff") {
-    query = "SELECT name, phone, cpf_encrypted FROM registrations WHERE status='PAID' AND is_staff=1";
-    headers = ["NOME", "TELEFONE", "CPF", "ASSINATURA"];
+    query = "SELECT name, date_of_birth, email, phone, cpf_encrypted FROM registrations WHERE status='PAID' AND is_staff=1";
+    headers = ["NOME", "DATA NASC.", "EMAIL", "TELEFONE", "CPF", "ASSINATURA"];
     filename = "credenciamento-staff.xlsx";
     sheetName = "Staff";
   } else if (tipo === "camisetas") {
-    query = "SELECT customer_name AS name, NULL AS phone, cpf_encrypted FROM tshirt_purchase WHERE status='PAID'";
-    headers = ["NOME", "CPF", "ASSINATURA"];
+    query = "SELECT customer_name AS name, NULL AS date_of_birth, email, NULL AS phone, cpf_encrypted FROM tshirt_purchase WHERE status='PAID'";
+    headers = ["NOME", "EMAIL", "CPF", "ASSINATURA"];
     filename = "retirada-camisetas.xlsx";
     sheetName = "Camisetas";
   } else {
-    query = "SELECT name, phone, cpf_encrypted FROM registrations WHERE status='PAID' AND is_staff=0";
-    headers = ["NOME", "TELEFONE", "CPF", "ASSINATURA"];
+    query = "SELECT name, date_of_birth, email, phone, cpf_encrypted FROM registrations WHERE status='PAID' AND is_staff=0";
+    headers = ["NOME", "DATA NASC.", "EMAIL", "TELEFONE", "CPF", "ASSINATURA"];
     filename = "credenciamento-peregrinos.xlsx";
     sheetName = "Peregrinos";
   }
@@ -66,9 +74,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
     if (withPhone) {
-      dataRows.push([row.name || "", row.phone ?? "", cpf, ""]);
+      dataRows.push([
+        row.name || "",
+        formatDateOfBirth(row.date_of_birth),
+        row.email ?? "",
+        row.phone ?? "",
+        cpf,
+        "",
+      ]);
     } else {
-      dataRows.push([row.name || "", cpf, ""]);
+      dataRows.push([row.name || "", row.email ?? "", cpf, ""]);
     }
   }
 
@@ -78,7 +93,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }));
 
   // Coluna de assinatura em branco fica mais larga para preenchimento à mão.
-  const widths = headers.map(h => (h === "ASSINATURA" ? 30 : Math.max(12, h.length + 4)));
+  const widths = headers.map(h => {
+    if (h === "ASSINATURA") return 30;
+    if (h === "EMAIL") return 32;
+    if (h === "NOME") return 28;
+    return Math.max(12, h.length + 4);
+  });
   const sheet: SheetSpec = {
     sheetName,
     rows: [headerRow, ...dataRows],
