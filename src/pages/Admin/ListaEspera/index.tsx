@@ -36,8 +36,7 @@ const buildWhatsappUrl = (entry: WaitlistEntry) => {
   const message =
     `Olá, ${firstName}! Aqui é da organização do Caminho do Perdão. ` +
     `Você está na nossa lista de espera e uma vaga foi liberada! ` +
-    `As inscrições estão abertas novamente em https://caminhodoperdao.com.br — garanta sua vaga. ` +
-    `Atenção: a vaga é por ordem de chegada e só é confirmada após o pagamento do PIX.`;
+    `Você pode fazer a inscrição pelo link:`;
   return `https://wa.me/55${entry.phone}?text=${encodeURIComponent(message)}`;
 };
 
