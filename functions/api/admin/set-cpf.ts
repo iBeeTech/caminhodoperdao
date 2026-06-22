@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { AdminAuthEnv, authorizeAdminRequest } from "../../_utils/adminAuth";
+import { AdminAuthEnv, authorizeSuperAdminRequest } from "../../_utils/adminAuth";
 import { encryptCpf } from "../../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../../_utils/cpfValidation";
 
@@ -32,7 +32,7 @@ const json = (body: unknown, status = 200) =>
 // GET /api/admin/set-cpf -> lista inscritos que estão sem CPF cadastrado, para a
 // tela /admin/passar-cpf. Inclui PENDING/PAID; não importa is_staff.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const auth = await authorizeAdminRequest(context.request, context.env);
+  const auth = await authorizeSuperAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   const result = await context.env.DB.prepare(
@@ -50,7 +50,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 // A criptografia usa a chave que vive na Cloudflare (env), então o CPF nunca
 // trafega em texto puro fora do servidor.
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const auth = await authorizeAdminRequest(context.request, context.env);
+  const auth = await authorizeSuperAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   let body: { id?: unknown; cpf?: unknown };

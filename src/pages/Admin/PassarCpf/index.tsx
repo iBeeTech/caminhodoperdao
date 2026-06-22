@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import AdminNav from "../AdminNav";
+import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -64,10 +65,16 @@ const PassarCpfPage: React.FC = () => {
   const [rowError, setRowError] = React.useState<Record<string, string>>({});
   const [loading, setLoading] = React.useState(true);
   const [authError, setAuthError] = React.useState(false);
+  const superAdmin = React.useMemo(() => isSuperAdmin(), []);
 
   const load = React.useCallback(async () => {
     if (!token) {
       setAuthError(true);
+      setLoading(false);
+      return;
+    }
+    if (!superAdmin) {
+      // A área é restrita ao admin geral; o render trata o aviso.
       setLoading(false);
       return;
     }
@@ -87,7 +94,7 @@ const PassarCpfPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, superAdmin]);
 
   React.useEffect(() => {
     load();
@@ -132,6 +139,18 @@ const PassarCpfPage: React.FC = () => {
       setRowError((prev) => ({ ...prev, [id]: "Erro de conexão." }));
     }
   };
+
+  if (token && !superAdmin) {
+    return (
+      <div style={styles.page}>
+        <AdminNav />
+        <h1 style={styles.title}>Passar CPF</h1>
+        <p style={styles.subtitle}>
+          Esta área é restrita ao administrador geral. <Link to="/admin">Voltar</Link>.
+        </p>
+      </div>
+    );
+  }
 
   if (authError) {
     return (
