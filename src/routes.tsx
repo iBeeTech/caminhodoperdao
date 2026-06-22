@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminPassarCpf } from "./pages";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -20,6 +20,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/depoimentos" element={<Depoimentos />} />
       <Route path="/testemunhos" element={<Testemunhos />} />
       <Route path="/admin/testemunhos" element={<AdminTestemunhos />} />
+      <Route path="/admin/passar-cpf" element={<AdminPassarCpf />} />
       <Route path="/responsabilityTerms" element={<ResponsabilityTerms />} />
       <Route path="/error" element={<ErrorPage />} />
       <Route path="*" element={<Navigate to="/error" replace />} />

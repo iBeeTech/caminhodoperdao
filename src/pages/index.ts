@@ -15,3 +15,4 @@ export { default as Depoimentos } from "./Depoimentos";
 export { default as Testemunhos } from "./Testemunhos";
 export { default as Convite } from "./Convite";
 export { default as AdminTestemunhos } from "./Admin/Testemunhos";
+export { default as AdminPassarCpf } from "./Admin/PassarCpf";

@@ -89,6 +89,12 @@ const AdminNav: React.FC = () => {
       >
         Testemunhos
       </Link>
+      <Link
+        to="/admin/passar-cpf"
+        style={pathname.startsWith("/admin/passar-cpf") ? activeItem : baseItem}
+      >
+        Passar CPF
+      </Link>
       <button
         type="button"
         style={logoutLink}
