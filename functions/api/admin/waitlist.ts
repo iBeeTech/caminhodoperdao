@@ -1,7 +1,11 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../_utils/adminAuth";
 import { decryptCpf } from "../../_utils/cpfCrypto";
-import { listWaitlist, setWaitlistNotified } from "../../_utils/waitlist";
+import {
+  listWaitlist,
+  setWaitlistNotified,
+  setWaitlistContactFailed,
+} from "../../_utils/waitlist";
 
 type WaitlistEnv = AdminAuthEnv & {
   DB: D1Database;
@@ -42,6 +46,7 @@ export const onRequestGet: PagesFunction<WaitlistEnv> = async (context) => {
       cpf,
       phone: entry.phone,
       notified_at: entry.notified_at,
+      contact_failed_at: entry.contact_failed_at,
       created_at: entry.created_at,
     });
   }
@@ -52,13 +57,15 @@ export const onRequestGet: PagesFunction<WaitlistEnv> = async (context) => {
   });
 };
 
-// POST /api/admin/waitlist -> marca/desmarca "avisado".
-// Body: { updates: [{ id, notified: boolean }] }
+// POST /api/admin/waitlist -> marca/desmarca "avisado" e/ou "não consegui contato".
+// Body: { updates: [{ id, notified?: boolean, contactFailed?: boolean }] }
 export const onRequestPost: PagesFunction<WaitlistEnv> = async (context) => {
   const auth = await authorizeAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
-  let body: { updates?: Array<{ id?: string; notified?: boolean }> };
+  let body: {
+    updates?: Array<{ id?: string; notified?: boolean; contactFailed?: boolean }>;
+  };
   try {
     body = await context.request.json();
   } catch {
@@ -69,13 +76,19 @@ export const onRequestPost: PagesFunction<WaitlistEnv> = async (context) => {
   }
 
   const updates = (body.updates ?? []).filter(
-    (u): u is { id: string; notified: boolean } =>
-      typeof u?.id === "string" && typeof u?.notified === "boolean"
+    (u): u is { id: string; notified?: boolean; contactFailed?: boolean } =>
+      typeof u?.id === "string" &&
+      (typeof u?.notified === "boolean" || typeof u?.contactFailed === "boolean")
   );
 
   let updated = 0;
   for (const item of updates) {
-    await setWaitlistNotified(context.env.DB, item.id, item.notified);
+    if (typeof item.notified === "boolean") {
+      await setWaitlistNotified(context.env.DB, item.id, item.notified);
+    }
+    if (typeof item.contactFailed === "boolean") {
+      await setWaitlistContactFailed(context.env.DB, item.id, item.contactFailed);
+    }
     updated += 1;
   }
 

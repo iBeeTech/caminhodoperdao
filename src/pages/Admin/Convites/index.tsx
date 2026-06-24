@@ -5,7 +5,7 @@ import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
 
-type InviteStatus = "available" | "pending" | "used" | "revoked";
+type InviteStatus = "available" | "link_copied" | "pending" | "used" | "revoked";
 
 interface InviteCode {
   code: string;
@@ -18,6 +18,7 @@ interface InviteCode {
 
 const STATUS_LABEL: Record<InviteStatus, string> = {
   available: "Disponível",
+  link_copied: "Link copiado",
   pending: "Em uso (não pago)",
   used: "Usado",
   revoked: "Revogado",
@@ -25,10 +26,22 @@ const STATUS_LABEL: Record<InviteStatus, string> = {
 
 const STATUS_STYLE: Record<InviteStatus, React.CSSProperties> = {
   available: { color: "#15803d", background: "#f0fdf4", borderColor: "#86efac" },
+  link_copied: { color: "#1d4ed8", background: "#eff6ff", borderColor: "#bfdbfe" },
   pending: { color: "#a16207", background: "#fefce8", borderColor: "#fde68a" },
   used: { color: "#1f2937", background: "#f3f4f6", borderColor: "#d1d5db" },
   revoked: { color: "#b91c1c", background: "#fef2f2", borderColor: "#fecaca" },
 };
+
+type InviteFilter = "all" | InviteStatus;
+
+const FILTERS: Array<{ key: InviteFilter; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "available", label: "Disponível" },
+  { key: "link_copied", label: "Link copiado" },
+  { key: "pending", label: "Em uso" },
+  { key: "used", label: "Usado" },
+  { key: "revoked", label: "Revogado" },
+];
 
 const s: Record<string, React.CSSProperties> = {
   page: { maxWidth: 1000, margin: "0 auto", padding: "1rem", fontFamily: "sans-serif" },
@@ -71,6 +84,12 @@ const s: Record<string, React.CSSProperties> = {
     color: "#b91c1c", fontWeight: 700, cursor: "pointer", fontSize: "0.8rem",
   },
   empty: { color: "#777", padding: "1rem 0" },
+  filterBar: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 1rem" },
+  filterBtn: {
+    padding: "0.4rem 0.9rem", borderRadius: 999, border: "1px solid #d1d5db", background: "#fff",
+    color: "#374151", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer",
+  },
+  filterBtnActive: { background: "#1f7a3d", borderColor: "#1f7a3d", color: "#fff" },
 };
 
 const badge = (status: InviteStatus): React.CSSProperties => ({
@@ -91,6 +110,7 @@ const ConvitesPage: React.FC = () => {
   const [generating, setGenerating] = React.useState(false);
   const [feedback, setFeedback] = React.useState<{ ok: boolean; msg: string } | null>(null);
   const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
+  const [filter, setFilter] = React.useState<InviteFilter>("all");
 
   const load = React.useCallback(() => {
     if (!token || !superAdmin) {
@@ -169,6 +189,21 @@ const ConvitesPage: React.FC = () => {
     } catch {
       /* clipboard indisponível */
     }
+    // Registra a cópia (rastreabilidade) e reflete o status "Link copiado" na hora.
+    // Só muda quem ainda está "Disponível" — não rebaixa usados/em uso/revogados.
+    if (!token) return;
+    setCodes((prev) =>
+      prev.map((c) => (c.code === code && c.status === "available" ? { ...c, status: "link_copied" } : c))
+    );
+    try {
+      await fetch("/api/admin/invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: "mark_copied", code }),
+      });
+    } catch {
+      /* a marcação volta a valer no próximo "Atualizar" */
+    }
   };
 
   if (token && !superAdmin) {
@@ -195,7 +230,15 @@ const ConvitesPage: React.FC = () => {
     );
   }
 
-  const available = codes.filter((c) => c.status === "available").length;
+  const counts: Record<InviteFilter, number> = {
+    all: codes.length,
+    available: codes.filter((c) => c.status === "available").length,
+    link_copied: codes.filter((c) => c.status === "link_copied").length,
+    pending: codes.filter((c) => c.status === "pending").length,
+    used: codes.filter((c) => c.status === "used").length,
+    revoked: codes.filter((c) => c.status === "revoked").length,
+  };
+  const visibleCodes = codes.filter((c) => filter === "all" || c.status === filter);
 
   return (
     <div style={s.page}>
@@ -248,10 +291,27 @@ const ConvitesPage: React.FC = () => {
       ) : (
         <>
           <p style={s.subtitle}>
-            {codes.length} código(s) — <strong>{available}</strong> disponível(is).
+            {codes.length} código(s) — <strong>{counts.available + counts.link_copied}</strong> ainda livre(s)
+            {" "}({counts.link_copied} com link copiado).
           </p>
+          <div style={s.filterBar}>
+            <span style={{ fontWeight: 700, color: "#374151", fontSize: "0.82rem" }}>Filtrar:</span>
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                style={filter === f.key ? { ...s.filterBtn, ...s.filterBtnActive } : s.filterBtn}
+                onClick={() => setFilter(f.key)}
+              >
+                {f.label} ({counts[f.key]})
+              </button>
+            ))}
+          </div>
+          {visibleCodes.length === 0 ? (
+            <p style={s.empty}>Nenhum código nesse filtro.</p>
+          ) : (
           <div style={s.grid}>
-            {codes.map((c) => (
+            {visibleCodes.map((c) => (
               <div key={c.code} style={s.card}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <span style={s.codeText}>{c.code}</span>
@@ -261,7 +321,7 @@ const ConvitesPage: React.FC = () => {
                 {c.used_by_name && (
                   <div style={{ fontSize: "0.85rem", color: "#374151" }}>👤 {c.used_by_name}</div>
                 )}
-                {(c.status === "available" || c.status === "pending") && (
+                {(c.status === "available" || c.status === "link_copied" || c.status === "pending") && (
                   <>
                     <div style={s.linkRow}>
                       <input style={s.linkInput} readOnly value={inviteLink(c.code)} />
@@ -277,6 +337,7 @@ const ConvitesPage: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
         </>
       )}
     </div>

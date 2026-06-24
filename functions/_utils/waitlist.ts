@@ -6,6 +6,7 @@ export interface WaitlistEntry {
   cpf_encrypted: string;
   phone: string;
   notified_at: string | null;
+  contact_failed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -15,7 +16,7 @@ export async function getWaitlistByCpfEncrypted(
   cpfEncrypted: string
 ): Promise<WaitlistEntry | null> {
   const row = await DB.prepare(
-    "SELECT id, name, cpf_encrypted, phone, notified_at, created_at, updated_at FROM waitlist WHERE cpf_encrypted = ?"
+    "SELECT id, name, cpf_encrypted, phone, notified_at, contact_failed_at, created_at, updated_at FROM waitlist WHERE cpf_encrypted = ?"
   )
     .bind(cpfEncrypted)
     .first<WaitlistEntry>();
@@ -50,18 +51,32 @@ export async function updateWaitlistContact(
 // Fila em ordem de chegada — é nessa ordem que o admin avisa quando abre vaga.
 export async function listWaitlist(DB: D1Database): Promise<WaitlistEntry[]> {
   const result = await DB.prepare(
-    "SELECT id, name, cpf_encrypted, phone, notified_at, created_at, updated_at FROM waitlist ORDER BY datetime(created_at) ASC"
+    "SELECT id, name, cpf_encrypted, phone, notified_at, contact_failed_at, created_at, updated_at FROM waitlist ORDER BY datetime(created_at) ASC"
   ).all<WaitlistEntry>();
   return result.results ?? [];
 }
 
+// Marca/desmarca "avisado". Avisar com sucesso limpa a marca de "não consegui contato".
 export async function setWaitlistNotified(
   DB: D1Database,
   id: string,
   notified: boolean
 ): Promise<void> {
   const sql = notified
-    ? "UPDATE waitlist SET notified_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"
+    ? "UPDATE waitlist SET notified_at = datetime('now'), contact_failed_at = NULL, updated_at = datetime('now') WHERE id = ?"
     : "UPDATE waitlist SET notified_at = NULL, updated_at = datetime('now') WHERE id = ?";
+  await DB.prepare(sql).bind(id).run();
+}
+
+// Marca/desmarca "não consegui contato". Marcar como falha limpa o "avisado"
+// (são estados mutuamente exclusivos: ou avisou, ou não conseguiu, ou aguarda).
+export async function setWaitlistContactFailed(
+  DB: D1Database,
+  id: string,
+  failed: boolean
+): Promise<void> {
+  const sql = failed
+    ? "UPDATE waitlist SET contact_failed_at = datetime('now'), notified_at = NULL, updated_at = datetime('now') WHERE id = ?"
+    : "UPDATE waitlist SET contact_failed_at = NULL, updated_at = datetime('now') WHERE id = ?";
   await DB.prepare(sql).bind(id).run();
 }

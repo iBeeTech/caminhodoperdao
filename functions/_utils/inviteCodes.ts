@@ -6,11 +6,13 @@ export interface InviteCodeRow {
   used_at: string | null;
   used_by_registration_id: string | null;
   revoked_at: string | null;
+  link_copied_at: string | null;
   created_at: string;
 }
 
 // Status derivado, usado no /admin/convites.
-export type InviteStatus = "available" | "pending" | "used" | "revoked";
+// "link_copied": disponível e o admin já copiou o link (rastreabilidade de envio).
+export type InviteStatus = "available" | "link_copied" | "pending" | "used" | "revoked";
 
 export interface InviteCodeView extends InviteCodeRow {
   status: InviteStatus;
@@ -42,7 +44,7 @@ export async function getInviteCode(DB: D1Database, code: string): Promise<Invit
   const normalized = normalizeInviteCode(code);
   if (!normalized) return null;
   const row = await DB.prepare(
-    "SELECT code, note, used_at, used_by_registration_id, revoked_at, created_at FROM invite_codes WHERE code = ?"
+    "SELECT code, note, used_at, used_by_registration_id, revoked_at, link_copied_at, created_at FROM invite_codes WHERE code = ?"
   )
     .bind(normalized)
     .first<InviteCodeRow>();
@@ -56,9 +58,11 @@ export interface InviteEvaluation {
 }
 
 // Regra de uso único: o código abre o formulário enquanto não foi REVOGADO e enquanto
-// a inscrição que o consumiu não está paga. Assim que a inscrição vira PAID, o código
-// fica permanentemente indisponível. A checagem de "mesma pessoa" (CPF) acontece no
-// register.ts, que tem o CPF em mãos — aqui é só o portão de UX.
+// nenhuma inscrição ATIVA (paga OU pendente) o tiver consumido. Assim que alguém se
+// inscreve com o código — mesmo sem ter pago ainda (PENDING) — a URL para de abrir, para
+// impedir uma segunda inscrição no mesmo link. A URL só volta a abrir se aquela inscrição
+// for cancelada/expirada (o que libera o convite de novo). A checagem de "mesma pessoa"
+// (CPF) acontece no register.ts, que tem o CPF em mãos — aqui é só o portão de UX.
 export async function evaluateInvite(DB: D1Database, code: string): Promise<InviteEvaluation> {
   const row = await getInviteCode(DB, code);
   if (!row) return { openable: false, reason: "not_found" };
@@ -67,7 +71,7 @@ export async function evaluateInvite(DB: D1Database, code: string): Promise<Invi
     const reg = await DB.prepare("SELECT status FROM registrations WHERE id = ?")
       .bind(row.used_by_registration_id)
       .first<{ status: string }>();
-    if (reg?.status === "PAID") {
+    if (reg?.status === "PAID" || reg?.status === "PENDING") {
       return { openable: false, reason: "used" };
     }
   }
@@ -88,6 +92,24 @@ export async function bindInviteCode(
   )
     .bind(registrationId, normalized)
     .run();
+}
+
+// Registra que o admin copiou o link deste código (rastreabilidade de envio). Idempotente:
+// só grava na primeira cópia e nunca mexe em códigos já revogados ou consumidos.
+export async function markInviteLinkCopied(DB: D1Database, code: string): Promise<boolean> {
+  const normalized = normalizeInviteCode(code);
+  if (!normalized) return false;
+  const result = await DB.prepare(
+    `UPDATE invite_codes
+     SET link_copied_at = datetime('now')
+     WHERE code = ?1
+       AND link_copied_at IS NULL
+       AND revoked_at IS NULL
+       AND used_by_registration_id IS NULL`
+  )
+    .bind(normalized)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
 }
 
 export async function createInviteCodes(
@@ -114,6 +136,7 @@ export async function createInviteCodes(
           used_at: null,
           used_by_registration_id: null,
           revoked_at: null,
+          link_copied_at: null,
           created_at: "",
         });
         inserted = true;
@@ -131,7 +154,8 @@ export async function createInviteCodes(
 
 export async function listInviteCodes(DB: D1Database): Promise<InviteCodeView[]> {
   const result = await DB.prepare(
-    `SELECT ic.code, ic.note, ic.used_at, ic.used_by_registration_id, ic.revoked_at, ic.created_at,
+    `SELECT ic.code, ic.note, ic.used_at, ic.used_by_registration_id, ic.revoked_at,
+            ic.link_copied_at, ic.created_at,
             r.name AS used_by_name, r.status AS reg_status
      FROM invite_codes ic
      LEFT JOIN registrations r ON r.id = ic.used_by_registration_id
@@ -147,6 +171,9 @@ export async function listInviteCodes(DB: D1Database): Promise<InviteCodeView[]>
     } else if (row.used_by_registration_id) {
       // Vinculado a uma inscrição ainda não paga (pendente/cancelada): convite em uso.
       status = "pending";
+    } else if (row.link_copied_at) {
+      // Disponível, mas o admin já copiou o link (rastreabilidade de quais foram enviados).
+      status = "link_copied";
     } else {
       status = "available";
     }
@@ -156,6 +183,7 @@ export async function listInviteCodes(DB: D1Database): Promise<InviteCodeView[]>
       used_at: row.used_at,
       used_by_registration_id: row.used_by_registration_id,
       revoked_at: row.revoked_at,
+      link_copied_at: row.link_copied_at,
       created_at: row.created_at,
       used_by_name: row.used_by_name,
       status,

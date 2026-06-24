@@ -10,8 +10,25 @@ interface WaitlistEntry {
   cpf: string;
   phone: string;
   notified_at: string | null;
+  contact_failed_at: string | null;
   created_at: string;
 }
+
+type WaitlistStatus = "waiting" | "notified" | "failed";
+type WaitlistFilter = "all" | WaitlistStatus;
+
+const statusOf = (entry: WaitlistEntry): WaitlistStatus => {
+  if (entry.notified_at) return "notified";
+  if (entry.contact_failed_at) return "failed";
+  return "waiting";
+};
+
+const FILTERS: Array<{ key: WaitlistFilter; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "waiting", label: "Aguardando" },
+  { key: "notified", label: "Avisados" },
+  { key: "failed", label: "Não consegui avisar" },
+];
 
 const formatCpf = (cpf: string) =>
   cpf.length === 11 ? `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}` : cpf;
@@ -60,6 +77,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "0.4rem 0.8rem", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff",
     color: "#374151", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", marginLeft: "0.5rem",
   },
+  failBtn: {
+    padding: "0.4rem 0.8rem", borderRadius: 8, border: "1px solid #fecaca", background: "#fff",
+    color: "#b91c1c", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", marginLeft: "0.5rem",
+  },
+  filterBar: { display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem", alignItems: "center" },
+  filterBtn: {
+    padding: "0.4rem 0.9rem", borderRadius: 999, border: "1px solid #d1d5db", background: "#fff",
+    color: "#374151", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer",
+  },
+  filterBtnActive: {
+    background: "#1d2c5e", borderColor: "#1d2c5e", color: "#fff",
+  },
   badge: { padding: "0.2rem 0.6rem", borderRadius: 999, fontWeight: 700, fontSize: "0.78rem", border: "1px solid", whiteSpace: "nowrap" },
   empty: { color: "#777", padding: "2rem 0" },
   error: { color: "#b91c1c", fontWeight: 600 },
@@ -72,6 +101,7 @@ const ListaEsperaPage: React.FC = () => {
   const [authError, setAuthError] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [savingId, setSavingId] = React.useState<string | null>(null);
+  const [filter, setFilter] = React.useState<WaitlistFilter>("all");
 
   const load = React.useCallback(async () => {
     if (!token) {
@@ -114,7 +144,45 @@ const ListaEsperaPage: React.FC = () => {
       if (!res.ok) throw new Error("save_failed");
       setEntries((prev) =>
         prev.map((e) =>
-          e.id === entry.id ? { ...e, notified_at: notified ? new Date().toISOString() : null } : e
+          e.id === entry.id
+            ? {
+                ...e,
+                notified_at: notified ? new Date().toISOString() : null,
+                // Avisar com sucesso limpa a marca de "não consegui contato" (espelha o backend).
+                contact_failed_at: notified ? null : e.contact_failed_at,
+              }
+            : e
+        )
+      );
+    } catch {
+      setActionError("Erro ao salvar. Tente novamente.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  // Marca/desmarca "não deu para mandar mensagem" (não consegui contato).
+  const setContactFailed = async (entry: WaitlistEntry, failed: boolean) => {
+    if (!token) return;
+    setSavingId(entry.id);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/admin/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ updates: [{ id: entry.id, contactFailed: failed }] }),
+      });
+      if (!res.ok) throw new Error("save_failed");
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entry.id
+            ? {
+                ...e,
+                contact_failed_at: failed ? new Date().toISOString() : null,
+                // "Não consegui" e "avisado" são mutuamente exclusivos (espelha o backend).
+                notified_at: failed ? null : e.notified_at,
+              }
+            : e
         )
       );
     } catch {
@@ -167,8 +235,20 @@ const ListaEsperaPage: React.FC = () => {
     );
   }
 
-  const waiting = entries.filter((e) => !e.notified_at).length;
-  const notified = entries.length - waiting;
+  const notified = entries.filter((e) => statusOf(e) === "notified").length;
+  const failed = entries.filter((e) => statusOf(e) === "failed").length;
+  const waiting = entries.length - notified - failed;
+  const counts: Record<WaitlistFilter, number> = {
+    all: entries.length,
+    waiting,
+    notified,
+    failed,
+  };
+
+  // Posição na fila vem da lista completa (ordem de chegada), independente do filtro.
+  const visible = entries
+    .map((entry, index) => ({ entry, pos: index + 1 }))
+    .filter(({ entry }) => filter === "all" || statusOf(entry) === filter);
 
   return (
     <div style={styles.page}>
@@ -189,6 +269,9 @@ const ListaEsperaPage: React.FC = () => {
         <span style={{ ...styles.counter, color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" }}>
           Avisados: {notified}
         </span>
+        <span style={{ ...styles.counter, color: "#b91c1c", borderColor: "#fecaca", background: "#fef2f2" }}>
+          Não consegui avisar: {failed}
+        </span>
         <button
           type="button"
           style={{ ...styles.toggleBtn, marginLeft: "auto" }}
@@ -199,12 +282,28 @@ const ListaEsperaPage: React.FC = () => {
         </button>
       </div>
 
+      <div style={styles.filterBar}>
+        <span style={{ fontWeight: 600, color: "#374151", fontSize: "0.85rem" }}>Filtrar:</span>
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            style={filter === f.key ? { ...styles.filterBtn, ...styles.filterBtnActive } : styles.filterBtn}
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label} ({counts[f.key]})
+          </button>
+        ))}
+      </div>
+
       {actionError && <p style={styles.error}>{actionError}</p>}
 
       {loading ? (
         <p>Carregando…</p>
       ) : entries.length === 0 ? (
         <p style={styles.empty}>Ninguém na lista de espera ainda.</p>
+      ) : visible.length === 0 ? (
+        <p style={styles.empty}>Ninguém nesse filtro.</p>
       ) : (
         <table style={styles.table}>
           <thead>
@@ -219,44 +318,61 @@ const ListaEsperaPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry, index) => (
-              <tr key={entry.id} style={entry.notified_at ? { background: "#f8fafc" } : undefined}>
-                <td style={styles.td}>{index + 1}º</td>
-                <td style={styles.td}>{entry.name || "—"}</td>
-                <td style={styles.td}>{entry.cpf ? formatCpf(entry.cpf) : "—"}</td>
-                <td style={styles.td}>{formatPhone(entry.phone)}</td>
-                <td style={styles.td}>{formatDate(entry.created_at)}</td>
-                <td style={styles.td}>
-                  {entry.notified_at ? (
-                    <span style={{ ...styles.badge, color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" }}>
-                      Avisado
-                    </span>
-                  ) : (
-                    <span style={{ ...styles.badge, color: "#a16207", borderColor: "#fde68a", background: "#fefce8" }}>
-                      Aguardando
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...styles.td, whiteSpace: "nowrap" }}>
-                  <button
-                    type="button"
-                    style={styles.waBtn}
-                    onClick={() => handleNotify(entry)}
-                    disabled={savingId === entry.id}
-                  >
-                    Avisar no WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    style={styles.toggleBtn}
-                    onClick={() => setNotified(entry, !entry.notified_at)}
-                    disabled={savingId === entry.id}
-                  >
-                    {entry.notified_at ? "Desfazer aviso" : "Marcar avisado"}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {visible.map(({ entry, pos }) => {
+              const status = statusOf(entry);
+              return (
+                <tr key={entry.id} style={status !== "waiting" ? { background: "#f8fafc" } : undefined}>
+                  <td style={styles.td}>{pos}º</td>
+                  <td style={styles.td}>{entry.name || "—"}</td>
+                  <td style={styles.td}>{entry.cpf ? formatCpf(entry.cpf) : "—"}</td>
+                  <td style={styles.td}>{formatPhone(entry.phone)}</td>
+                  <td style={styles.td}>{formatDate(entry.created_at)}</td>
+                  <td style={styles.td}>
+                    {status === "notified" && (
+                      <span style={{ ...styles.badge, color: "#15803d", borderColor: "#86efac", background: "#f0fdf4" }}>
+                        Avisado
+                      </span>
+                    )}
+                    {status === "failed" && (
+                      <span style={{ ...styles.badge, color: "#b91c1c", borderColor: "#fecaca", background: "#fef2f2" }}>
+                        Não consegui avisar
+                      </span>
+                    )}
+                    {status === "waiting" && (
+                      <span style={{ ...styles.badge, color: "#a16207", borderColor: "#fde68a", background: "#fefce8" }}>
+                        Aguardando
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...styles.td, whiteSpace: "nowrap" }}>
+                    <button
+                      type="button"
+                      style={styles.waBtn}
+                      onClick={() => handleNotify(entry)}
+                      disabled={savingId === entry.id}
+                    >
+                      Avisar no WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      style={styles.toggleBtn}
+                      onClick={() => setNotified(entry, !entry.notified_at)}
+                      disabled={savingId === entry.id}
+                    >
+                      {entry.notified_at ? "Desfazer aviso" : "Marcar avisado"}
+                    </button>
+                    <button
+                      type="button"
+                      style={styles.failBtn}
+                      onClick={() => setContactFailed(entry, status !== "failed")}
+                      disabled={savingId === entry.id}
+                    >
+                      {status === "failed" ? "Desfazer" : "Não deu para mandar mensagem"}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

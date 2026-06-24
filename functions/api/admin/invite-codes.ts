@@ -4,6 +4,7 @@ import {
   createInviteCodes,
   listInviteCodes,
   revokeInviteCode,
+  markInviteLinkCopied,
 } from "../../_utils/inviteCodes";
 
 type Env = AdminAuthEnv & { DB: D1Database };
@@ -60,6 +61,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return json({ error: "cannot_revoke" }, 409);
     }
     return json({ ok: true });
+  }
+
+  // Marca que o link foi copiado (rastreabilidade). Idempotente; ignora códigos já usados.
+  if (body.action === "mark_copied") {
+    if (typeof body.code !== "string" || !body.code.trim()) {
+      return json({ error: "invalid_input" }, 400);
+    }
+    const marked = await markInviteLinkCopied(context.env.DB, body.code);
+    return json({ ok: true, marked });
   }
 
   return json({ error: "invalid_action" }, 400);
