@@ -261,6 +261,7 @@ const ConvidarGrupoPage: React.FC = () => {
         <table style={styles.table}>
           <thead>
             <tr>
+              <th style={styles.th}>#</th>
               <th style={styles.th}>Nome</th>
               <th style={styles.th}>WhatsApp</th>
               <th style={styles.th}>Status</th>
@@ -268,10 +269,11 @@ const ConvidarGrupoPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {visible.map((entry) => {
+            {visible.map((entry, index) => {
               const status = statusOf(entry);
               return (
                 <tr key={entry.id} style={status !== "waiting" ? { background: "#f8fafc" } : undefined}>
+                  <td style={styles.td}>{index + 1}º</td>
                   <td style={styles.td}>{entry.name || "—"}</td>
                   <td style={styles.td}>{formatPhone(entry.phone)}</td>
                   <td style={styles.td}>
