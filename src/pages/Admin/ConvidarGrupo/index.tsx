@@ -87,6 +87,10 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#374151", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer",
   },
   filterBtnActive: { background: "#1d2c5e", borderColor: "#1d2c5e", color: "#fff" },
+  rangeInput: {
+    width: 72, padding: "0.35rem 0.5rem", borderRadius: 8, border: "1px solid #d1d5db",
+    fontSize: "0.85rem", fontWeight: 600, color: "#374151",
+  },
   badge: { padding: "0.2rem 0.6rem", borderRadius: 999, fontWeight: 700, fontSize: "0.78rem", border: "1px solid", whiteSpace: "nowrap" },
   empty: { color: "#777", padding: "2rem 0" },
   error: { color: "#b91c1c", fontWeight: 600 },
@@ -100,7 +104,8 @@ const ConvidarGrupoPage: React.FC = () => {
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [savingId, setSavingId] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState<InviteFilter>("all");
-  const [rangeFilter, setRangeFilter] = React.useState<RangeKey>("all");
+  const [rangeMin, setRangeMin] = React.useState("");
+  const [rangeMax, setRangeMax] = React.useState("");
 
   const load = React.useCallback(async () => {
     if (!token) {
@@ -214,8 +219,11 @@ const ConvidarGrupoPage: React.FC = () => {
   // Posição fixa (#) = índice na lista completa em ordem alfabética. As faixas de
   // responsável usam essa posição, então ela não pode depender dos filtros ativos.
   const positioned = entries.map((entry, index) => ({ entry, pos: index + 1 }));
-  const activeRange = RANGES.find((r) => r.key === rangeFilter) ?? RANGES[0];
-  const ranged = positioned.filter(({ pos }) => pos >= activeRange.min && pos <= activeRange.max);
+  const minPos = parseInt(rangeMin, 10);
+  const maxPos = parseInt(rangeMax, 10);
+  const lo = Number.isFinite(minPos) ? minPos : 1;
+  const hi = Number.isFinite(maxPos) ? maxPos : Infinity;
+  const ranged = positioned.filter(({ pos }) => pos >= lo && pos <= hi);
 
   // Contadores refletem a faixa selecionada (cada ajudante vê só a parte dele).
   const invited = ranged.filter(({ entry }) => statusOf(entry) === "invited").length;
@@ -256,13 +264,46 @@ const ConvidarGrupoPage: React.FC = () => {
       </div>
 
       <div style={styles.filterBar}>
-        <span style={{ fontWeight: 600, color: "#374151", fontSize: "0.85rem" }}>Responsável:</span>
-        {RANGES.map((r) => (
+        <span style={{ fontWeight: 600, color: "#374151", fontSize: "0.85rem" }}>Número (#):</span>
+        <input
+          type="number"
+          min={1}
+          value={rangeMin}
+          onChange={(e) => setRangeMin(e.target.value)}
+          placeholder="de"
+          style={styles.rangeInput}
+        />
+        <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>até</span>
+        <input
+          type="number"
+          min={1}
+          value={rangeMax}
+          onChange={(e) => setRangeMax(e.target.value)}
+          placeholder="até"
+          style={styles.rangeInput}
+        />
+        {(rangeMin || rangeMax) && (
+          <button
+            type="button"
+            style={styles.filterBtn}
+            onClick={() => {
+              setRangeMin("");
+              setRangeMax("");
+            }}
+          >
+            Limpar
+          </button>
+        )}
+        <span style={{ fontWeight: 600, color: "#374151", fontSize: "0.85rem", marginLeft: "0.5rem" }}>Atalhos:</span>
+        {RANGES.filter((r) => r.key !== "all").map((r) => (
           <button
             key={r.key}
             type="button"
-            style={rangeFilter === r.key ? { ...styles.filterBtn, ...styles.filterBtnActive } : styles.filterBtn}
-            onClick={() => setRangeFilter(r.key)}
+            style={styles.filterBtn}
+            onClick={() => {
+              setRangeMin(String(r.min));
+              setRangeMax(Number.isFinite(r.max) ? String(r.max) : "");
+            }}
           >
             {r.label}
           </button>
