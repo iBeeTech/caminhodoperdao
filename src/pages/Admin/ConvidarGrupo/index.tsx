@@ -35,6 +35,18 @@ const FILTERS: Array<{ key: InviteFilter; label: string }> = [
   { key: "failed", label: "Não consegui convidar" },
 ];
 
+type RangeKey = "all" | "mateus" | "junior" | "marcelo" | "cassio";
+
+// Faixas do número (#) para dividir o trabalho entre quem ajuda a convidar.
+// min/max são inclusivos e batem com a posição fixa na lista alfabética.
+const RANGES: Array<{ key: RangeKey; label: string; min: number; max: number }> = [
+  { key: "all", label: "Todos", min: 1, max: Infinity },
+  { key: "mateus", label: "1–150 · Pe. Mateus", min: 1, max: 150 },
+  { key: "junior", label: "151–300 · Júnior", min: 151, max: 300 },
+  { key: "marcelo", label: "301–450 · Marcelo", min: 301, max: 450 },
+  { key: "cassio", label: "451–fim · Cássio", min: 451, max: Infinity },
+];
+
 const formatPhone = (digits: string) => {
   if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
@@ -88,6 +100,7 @@ const ConvidarGrupoPage: React.FC = () => {
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [savingId, setSavingId] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState<InviteFilter>("all");
+  const [rangeFilter, setRangeFilter] = React.useState<RangeKey>("all");
 
   const load = React.useCallback(async () => {
     if (!token) {
@@ -198,17 +211,24 @@ const ConvidarGrupoPage: React.FC = () => {
     );
   }
 
-  const invited = entries.filter((e) => statusOf(e) === "invited").length;
-  const failed = entries.filter((e) => statusOf(e) === "failed").length;
-  const waiting = entries.length - invited - failed;
+  // Posição fixa (#) = índice na lista completa em ordem alfabética. As faixas de
+  // responsável usam essa posição, então ela não pode depender dos filtros ativos.
+  const positioned = entries.map((entry, index) => ({ entry, pos: index + 1 }));
+  const activeRange = RANGES.find((r) => r.key === rangeFilter) ?? RANGES[0];
+  const ranged = positioned.filter(({ pos }) => pos >= activeRange.min && pos <= activeRange.max);
+
+  // Contadores refletem a faixa selecionada (cada ajudante vê só a parte dele).
+  const invited = ranged.filter(({ entry }) => statusOf(entry) === "invited").length;
+  const failed = ranged.filter(({ entry }) => statusOf(entry) === "failed").length;
+  const waiting = ranged.length - invited - failed;
   const counts: Record<InviteFilter, number> = {
-    all: entries.length,
+    all: ranged.length,
     waiting,
     invited,
     failed,
   };
 
-  const visible = entries.filter((entry) => filter === "all" || statusOf(entry) === filter);
+  const visible = ranged.filter(({ entry }) => filter === "all" || statusOf(entry) === filter);
 
   return (
     <div style={styles.page}>
@@ -222,7 +242,7 @@ const ConvidarGrupoPage: React.FC = () => {
 
       <div style={styles.counters}>
         <span style={{ ...styles.counter, color: "#1d2c5e", borderColor: "#c7d2fe", background: "#eef2ff" }}>
-          Total: {entries.length}
+          Total: {ranged.length}
         </span>
         <span style={{ ...styles.counter, color: "#a16207", borderColor: "#fde68a", background: "#fefce8" }}>
           Aguardando: {waiting}
@@ -233,6 +253,20 @@ const ConvidarGrupoPage: React.FC = () => {
         <span style={{ ...styles.counter, color: "#b91c1c", borderColor: "#fecaca", background: "#fef2f2" }}>
           Não consegui convidar: {failed}
         </span>
+      </div>
+
+      <div style={styles.filterBar}>
+        <span style={{ fontWeight: 600, color: "#374151", fontSize: "0.85rem" }}>Responsável:</span>
+        {RANGES.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            style={rangeFilter === r.key ? { ...styles.filterBtn, ...styles.filterBtnActive } : styles.filterBtn}
+            onClick={() => setRangeFilter(r.key)}
+          >
+            {r.label}
+          </button>
+        ))}
       </div>
 
       <div style={styles.filterBar}>
@@ -269,11 +303,11 @@ const ConvidarGrupoPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {visible.map((entry, index) => {
+            {visible.map(({ entry, pos }) => {
               const status = statusOf(entry);
               return (
                 <tr key={entry.id} style={status !== "waiting" ? { background: "#f8fafc" } : undefined}>
-                  <td style={styles.td}>{index + 1}º</td>
+                  <td style={styles.td}>{pos}º</td>
                   <td style={styles.td}>{entry.name || "—"}</td>
                   <td style={styles.td}>{formatPhone(entry.phone)}</td>
                   <td style={styles.td}>
