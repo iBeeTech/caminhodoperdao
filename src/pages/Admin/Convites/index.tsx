@@ -83,6 +83,10 @@ const s: Record<string, React.CSSProperties> = {
     padding: "0.4rem 0.7rem", borderRadius: 6, border: "1px solid #fecaca", background: "#fff",
     color: "#b91c1c", fontWeight: 700, cursor: "pointer", fontSize: "0.8rem",
   },
+  unrevokeBtn: {
+    padding: "0.4rem 0.7rem", borderRadius: 6, border: "1px solid #86efac", background: "#fff",
+    color: "#15803d", fontWeight: 700, cursor: "pointer", fontSize: "0.8rem",
+  },
   empty: { color: "#777", padding: "1rem 0" },
   filterBar: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 1rem" },
   filterBtn: {
@@ -181,6 +185,24 @@ const ConvitesPage: React.FC = () => {
     }
   };
 
+  const handleUnrevoke = async (code: string) => {
+    if (!token) return;
+    setFeedback(null);
+    try {
+      const res = await fetch("/api/admin/invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: "unrevoke", code }),
+      });
+      if (!res.ok) throw new Error("unrevoke_failed");
+      // O status que volta (disponível / em uso / usado) depende do vínculo com a
+      // inscrição, então recarrega a lista em vez de assumir "disponível".
+      load();
+    } catch {
+      setFeedback({ ok: false, msg: "Não foi possível desrevogar este código." });
+    }
+  };
+
   const handleCopy = async (code: string) => {
     try {
       await navigator.clipboard.writeText(inviteLink(code));
@@ -252,7 +274,8 @@ const ConvitesPage: React.FC = () => {
       <p style={s.subtitle}>
         Gere um código por pessoa e envie o link <strong>/convite</strong>. Mesmo com as 500 vagas
         esgotadas, quem tem código válido consegue se inscrever (sem pernoite). Cada código é de uso
-        único — após a inscrição ser paga, fica indisponível. Você pode revogar um código não usado.
+        único — após a inscrição ser paga, fica indisponível. Você pode revogar um código não usado
+        e, se precisar, desrevogá-lo depois para voltar a valer.
       </p>
 
       <div style={s.genBox}>
@@ -333,6 +356,11 @@ const ConvitesPage: React.FC = () => {
                       Revogar
                     </button>
                   </>
+                )}
+                {c.status === "revoked" && (
+                  <button type="button" style={s.unrevokeBtn} onClick={() => handleUnrevoke(c.code)}>
+                    Desrevogar
+                  </button>
                 )}
               </div>
             ))}

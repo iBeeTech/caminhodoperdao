@@ -4,6 +4,7 @@ import {
   createInviteCodes,
   listInviteCodes,
   revokeInviteCode,
+  unrevokeInviteCode,
   markInviteLinkCopied,
 } from "../../_utils/inviteCodes";
 
@@ -31,9 +32,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   return json({ codes });
 };
 
-// POST /api/admin/invite-codes -> cria ou revoga.
+// POST /api/admin/invite-codes -> cria, revoga ou desrevoga.
 //   { action: "create", count?: number, note?: string }  -> gera N códigos.
 //   { action: "revoke", code: string }                    -> revoga um código não usado.
+//   { action: "unrevoke", code: string }                  -> desfaz a revogação (volta a valer).
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const auth = await authorizeSuperAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
@@ -59,6 +61,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const revoked = await revokeInviteCode(context.env.DB, body.code);
     if (!revoked) {
       return json({ error: "cannot_revoke" }, 409);
+    }
+    return json({ ok: true });
+  }
+
+  if (body.action === "unrevoke") {
+    if (typeof body.code !== "string" || !body.code.trim()) {
+      return json({ error: "invalid_input" }, 400);
+    }
+    const unrevoked = await unrevokeInviteCode(context.env.DB, body.code);
+    if (!unrevoked) {
+      return json({ error: "cannot_unrevoke" }, 409);
     }
     return json({ ok: true });
   }

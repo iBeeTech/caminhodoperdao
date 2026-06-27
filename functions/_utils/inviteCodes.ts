@@ -209,3 +209,20 @@ export async function revokeInviteCode(DB: D1Database, code: string): Promise<bo
     .run();
   return (result.meta?.changes ?? 0) > 0;
 }
+
+// Desfaz a revogação: limpa revoked_at e o código volta a valer. O status final
+// (disponível / em uso / usado) é derivado de novo a partir do vínculo com a
+// inscrição, então aqui só removemos a marca de revogado. Retorna se mudou.
+export async function unrevokeInviteCode(DB: D1Database, code: string): Promise<boolean> {
+  const normalized = normalizeInviteCode(code);
+  if (!normalized) return false;
+  const result = await DB.prepare(
+    `UPDATE invite_codes
+     SET revoked_at = NULL
+     WHERE code = ?1
+       AND revoked_at IS NOT NULL`
+  )
+    .bind(normalized)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
+}
