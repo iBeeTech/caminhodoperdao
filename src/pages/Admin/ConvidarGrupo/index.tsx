@@ -6,10 +6,15 @@ const STORAGE_KEY = "admin_jwt";
 
 // Link do grupo do WhatsApp e mensagem fixa enviada a cada inscrito pago.
 const GROUP_LINK = "https://chat.whatsapp.com/FBuIFntCDpxGceChM6zNNa";
-const GROUP_MESSAGE =
-  "Você está inscrito no Caminho do Perdão, se já está no nosso grupo de WhatsApp, " +
-  "desconsidere essa mensagem. Se ainda não está, entre para o nosso grupo de WhatsApp " +
-  `pelo link: ${GROUP_LINK}`;
+// Saudação personalizada com o primeiro nome da pessoa.
+const buildGroupMessage = (name: string) => {
+  const firstName = name.trim().split(/\s+/)[0] || name;
+  return (
+    `Olá ${firstName}! Você está inscrito no Caminho do Perdão, se já está no nosso grupo de ` +
+    "WhatsApp, desconsidere essa mensagem. Se ainda não está, entre para o nosso grupo de " +
+    `WhatsApp pelo link: ${GROUP_LINK}`
+  );
+};
 
 interface Registration {
   id: string;
@@ -55,7 +60,7 @@ const formatPhone = (digits: string) => {
 
 // Abre o WhatsApp já com a mensagem do grupo pronta para enviar.
 const buildWhatsappUrl = (r: Registration) =>
-  `https://wa.me/55${r.phone}?text=${encodeURIComponent(GROUP_MESSAGE)}`;
+  `https://wa.me/55${r.phone}?text=${encodeURIComponent(buildGroupMessage(r.name))}`;
 
 const styles: Record<string, React.CSSProperties> = {
   page: { maxWidth: 1100, margin: "0 auto", padding: "2rem 1rem", fontFamily: "sans-serif" },
