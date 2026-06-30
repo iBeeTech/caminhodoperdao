@@ -130,8 +130,15 @@ const tag = (color: string, bg: string, border: string): React.CSSProperties => 
   fontSize: "0.78rem", border: `1px solid ${border}`, color, background: bg,
 });
 
+// Remove acentos e baixa a caixa para a busca ignorar diacríticos
+// (ex.: "julio" encontra "Júlio", "jose" encontra "José").
+const norm = (v: string | null | undefined) =>
+  (v ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 const inc = (v: string | null | undefined, q: string) =>
-  (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
+  norm(v).includes(norm(q).trim());
 
 const hasText = (v: string | null | undefined) => (v ?? "").trim().length > 0;
 const matchYesNo = (v: string | null | undefined, f: string) =>
