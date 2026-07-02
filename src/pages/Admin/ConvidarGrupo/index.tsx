@@ -149,6 +149,9 @@ const ConvidarGrupoPage: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ updates: [{ id: entry.id, invited }] }),
+        // keepalive garante que o POST chegue ao servidor mesmo se a página
+        // for descarregada logo em seguida (ex.: abrir o WhatsApp no celular).
+        keepalive: true,
       });
       if (!res.ok) throw new Error("save_failed");
       setEntries((prev) =>
@@ -180,6 +183,7 @@ const ConvidarGrupoPage: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ updates: [{ id: entry.id, inviteFailed: failed }] }),
+        keepalive: true,
       });
       if (!res.ok) throw new Error("save_failed");
       setEntries((prev) =>
@@ -201,12 +205,14 @@ const ConvidarGrupoPage: React.FC = () => {
     }
   };
 
-  // Abre o WhatsApp com a mensagem do grupo e já marca como convidado.
+  // Marca como convidado e ABRE o WhatsApp em seguida. A ordem importa: no
+  // celular, abrir o wa.me troca de app / navega a aba, o que cancelaria um
+  // POST em voo. Disparamos o salvamento (com keepalive) antes de abrir.
   const handleInvite = (entry: Registration) => {
-    window.open(buildWhatsappUrl(entry), "_blank", "noopener,noreferrer");
     if (!entry.group_invited_at) {
       setInvited(entry, true);
     }
+    window.open(buildWhatsappUrl(entry), "_blank", "noopener,noreferrer");
   };
 
   if (authError) {
