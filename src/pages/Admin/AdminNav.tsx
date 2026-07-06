@@ -81,6 +81,12 @@ const AdminNav: React.FC = () => {
       >
         Convidar p/ Grupo WP
       </Link>
+      <Link
+        to="/admin/info-mosteiro"
+        style={pathname.startsWith("/admin/info-mosteiro") ? activeItem : baseItem}
+      >
+        Informar Mosteiro
+      </Link>
       {isSuperAdmin() && (
         <Link
           to="/admin/convites"

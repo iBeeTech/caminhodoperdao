@@ -10,6 +10,7 @@ export { default as AdminListaEspera } from "./Admin/ListaEspera";
 export { default as AdminPernoiteExtra } from "./Admin/PernoiteExtra";
 export { default as AdminConvites } from "./Admin/Convites";
 export { default as AdminConvidarGrupo } from "./Admin/ConvidarGrupo";
+export { default as AdminInfoMosteiro } from "./Admin/InfoMosteiro";
 export { default as Staff } from "./Staff";
 export { default as ResponsabilityTerms } from "./ResponsabilityTerms";
 export { default as Depoimentos } from "./Depoimentos";
