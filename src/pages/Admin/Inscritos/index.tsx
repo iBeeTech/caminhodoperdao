@@ -185,6 +185,7 @@ const InscritosPage: React.FC = () => {
   const [fPernoite, setFPernoite] = React.useState("");
   const [fMed, setFMed] = React.useState("");
   const [fRestr, setFRestr] = React.useState("");
+  const [fStaff, setFStaff] = React.useState("");
   const [fAniversariante, setFAniversariante] = React.useState(false);
   // filtros camisetas
   const [cNome, setCNome] = React.useState("");
@@ -257,7 +258,7 @@ const InscritosPage: React.FC = () => {
 
   React.useEffect(() => {
     setPage(1);
-  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fAniversariante, cNome, cStatus]);
+  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fStaff, fAniversariante, cNome, cStatus]);
 
   // Aniversariante: aniversário (mês/dia) dentro de ±7 dias da CAMINHADA (02/08).
   const birthdayWithinWeek = (dob: string | null): boolean => {
@@ -301,8 +302,12 @@ const InscritosPage: React.FC = () => {
     { num: staffPernoite, label: "Staff — com pernoite", c: "#3730a3", bg: "#eef2ff", b: "#c7d2fe" },
   ];
 
+  // Total geral = peregrinos pagos + staff (cortesia). Soma todo mundo confirmado.
+  const totalGeral = paidTotal + staffCount;
+
   // Grupo "Inscrições" (visão geral, independente de mosteiro).
   const geralMetrics = [
+    { num: totalGeral, label: "Total geral (com staff)", c: "#1d4ed8", bg: "#eff6ff", b: "#bfdbfe" },
     { num: paidTotal, label: "Pagos (peregrinos)", c: "#15803d", bg: "#f0fdf4", b: "#bbf7d0" },
     { num: pendentes, label: "Pendentes", c: "#a16207", bg: "#fefce8", b: "#fde68a" },
     { num: cancelados, label: "Cancelados", c: "#b91c1c", bg: "#fef2f2", b: "#fecaca" },
@@ -313,15 +318,20 @@ const InscritosPage: React.FC = () => {
   const medCount = regs.filter((r) => hasText(r.allergy_medication_details)).length;
   const restrCount = regs.filter((r) => hasText(r.dietary_restriction_details)).length;
 
-  // Quantidade de pessoas por cidade (agrupado sem diferenciar caixa), maior primeiro.
+  // Quantidade de pessoas por cidade (agrupado sem diferenciar caixa NEM acento/ç),
+  // maior primeiro. Ex.: "França", "franca" e "Franca" caem no mesmo grupo; idem
+  // "Cássia"/"cassia". Como rótulo, mantém a 1ª grafia acentuada que aparecer.
   const cityCounts = React.useMemo(() => {
     const map = new Map<string, { label: string; n: number }>();
     for (const r of regs) {
       const c = (r.city || "").trim();
       if (!c) continue;
-      const key = c.toLowerCase();
+      const key = norm(c);
       const cur = map.get(key) || { label: c, n: 0 };
       cur.n += 1;
+      // Prefere um rótulo acentuado (ex.: "França" no lugar de "franca").
+      const hasAccent = (x: string) => x.normalize("NFD").replace(/\p{Diacritic}/gu, "") !== x;
+      if (hasAccent(c) && !hasAccent(cur.label)) cur.label = c;
       map.set(key, cur);
     }
     return [...map.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
@@ -333,6 +343,7 @@ const InscritosPage: React.FC = () => {
         inc(r.name, fNome) &&
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
+        (!fStaff || (fStaff === "staff" ? r.is_staff === 1 : r.is_staff === 0)) &&
         (!fStatus || r.status === fStatus) &&
         (!fPernoite ||
           (fPernoite === "granted"
@@ -487,6 +498,14 @@ const InscritosPage: React.FC = () => {
                   <option value="1">Sim</option>
                   <option value="0">Não</option>
                   <option value="granted">Pernoite Concedida</option>
+                </select>
+              </label>
+              <label style={s.field}>
+                Perfil
+                <select style={s.miniSelect} value={fStaff} onChange={(e) => setFStaff(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="peregrino">Peregrinos</option>
+                  <option value="staff">Staff ({staffCount})</option>
                 </select>
               </label>
               <label style={s.field}>
