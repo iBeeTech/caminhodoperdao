@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -226,7 +225,6 @@ const ListaEsperaPage: React.FC = () => {
   if (authError) {
     return (
       <div style={styles.page}>
-        <AdminNav />
         <h1 style={styles.title}>Lista de espera</h1>
         <p style={styles.subtitle}>
           Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
@@ -252,7 +250,6 @@ const ListaEsperaPage: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AdminNav />
       <h1 style={styles.title}>Lista de espera</h1>
       <p style={styles.subtitle}>
         Pessoas aguardando vaga, em ordem de entrada. Quando abrir vaga, clique em

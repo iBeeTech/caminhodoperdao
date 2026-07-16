@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
@@ -143,7 +142,6 @@ const PassarCpfPage: React.FC = () => {
   if (token && !superAdmin) {
     return (
       <div style={styles.page}>
-        <AdminNav />
         <h1 style={styles.title}>Passar CPF</h1>
         <p style={styles.subtitle}>
           Esta área é restrita ao administrador geral. <Link to="/admin">Voltar</Link>.
@@ -155,7 +153,6 @@ const PassarCpfPage: React.FC = () => {
   if (authError) {
     return (
       <div style={styles.page}>
-        <AdminNav />
         <h1 style={styles.title}>Passar CPF</h1>
         <p style={styles.subtitle}>
           Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
@@ -166,7 +163,6 @@ const PassarCpfPage: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AdminNav />
       <h1 style={styles.title}>Passar CPF</h1>
       <p style={styles.subtitle}>
         Inscritos que estão sem CPF cadastrado. Digite o CPF e clique em Salvar — ele é

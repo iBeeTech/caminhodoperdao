@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -145,7 +144,6 @@ const PernoiteExtraPage: React.FC = () => {
   if (authError) {
     return (
       <div style={s.page}>
-        <AdminNav />
         <h1 style={s.title}>Pernoite extra</h1>
         <p style={s.subtitle}>
           Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
@@ -162,7 +160,6 @@ const PernoiteExtraPage: React.FC = () => {
 
   return (
     <div style={s.page}>
-      <AdminNav />
 
       <div style={s.topbar}>
         <h1 style={s.title}>Pernoite extra</h1>

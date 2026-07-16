@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
@@ -231,7 +230,6 @@ const ConvitesPage: React.FC = () => {
   if (token && !superAdmin) {
     return (
       <div style={s.page}>
-        <AdminNav />
         <h1 style={s.title}>Convites</h1>
         <p style={s.subtitle}>
           Esta área é restrita ao administrador geral. <Link to="/admin">Voltar</Link>.
@@ -243,7 +241,6 @@ const ConvitesPage: React.FC = () => {
   if (authError) {
     return (
       <div style={s.page}>
-        <AdminNav />
         <h1 style={s.title}>Convites</h1>
         <p style={s.subtitle}>
           Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
@@ -264,7 +261,6 @@ const ConvitesPage: React.FC = () => {
 
   return (
     <div style={s.page}>
-      <AdminNav />
       <div style={s.topbar}>
         <h1 style={s.title}>Convites — inscrições extras</h1>
         <button type="button" style={s.refresh} onClick={load} disabled={loading}>

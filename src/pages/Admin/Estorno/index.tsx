@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -124,7 +123,6 @@ const EstornoPage: React.FC = () => {
   if (authError) {
     return (
       <div style={styles.page}>
-        <AdminNav />
         <h1 style={styles.title}>Estornos</h1>
         <p style={styles.subtitle}>
           Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
@@ -135,7 +133,6 @@ const EstornoPage: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AdminNav />
       <h1 style={styles.title}>Estornos — cancelamentos pelo site</h1>
       <p style={styles.subtitle}>
         Pessoas que cancelaram inscrição/camiseta paga ou trocaram pernoite→geral. Defina o status do

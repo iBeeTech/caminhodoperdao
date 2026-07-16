@@ -1,10 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import AdminView from "../View/AdminView";
+import { clearAdminToken, getAdminToken, setAdminToken } from "../../../utils/auth/adminSession";
 
 type AuthStatus = "loading" | "unauthenticated" | "authenticated";
 
-const STORAGE_KEY = "admin_jwt";
 const DEFAULT_EMAIL = "cassiotakarada7@gmail.com";
 
 const AdminController: React.FC = () => {
@@ -35,7 +35,7 @@ const AdminController: React.FC = () => {
       setAdminEmail(data.email ?? null);
       setStatus("authenticated");
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      clearAdminToken();
       setToken(null);
       setAdminEmail(null);
       setStatus("unauthenticated");
@@ -43,7 +43,7 @@ const AdminController: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
-    const storedToken = localStorage.getItem(STORAGE_KEY);
+    const storedToken = getAdminToken();
     if (!storedToken) {
       setStatus("unauthenticated");
       return;
@@ -79,7 +79,7 @@ const AdminController: React.FC = () => {
         return;
       }
       const data = (await response.json()) as { token: string };
-      localStorage.setItem(STORAGE_KEY, data.token);
+      setAdminToken(data.token);
       setToken(data.token);
       setAdminEmail(email.toLowerCase());
       setStatus("authenticated");

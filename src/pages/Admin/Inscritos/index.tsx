@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../AdminNav";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
@@ -391,7 +390,6 @@ const InscritosPage: React.FC = () => {
 
   return (
     <div style={s.page}>
-      <AdminNav />
 
       <div style={s.topbar}>
         <h1 style={s.title}>Inscritos</h1>
