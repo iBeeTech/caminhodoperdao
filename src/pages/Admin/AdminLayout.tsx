@@ -189,11 +189,26 @@ const Pin = styled.span`
   background: #1f7a3d;
 `;
 
+const DROPDOWN_GAP = "6px";
+
 const Dropdown = styled.div`
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + ${DROPDOWN_GAP});
   left: 0;
   min-width: 230px;
+
+  /* Ponte invisível sobre o respiro entre o gatilho e o menu. Sem ela o vão é
+     página: descer o mouse até os itens tira o cursor do grupo, dispara o
+     mouseleave e o dropdown fecha antes de dar para clicar. O ::before conta
+     como o próprio dropdown no hit-test, então o caminho fica contínuo. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -${DROPDOWN_GAP};
+    left: 0;
+    right: 0;
+    height: ${DROPDOWN_GAP};
+  }
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
