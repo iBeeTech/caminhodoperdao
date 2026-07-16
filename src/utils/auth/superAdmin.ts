@@ -28,3 +28,22 @@ export function getAdminEmailFromToken(): string | null {
 export function isSuperAdmin(): boolean {
   return getAdminEmailFromToken() === SUPER_ADMIN_EMAIL;
 }
+
+/**
+ * true quando o token foi emitido só para trocar a senha (primeiro acesso ou
+ * senha temporária). Serve para não exibir a navegação de um painel que o
+ * servidor recusaria de todo jeito (authorizeAdminRequest devolve 403).
+ */
+export function isPasswordChangePending(): boolean {
+  if (typeof window === "undefined") return false;
+  const token = localStorage.getItem(STORAGE_KEY);
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const payload = JSON.parse(base64UrlDecode(parts[1])) as { mustChange?: unknown };
+    return payload.mustChange === true;
+  } catch {
+    return false;
+  }
+}

@@ -58,6 +58,77 @@ export const SuccessText = styled.p`
   margin: 0;
 `;
 
+export const HelpText = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b4b52;
+`;
+
+/** Link de ação dentro do card (ex.: "Esqueci minha senha"). */
+export const LinkButton = styled.button`
+  align-self: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f7a3d;
+  text-decoration: underline;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover {
+    color: #14532d;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #1f7a3d;
+    outline-offset: 2px;
+  }
+`;
+
+export const InfoBox = styled.div`
+  background: #eaf5ee;
+  border: 1px solid #bfe0cb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #14532d;
+`;
+
+/** Destaque para segredo mostrado uma única vez (senha temporária). */
+export const SecretBox = styled.div`
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #7c2d12;
+
+  code {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    color: #1d1d1f;
+    user-select: all;
+  }
+`;
+
 export const ButtonRow = styled.div`
   display: flex;
   flex-direction: column;

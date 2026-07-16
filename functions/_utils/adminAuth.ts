@@ -17,6 +17,8 @@ export interface AdminUserRecord {
   password_hash: string;
   created_at: number;
   updated_at: number;
+  /** 1 = precisa trocar a senha antes de usar o painel (primeiro login ou reset). */
+  must_change_password: number;
 }
 
 export interface AdminTokenPayload {
@@ -24,11 +26,21 @@ export interface AdminTokenPayload {
   role: "admin";
   iat: number;
   exp: number;
+  /**
+   * true = token emitido para quem ainda deve trocar a senha. Serve só para
+   * chegar à tela de nova senha: authorizeAdminRequest o rejeita em todo o
+   * resto, para a obrigação não ser apenas cosmética no front.
+   */
+  mustChange?: boolean;
 }
 
 const DEFAULT_ADMIN_EMAIL = "cassiotakarada7@gmail.com";
-const DEFAULT_ADMIN_PASSWORD = "mudarsenha123";
 const DEFAULT_JWT_TTL_SECONDS = 60 * 60 * 12;
+
+// Alfabeto sem caracteres ambíguos (0/O, 1/l/I): a senha temporária é ditada
+// por WhatsApp, então confundir um caractere é o modo de falha esperado.
+const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+const TEMP_PASSWORD_LENGTH = 14;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -36,8 +48,27 @@ const textDecoder = new TextDecoder();
 export function getAdminDefaults(env: AdminAuthEnv) {
   return {
     email: (env.ADMIN_DEFAULT_EMAIL ?? DEFAULT_ADMIN_EMAIL).toLowerCase(),
-    password: env.ADMIN_DEFAULT_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
   };
+}
+
+/**
+ * Senha de bootstrap do super admin, só via env (secret) — nunca hardcoded.
+ * Não existe mais senha padrão: até a criação de admin gera senha aleatória.
+ * Sem isso configurado, ensureDefaultAdmin não cria ninguém.
+ */
+export function getAdminDefaultPassword(env: AdminAuthEnv): string | null {
+  return env.ADMIN_DEFAULT_PASSWORD?.trim() || null;
+}
+
+/** Senha temporária aleatória (CSPRNG), entregue uma vez e trocada no 1º uso. */
+export function generateTempPassword(): string {
+  const bytes = new Uint8Array(TEMP_PASSWORD_LENGTH);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 1) {
+    out += TEMP_PASSWORD_ALPHABET[bytes[i] % TEMP_PASSWORD_ALPHABET.length];
+  }
+  return out;
 }
 
 export function getJwtSecret(env: AdminAuthEnv): string | null {
@@ -52,17 +83,25 @@ export function getJwtTtlSeconds(env: AdminAuthEnv): number {
   return DEFAULT_JWT_TTL_SECONDS;
 }
 
+/**
+ * Bootstrap do super admin em base nova. Sem ADMIN_DEFAULT_PASSWORD (secret)
+ * não cria ninguém — em produção o super admin já existe, então isto é no-op.
+ */
 export async function ensureDefaultAdmin(env: AdminAuthEnv): Promise<void> {
-  const { email, password } = getAdminDefaults(env);
+  const { email } = getAdminDefaults(env);
   if (!isValidEmail(email)) {
     throw new Error("invalid_default_admin_email");
   }
   const existing = await getAdminByEmail(env.DB, email);
   if (existing) return;
+
+  const password = getAdminDefaultPassword(env);
+  if (!password) return;
+
   const passwordHash = await hashPassword(password, env.ADMIN_PASSWORD_PEPPER);
   const now = Date.now();
   await env.DB.prepare(
-    "INSERT INTO admin_users (email, password_hash, created_at, updated_at) VALUES (?1, ?2, ?3, ?4)"
+    "INSERT INTO admin_users (email, password_hash, created_at, updated_at, must_change_password) VALUES (?1, ?2, ?3, ?4, 1)"
   )
     .bind(email, passwordHash, now, now)
     .run();
@@ -70,18 +109,35 @@ export async function ensureDefaultAdmin(env: AdminAuthEnv): Promise<void> {
 
 export async function getAdminByEmail(DB: D1Database, email: string): Promise<AdminUserRecord | null> {
   const stmt = DB.prepare(
-    "SELECT id, email, password_hash, created_at, updated_at FROM admin_users WHERE email = ?"
+    "SELECT id, email, password_hash, created_at, updated_at, must_change_password FROM admin_users WHERE email = ?"
   ).bind(email.toLowerCase());
   return (await stmt.first<AdminUserRecord>()) ?? null;
 }
 
+/** Troca a senha e encerra a obrigação de trocar — os dois andam juntos. */
 export async function updateAdminPassword(
   DB: D1Database,
   email: string,
   passwordHash: string
 ): Promise<void> {
   const now = Date.now();
-  await DB.prepare("UPDATE admin_users SET password_hash = ?1, updated_at = ?2 WHERE email = ?3")
+  await DB.prepare(
+    "UPDATE admin_users SET password_hash = ?1, updated_at = ?2, must_change_password = 0 WHERE email = ?3"
+  )
+    .bind(passwordHash, now, email.toLowerCase())
+    .run();
+}
+
+/** Define senha temporária e obriga a troca no próximo login. */
+export async function setTempPassword(
+  DB: D1Database,
+  email: string,
+  passwordHash: string
+): Promise<void> {
+  const now = Date.now();
+  await DB.prepare(
+    "UPDATE admin_users SET password_hash = ?1, updated_at = ?2, must_change_password = 1 WHERE email = ?3"
+  )
     .bind(passwordHash, now, email.toLowerCase())
     .run();
 }
@@ -129,6 +185,7 @@ export async function verifyJwt(token: string, secret: string): Promise<AdminTok
     const payloadJson = base64UrlDecode(payload);
     const parsed = JSON.parse(payloadJson) as AdminTokenPayload;
     if (parsed.role !== "admin" || !parsed.sub) return null;
+    if (parsed.mustChange !== undefined && typeof parsed.mustChange !== "boolean") return null;
     if (typeof parsed.exp !== "number") return null;
     const now = Math.floor(Date.now() / 1000);
     if (now >= parsed.exp) return null;
@@ -154,6 +211,12 @@ export async function authorizeAdminRequest(
   const payload = await verifyJwt(token, secret);
   if (!payload) {
     return unauthorized("invalid_token");
+  }
+  // Senha temporária/primeiro login: o token só serve para chegar à troca de
+  // senha. Barrar aqui cobre os 23 endpoints de uma vez — inclusive os que
+  // leem dados pessoais dos inscritos.
+  if (payload.mustChange) {
+    return forbidden("password_change_required");
   }
   return payload;
 }

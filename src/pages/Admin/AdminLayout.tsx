@@ -1,7 +1,11 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import { getAdminEmailFromToken, isSuperAdmin } from "../../utils/auth/superAdmin";
+import {
+  getAdminEmailFromToken,
+  isPasswordChangePending,
+  isSuperAdmin,
+} from "../../utils/auth/superAdmin";
 import { clearAdminToken, getAdminToken, subscribeAdminSession } from "../../utils/auth/adminSession";
 
 // Abaixo disso vira menu sanduíche; daqui pra cima, navbar com dropdowns.
@@ -25,9 +29,7 @@ interface NavEntry {
   superAdminOnly?: boolean;
 }
 
-// "Planilhas" é link direto: um dropdown de um item só seria ruído.
 const NAV: readonly NavEntry[] = [
-  { label: "Planilhas", to: "/admin", exact: true },
   {
     label: "Inscrições",
     items: [
@@ -35,6 +37,7 @@ const NAV: readonly NavEntry[] = [
       { to: "/admin/lista-espera", label: "Lista de espera" },
       { to: "/admin/estorno", label: "Estornos" },
       { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
+      { to: "/admin", label: "Planilhas", exact: true },
     ],
   },
   {
@@ -49,6 +52,7 @@ const NAV: readonly NavEntry[] = [
     label: "Sistema",
     superAdminOnly: true,
     items: [
+      { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/convites", label: "Convites" },
       { to: "/admin/passar-cpf", label: "Passar CPF" },
     ],
@@ -383,7 +387,9 @@ const AdminLayout: React.FC = () => {
   // Assinar o token (e não só ler) faz a barra aparecer assim que o login
   // grava a sessão, sem depender de um reload.
   const token = React.useSyncExternalStore(subscribeAdminSession, getAdminToken, () => null);
-  const adminEmail = token ? getAdminEmailFromToken() : null;
+  // Token de troca pendente não conta como sessão: o painel inteiro daria 403,
+  // então mostrar o menu só convidaria a cliques que falham.
+  const adminEmail = token && !isPasswordChangePending() ? getAdminEmailFromToken() : null;
 
   const closeMenus = React.useCallback(() => {
     setOpenLabel(null);
@@ -418,10 +424,6 @@ const AdminLayout: React.FC = () => {
     };
   }, [pinnedLabel, isDrawerOpen, closeMenus]);
 
-  if (!adminEmail) {
-    return <Outlet />;
-  }
-
   const entries = NAV.filter(entry => !entry.superAdminOnly || isSuperAdmin());
 
   const handleLogout = () => {
@@ -446,8 +448,14 @@ const AdminLayout: React.FC = () => {
     }
   };
 
+  // Sem sessão (login / troca de senha) a barra some, mas a árvore em volta do
+  // <Outlet /> mantém SEMPRE a mesma forma e a mesma posição entre irmãos.
+  // Trocar a forma remontaria a página filha ao logar, e ela perderia o estado
+  // — foi assim que a troca obrigatória entrou em loop: remontava, revalidava
+  // a sessão e deslogava, sem nunca deixar trocar a senha.
   return (
     <Shell>
+      {adminEmail && (
       <Bar>
         <Burger
           type="button"
@@ -529,8 +537,9 @@ const AdminLayout: React.FC = () => {
           Sair
         </LogoutButton>
       </Bar>
+      )}
 
-      {isDrawerOpen && (
+      {adminEmail && isDrawerOpen && (
         <>
           <Backdrop onClick={() => setIsDrawerOpen(false)} />
           <Drawer aria-label="Menu do admin">

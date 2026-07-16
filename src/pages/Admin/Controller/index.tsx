@@ -1,46 +1,85 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import AdminView from "../View/AdminView";
 import { clearAdminToken, getAdminToken, setAdminToken } from "../../../utils/auth/adminSession";
 
-type AuthStatus = "loading" | "unauthenticated" | "authenticated";
+type AuthStatus =
+  | "loading"
+  | "unauthenticated"
+  /** Pediu "Esqueci minha senha": informa o e-mail para registrar o pedido. */
+  | "forgot"
+  /** Entrou com senha temporária/primeiro acesso: só sai daqui trocando a senha. */
+  | "must-change-password"
+  | "authenticated";
 
-const DEFAULT_EMAIL = "cassiotakarada7@gmail.com";
+/** Tela inicial do admin depois de entrar. */
+const HOME_ROUTE = "/admin/inscritos";
+const MIN_PASSWORD_LENGTH = 8;
+/** Só o admin geral adiciona admins. Gate de UI; o servidor é quem decide. */
+const SUPER_ADMIN_EMAIL = "cassiotakarada7@gmail.com";
 
 const AdminController: React.FC = () => {
   const { t } = useTranslation("admin");
+  const navigate = useNavigate();
   const [status, setStatus] = React.useState<AuthStatus>("loading");
   const [token, setToken] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string | null>(null);
-  const [email, setEmail] = React.useState(DEFAULT_EMAIL);
+  const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [newAdminEmail, setNewAdminEmail] = React.useState("");
-  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [forgotEmail, setForgotEmail] = React.useState("");
+  const [forgotDone, setForgotDone] = React.useState(false);
+  const [createdAdmin, setCreatedAdmin] = React.useState<{
+    email: string;
+    tempPassword: string;
+  } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isAddingAdmin, setIsAddingAdmin] = React.useState(false);
+  // Senha do login, guardada só em memória para a troca obrigatória logo em
+  // seguida (change-password exige a senha atual). Nunca persistida.
+  const pendingPasswordRef = React.useRef<string | null>(null);
 
-  const verifyToken = React.useCallback(async (jwt: string) => {
-    try {
-      const response = await fetch("/api/admin/verify", {
-        headers: { Authorization: `Bearer ${jwt}` },
-      });
-      if (!response.ok) {
-        throw new Error("invalid_token");
-      }
-      const data = (await response.json()) as { email?: string };
-      setAdminEmail(data.email ?? null);
-      setStatus("authenticated");
-    } catch {
-      clearAdminToken();
-      setToken(null);
-      setAdminEmail(null);
-      setStatus("unauthenticated");
-    }
+  const signOutLocal = React.useCallback(() => {
+    clearAdminToken();
+    pendingPasswordRef.current = null;
+    setToken(null);
+    setAdminEmail(null);
+    setStatus("unauthenticated");
   }, []);
+
+  const verifyToken = React.useCallback(
+    async (jwt: string) => {
+      try {
+        const response = await fetch("/api/admin/verify", {
+          headers: { Authorization: `Bearer ${jwt}` },
+        });
+        if (!response.ok) {
+          throw new Error("invalid_token");
+        }
+        const data = (await response.json()) as { email?: string; mustChangePassword?: boolean };
+
+        // Troca pendente sem a senha atual em memória (ex.: recarregou a
+        // página): não dá para concluir a troca, então volta ao login.
+        if (data.mustChangePassword) {
+          signOutLocal();
+          setError(t("messages.reloginToChangePassword"));
+          return;
+        }
+
+        setAdminEmail(data.email ?? null);
+        setStatus("authenticated");
+      } catch {
+        signOutLocal();
+      }
+    },
+    [signOutLocal, t]
+  );
 
   React.useEffect(() => {
     const storedToken = getAdminToken();
@@ -78,12 +117,23 @@ const AdminController: React.FC = () => {
         setStatus("unauthenticated");
         return;
       }
-      const data = (await response.json()) as { token: string };
+      const data = (await response.json()) as { token: string; mustChangePassword?: boolean };
       setAdminToken(data.token);
       setToken(data.token);
       setAdminEmail(email.toLowerCase());
-      setStatus("authenticated");
+
+      // Primeiro acesso ou senha temporária: o token só serve para trocar a
+      // senha (o servidor recusa o resto), então prende na tela de troca.
+      if (data.mustChangePassword) {
+        pendingPasswordRef.current = password;
+        setPassword("");
+        setStatus("must-change-password");
+        return;
+      }
+
       setPassword("");
+      setStatus("authenticated");
+      navigate(HOME_ROUTE);
     } catch {
       setError(t("messages.loginError"));
       setStatus("unauthenticated");
@@ -92,11 +142,31 @@ const AdminController: React.FC = () => {
     }
   };
 
+  /** Troca obrigatória: usa a senha do login como senha atual. */
   const handleChangePassword = async () => {
-    if (!email || !password || !newPassword) {
+    const currentPassword = pendingPasswordRef.current;
+    if (!currentPassword) {
+      signOutLocal();
+      setError(t("messages.reloginToChangePassword"));
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
       setError(t("messages.fillChangePassword"));
       return;
     }
+    if (newPassword !== confirmPassword) {
+      setError(t("messages.passwordsDoNotMatch"));
+      return;
+    }
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(t("messages.passwordTooShort", { min: MIN_PASSWORD_LENGTH }));
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setError(t("messages.passwordMustDiffer"));
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -106,7 +176,7 @@ const AdminController: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          currentPassword: password,
+          currentPassword,
           newPassword,
         }),
       });
@@ -121,14 +191,43 @@ const AdminController: React.FC = () => {
         }
         return;
       }
-      setSuccess(t("messages.passwordUpdated"));
-      setPassword("");
+      // O token atual é de troca pendente e o servidor o recusa nos demais
+      // endpoints: só um login novo emite um token utilizável.
       setNewPassword("");
-      setIsChangingPassword(false);
+      setConfirmPassword("");
+      signOutLocal();
+      setSuccess(t("messages.passwordUpdatedLoginAgain"));
     } catch {
       setError(t("messages.changePasswordError"));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * Registra o pedido de redefinição. Não redefine nada: quem redefine é o
+   * super admin, gerando uma senha temporária. A resposta é sempre a mesma,
+   * exista o e-mail ou não.
+   */
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      setError(t("messages.fillEmail"));
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await fetch("/api/admin/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+    } catch {
+      // Falha de rede não deve revelar nada nem travar o usuário: a orientação
+      // ("fale com o administrador") vale igual.
+    } finally {
+      setIsSubmitting(false);
+      setForgotDone(true);
     }
   };
 
@@ -163,7 +262,19 @@ const AdminController: React.FC = () => {
         }
         return;
       }
-      setSuccess(t("messages.addAdminSuccess"));
+      const data = (await response.json()) as {
+        created?: boolean;
+        reason?: string;
+        email?: string;
+        tempPassword?: string;
+      };
+      if (!data.created) {
+        setError(t("messages.addAdminAlreadyExists"));
+        return;
+      }
+      // Única vez que a senha temporária aparece: não fica guardada em lugar
+      // nenhum em claro. O super admin a repassa por fora.
+      setCreatedAdmin({ email: data.email ?? newAdminEmail, tempPassword: data.tempPassword ?? "" });
       setNewAdminEmail("");
     } catch {
       setError(t("messages.addAdminError"));
@@ -209,20 +320,34 @@ const AdminController: React.FC = () => {
       email={email}
       password={password}
       newPassword={newPassword}
+      confirmPassword={confirmPassword}
+      forgotEmail={forgotEmail}
+      forgotDone={forgotDone}
+      createdAdmin={createdAdmin}
       error={error}
       success={success}
       isSubmitting={isSubmitting}
       isDownloading={isDownloading}
-      isChangingPassword={isChangingPassword}
       onEmailChange={setEmail}
       onPasswordChange={setPassword}
       onNewPasswordChange={setNewPassword}
+      onConfirmPasswordChange={setConfirmPassword}
+      onForgotEmailChange={setForgotEmail}
       onSubmit={handleLogin}
-      onToggleChangePassword={() => {
+      onOpenForgot={() => {
         setError(null);
         setSuccess(null);
-        setIsChangingPassword(prev => !prev);
+        setForgotDone(false);
+        setForgotEmail(email);
+        setStatus("forgot");
       }}
+      onCloseForgot={() => {
+        setError(null);
+        setForgotDone(false);
+        setStatus("unauthenticated");
+      }}
+      onForgotPassword={handleForgotPassword}
+      onDismissCreatedAdmin={() => setCreatedAdmin(null)}
       onChangePassword={handleChangePassword}
       onDownloadTotal={() =>
         downloadReport("/api/admin/reports/total", "planilha-total.xlsx")
@@ -263,7 +388,7 @@ const AdminController: React.FC = () => {
           "retirada-camisetas.xlsx"
         )
       }
-      canManageAdmins={adminEmail?.toLowerCase() === DEFAULT_EMAIL}
+      canManageAdmins={adminEmail?.toLowerCase() === SUPER_ADMIN_EMAIL}
       newAdminEmail={newAdminEmail}
       isAddingAdmin={isAddingAdmin}
       onNewAdminEmailChange={setNewAdminEmail}

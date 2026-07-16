@@ -46,12 +46,20 @@ export const onRequestPost: PagesFunction<AdminAuthEnv> = async context => {
   }
 
   const ttlSeconds = getJwtTtlSeconds(context.env);
-  const token = await createJwt({ sub: admin.email, role: "admin" }, jwtSecret, ttlSeconds);
+  const mustChangePassword = admin.must_change_password === 1;
+  // Token marcado: authorizeAdminRequest o recusa em todo endpoint que não
+  // seja a troca de senha, então a obrigação vale no servidor, não só na UI.
+  const token = await createJwt(
+    { sub: admin.email, role: "admin", ...(mustChangePassword ? { mustChange: true } : {}) },
+    jwtSecret,
+    ttlSeconds
+  );
 
   return json(200, {
     token,
     expiresIn: ttlSeconds,
     email: admin.email,
+    mustChangePassword,
   });
 };
 

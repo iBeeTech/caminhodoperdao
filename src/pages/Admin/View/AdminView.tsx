@@ -8,9 +8,13 @@ import {
   ButtonRow,
   ErrorText,
   FieldGroup,
+  HelpText,
+  InfoBox,
   Label,
+  LinkButton,
   PrimaryButton,
   SecondaryButton,
+  SecretBox,
   SuccessText,
 } from "./AdminView.styles";
 
@@ -31,23 +35,31 @@ const dropItem: React.CSSProperties = {
 };
 
 interface AdminViewProps {
-  status: "loading" | "unauthenticated" | "authenticated";
+  status: "loading" | "unauthenticated" | "forgot" | "must-change-password" | "authenticated";
   email: string;
   password: string;
   newPassword: string;
+  confirmPassword: string;
+  forgotEmail: string;
+  forgotDone: boolean;
+  createdAdmin: { email: string; tempPassword: string } | null;
   error: string | null;
   success: string | null;
   isSubmitting: boolean;
   isDownloading: boolean;
-  isChangingPassword: boolean;
   isAddingAdmin: boolean;
   canManageAdmins: boolean;
   newAdminEmail: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
+  onConfirmPasswordChange: (value: string) => void;
+  onForgotEmailChange: (value: string) => void;
   onSubmit: () => void;
-  onToggleChangePassword: () => void;
+  onOpenForgot: () => void;
+  onCloseForgot: () => void;
+  onForgotPassword: () => void;
+  onDismissCreatedAdmin: () => void;
   onChangePassword: () => void;
   onDownloadTotal: () => void;
   onDownloadStaffGeral: () => void;
@@ -66,19 +78,27 @@ const AdminView: React.FC<AdminViewProps> = ({
   email,
   password,
   newPassword,
+  confirmPassword,
+  forgotEmail,
+  forgotDone,
+  createdAdmin,
   error,
   success,
   isSubmitting,
   isDownloading,
-  isChangingPassword,
   isAddingAdmin,
   canManageAdmins,
   newAdminEmail,
   onEmailChange,
   onPasswordChange,
   onNewPasswordChange,
+  onConfirmPasswordChange,
+  onForgotEmailChange,
   onSubmit,
-  onToggleChangePassword,
+  onOpenForgot,
+  onCloseForgot,
+  onForgotPassword,
+  onDismissCreatedAdmin,
   onChangePassword,
   onDownloadTotal,
   onDownloadStaffGeral,
@@ -150,32 +170,101 @@ const AdminView: React.FC<AdminViewProps> = ({
                 placeholder={t("login.passwordPlaceholder")}
               />
             </FieldGroup>
-            {isChangingPassword && (
-              <FieldGroup>
-                <Label htmlFor="admin-new-password">{t("login.newPasswordLabel")}</Label>
-                <input
-                  id="admin-new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={event => onNewPasswordChange(event.target.value)}
-                  placeholder={t("login.newPasswordPlaceholder")}
-                />
-              </FieldGroup>
-            )}
             {error && <ErrorText>{error}</ErrorText>}
             {success && <SuccessText>{success}</SuccessText>}
-            {isChangingPassword ? (
-              <PrimaryButton type="button" onClick={onChangePassword} disabled={isSubmitting}>
-                {isSubmitting ? t("login.changePasswordSubmitting") : t("login.changePasswordSubmit")}
-              </PrimaryButton>
+            <PrimaryButton type="button" onClick={onSubmit} disabled={isSubmitting}>
+              {isSubmitting ? t("login.submitting") : t("login.submit")}
+            </PrimaryButton>
+            <LinkButton type="button" onClick={onOpenForgot} disabled={isSubmitting}>
+              {t("login.forgotPassword")}
+            </LinkButton>
+          </AdminCard>
+        </AdminContainer>
+      </AdminPage>
+    );
+  }
+
+  // "Esqueci minha senha": registra o pedido. A confirmação é sempre a mesma,
+  // exista o e-mail ou não — a tela nunca revela quem é admin.
+  if (status === "forgot") {
+    return (
+      <AdminPage>
+        <AdminContainer>
+          <AdminCard>
+            <AdminTitle>{t("forgot.title")}</AdminTitle>
+            {forgotDone ? (
+              <>
+                <InfoBox role="status">
+                  <strong>{t("forgot.doneTitle")}</strong>
+                  <p style={{ margin: "6px 0 0" }}>{t("forgot.doneBody")}</p>
+                </InfoBox>
+                <PrimaryButton type="button" onClick={onCloseForgot}>
+                  {t("forgot.backToLogin")}
+                </PrimaryButton>
+              </>
             ) : (
-              <PrimaryButton type="button" onClick={onSubmit} disabled={isSubmitting}>
-                {isSubmitting ? t("login.submitting") : t("login.submit")}
-              </PrimaryButton>
+              <>
+                <HelpText>{t("forgot.help")}</HelpText>
+                <FieldGroup>
+                  <Label htmlFor="forgot-email">{t("login.emailLabel")}</Label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={event => onForgotEmailChange(event.target.value)}
+                    placeholder={t("login.emailPlaceholder")}
+                  />
+                </FieldGroup>
+                {error && <ErrorText>{error}</ErrorText>}
+                <PrimaryButton type="button" onClick={onForgotPassword} disabled={isSubmitting}>
+                  {isSubmitting ? t("forgot.submitting") : t("forgot.submit")}
+                </PrimaryButton>
+                <SecondaryButton type="button" onClick={onCloseForgot} disabled={isSubmitting}>
+                  {t("forgot.backToLogin")}
+                </SecondaryButton>
+              </>
             )}
-            <SecondaryButton type="button" onClick={onToggleChangePassword} disabled={isSubmitting}>
-              {isChangingPassword ? t("login.backToLogin") : t("login.toggleChangePassword")}
-            </SecondaryButton>
+          </AdminCard>
+        </AdminContainer>
+      </AdminPage>
+    );
+  }
+
+  // Primeiro acesso ou senha temporária. O servidor recusa este token em
+  // qualquer outro endpoint, então não há como pular esta tela.
+  if (status === "must-change-password") {
+    return (
+      <AdminPage>
+        <AdminContainer>
+          <AdminCard>
+            <AdminTitle>{t("changePassword.title")}</AdminTitle>
+            <HelpText>{t("changePassword.help")}</HelpText>
+            <FieldGroup>
+              <Label htmlFor="new-password">{t("changePassword.newLabel")}</Label>
+              <input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={event => onNewPasswordChange(event.target.value)}
+                placeholder={t("changePassword.newPlaceholder")}
+              />
+            </FieldGroup>
+            <FieldGroup>
+              <Label htmlFor="confirm-password">{t("changePassword.confirmLabel")}</Label>
+              <input
+                id="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={event => onConfirmPasswordChange(event.target.value)}
+                placeholder={t("changePassword.confirmPlaceholder")}
+              />
+            </FieldGroup>
+            {error && <ErrorText>{error}</ErrorText>}
+            <PrimaryButton type="button" onClick={onChangePassword} disabled={isSubmitting}>
+              {isSubmitting ? t("changePassword.submitting") : t("changePassword.submit")}
+            </PrimaryButton>
           </AdminCard>
         </AdminContainer>
       </AdminPage>
@@ -261,6 +350,21 @@ const AdminView: React.FC<AdminViewProps> = ({
               <PrimaryButton type="button" onClick={onAddAdmin} disabled={isAddingAdmin}>
                 {isAddingAdmin ? t("panel.addingAdmin") : t("panel.addAdmin")}
               </PrimaryButton>
+
+              {/* Único momento em que a senha temporária é visível: ela não fica
+                  guardada em claro em lugar nenhum. */}
+              {createdAdmin && (
+                <SecretBox role="status">
+                  <strong>{t("panel.adminCreatedTitle", { email: createdAdmin.email })}</strong>
+                  <p style={{ margin: "6px 0 0" }}>{t("panel.adminCreatedBody")}</p>
+                  <code>{createdAdmin.tempPassword}</code>
+                  <p style={{ margin: "10px 0 0" }}>
+                    <SecondaryButton type="button" onClick={onDismissCreatedAdmin}>
+                      {t("panel.adminCreatedDismiss")}
+                    </SecondaryButton>
+                  </p>
+                </SecretBox>
+              )}
             </FieldGroup>
           )}
         </AdminCard>

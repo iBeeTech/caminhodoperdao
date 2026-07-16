@@ -4,6 +4,7 @@ import { isValidEmail } from "../../_utils/validation";
 import {
   AdminAuthEnv,
   authorizeAdminRequest,
+  generateTempPassword,
   getAdminByEmail,
   getAdminDefaults,
   hashPassword,
@@ -40,14 +41,18 @@ export const onRequestPost: PagesFunction<AdminAuthEnv> = async context => {
     return json(200, { created: false, reason: "already_exists" });
   }
 
-  const defaultPassword = getAdminDefaults(context.env).password;
-  const passwordHash = await hashPassword(defaultPassword, context.env.ADMIN_PASSWORD_PEPPER);
+  // Sem senha padrão: cada admin nasce com uma senha aleatória, mostrada uma
+  // única vez a quem criou, e obrigado a trocá-la no primeiro acesso.
+  const tempPassword = generateTempPassword();
+  const passwordHash = await hashPassword(tempPassword, context.env.ADMIN_PASSWORD_PEPPER);
   const now = Date.now();
   await context.env.DB
-    .prepare("INSERT INTO admin_users (email, password_hash, created_at, updated_at) VALUES (?1, ?2, ?3, ?4)")
+    .prepare(
+      "INSERT INTO admin_users (email, password_hash, created_at, updated_at, must_change_password) VALUES (?1, ?2, ?3, ?4, 1)"
+    )
     .bind(email, passwordHash, now, now)
     .run();
 
-  return json(201, { created: true });
+  return json(201, { created: true, email, tempPassword });
 };
 

@@ -6,14 +6,28 @@
         "emailPlaceholder": "Seu email",
         "passwordLabel": "Senha",
         "passwordPlaceholder": "Sua senha",
-        "newPasswordLabel": "Nova senha",
-        "newPasswordPlaceholder": "Nova senha",
         "submit": "Entrar",
         "submitting": "Entrando...",
-        "changePasswordSubmit": "Atualizar senha",
-        "changePasswordSubmitting": "Atualizando...",
-        "toggleChangePassword": "Trocar senha",
-        "backToLogin": "Voltar ao login"
+        "forgotPassword": "Esqueci minha senha"
+    },
+    "forgot": {
+        "title": "Esqueci minha senha",
+        "help": "Informe seu e-mail de admin. O administrador do site vai redefinir sua senha e te passar uma senha temporária.",
+        "submit": "Recuperar senha",
+        "submitting": "Enviando...",
+        "backToLogin": "Voltar ao login",
+        "doneTitle": "Pedido registrado.",
+        "doneBody": "Fale com o administrador do site para concluir a redefinição. Ele vai te passar uma senha temporária, e você define a sua nova senha ao entrar."
+    },
+    "changePassword": {
+        "title": "Defina sua senha",
+        "help": "Este é seu primeiro acesso (ou sua senha foi redefinida). Escolha uma senha nova para continuar.",
+        "newLabel": "Nova senha",
+        "newPlaceholder": "Pelo menos 8 caracteres",
+        "confirmLabel": "Confirmar senha",
+        "confirmPlaceholder": "Repita a nova senha",
+        "submit": "Salvar senha",
+        "submitting": "Salvando..."
     },
     "panel": {
         "title": "Planilhas",
@@ -30,14 +44,24 @@
         "addAdminLabel": "Adicionar admin",
         "addAdminPlaceholder": "email@dominio.com",
         "addAdmin": "Adicionar",
-        "addingAdmin": "Adicionando..."
+        "addingAdmin": "Adicionando...",
+        "adminCreatedTitle": "Admin {{email}} criado.",
+        "adminCreatedBody": "Esta senha temporária aparece só agora — copie e passe para a pessoa. Ela será obrigada a trocá-la no primeiro acesso.",
+        "adminCreatedDismiss": "Já anotei"
     },
     "messages": {
         "fillEmailPassword": "Preencha email e senha.",
         "invalidCredentials": "Credenciais inválidas.",
         "serverError": "Erro no servidor. Verifique a migração do admin.",
         "loginError": "Não foi possível entrar.",
-        "fillChangePassword": "Preencha email, senha atual e nova senha.",
+        "fillChangePassword": "Preencha a nova senha e a confirmação.",
+        "fillEmail": "Informe seu e-mail.",
+        "passwordsDoNotMatch": "As senhas não coincidem.",
+        "passwordTooShort": "A senha deve ter pelo menos {{min}} caracteres.",
+        "passwordMustDiffer": "A nova senha deve ser diferente da atual.",
+        "passwordUpdatedLoginAgain": "Senha atualizada. Entre com a sua nova senha.",
+        "reloginToChangePassword": "Entre novamente para definir a sua nova senha.",
+        "addAdminAlreadyExists": "Já existe um admin com esse e-mail.",
         "passwordUpdated": "Senha atualizada com sucesso.",
         "changePasswordError": "Não foi possível trocar a senha.",
         "reauth": "Você precisa entrar novamente.",
