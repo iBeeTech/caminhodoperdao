@@ -302,6 +302,16 @@
             "refundNote": "Você cancelou um pedido já pago. Para solicitar o estorno, fale com a organização pelo WhatsApp.",
             "refundWhatsapp": "Falar no WhatsApp para estorno",
             "refundWhatsappMessage": "Olá! Cancelei a compra da minha camiseta do Caminho do Perdão e gostaria de solicitar o estorno do pagamento."
+        },
+        "cancelSection": {
+            "title": "Já comprei e quero cancelar",
+            "help": "As vendas foram encerradas, mas quem já comprou pode cancelar. Informe o CPF usado na compra para ver seus pedidos.",
+            "search": "Visualizar pedidos",
+            "searching": "Buscando...",
+            "empty": "Não encontramos pedidos de camiseta para este CPF.",
+            "done": "Pedido cancelado.",
+            "pendingNote": "Pagamento ainda não confirmado. Cancelar apenas invalida o PIX; nada foi cobrado.",
+            "paidNote": "Pedido pago. Ao cancelar, o valor é devolvido via PIX."
         }
     },
     "signup": {
