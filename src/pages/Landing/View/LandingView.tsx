@@ -44,6 +44,7 @@ interface LandingViewProps {
     nameRef: RefObject<HTMLInputElement | null>;
     emailRef: RefObject<HTMLInputElement | null>;
     cpfRef: RefObject<HTMLInputElement | null>;
+    genderRef: RefObject<HTMLSelectElement | null>;
     dateOfBirthRef: RefObject<HTMLInputElement | null>;
     phoneRef: RefObject<HTMLInputElement | null>;
     cepRef: RefObject<HTMLInputElement | null>;
@@ -82,7 +83,7 @@ interface LandingViewProps {
   registerIntent: boolean;
   registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
-  onCancelRegistration: () => Promise<void>;
+  onCancelRegistration: (pixKey?: string) => Promise<void>;
   registrationCpf: string | null;
   sleepAtMonastery: number | null;
   getNextWhatsappUrl: (opts?: { depoimento?: boolean }) => Promise<string>;

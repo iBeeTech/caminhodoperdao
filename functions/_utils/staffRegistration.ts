@@ -7,6 +7,7 @@ import {
   countActiveStaff,
   expirePending,
   getByCpfEncrypted,
+  isValidGender,
 } from "./registrations";
 import { getCapacityLimits, CapacityEnv } from "./capacity";
 
@@ -37,6 +38,8 @@ export interface StaffRegistrationInput {
   allergyMedicationDetails?: string;
   hasDietaryRestriction?: boolean;
   dietaryRestrictionDetails?: string;
+  /** 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'. Validado antes do INSERT. */
+  gender?: string;
 }
 
 // Campos da inscrição que o staff pode editar (tudo menos email e CPF).
@@ -187,6 +190,9 @@ export async function createStaffRegistration(
 
   if (!input.cpf || !isValidCpf(input.cpf)) return fail(400, "invalid_cpf");
 
+  // Lista fechada garantida aqui: o SQLite não valida CHECK criado por ALTER.
+  if (!isValidGender(input.gender)) return fail(400, "invalid_gender");
+
   const validated = validateEditable(input);
   if ("error" in validated) return fail(400, validated.error);
   const v = validated.value;
@@ -251,9 +257,9 @@ export async function createStaffRegistration(
            date_of_birth = ?12, terms_accepted_at = ?13, emergency_contact_name = ?14,
            emergency_contact_phone = ?15, has_allergy_medication = ?16,
            allergy_medication_details = ?17, has_dietary_restriction = ?18,
-           dietary_restriction_details = ?19, is_staff = 1, registration_number = ?20,
-           paid_at = ?21
-         WHERE id = ?22`
+           dietary_restriction_details = ?19, gender = ?20, is_staff = 1,
+           registration_number = ?21, paid_at = ?22
+         WHERE id = ?23`
       )
         .bind(
           v.name,
@@ -275,6 +281,7 @@ export async function createStaffRegistration(
           v.allergyDetails,
           v.hasDietary,
           v.dietaryDetails,
+          input.gender ?? null,
           registrationNumber,
           nowIso,
           existing.id
@@ -291,10 +298,10 @@ export async function createStaffRegistration(
          companion_name, phone, cep, address, number, complement, city, state,
          cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name,
          emergency_contact_phone, has_allergy_medication, allergy_medication_details,
-         has_dietary_restriction, dietary_restriction_details, is_staff,
+         has_dietary_restriction, dietary_restriction_details, gender, is_staff,
          registration_number, created_at, paid_at
        ) VALUES (?1, ?2, ?3, 'PAID', 'cortesia', NULL, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11,
-         ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, 1, ?22, datetime('now'), ?23)`
+         ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, 1, ?23, datetime('now'), ?24)`
     )
       .bind(
         id,
@@ -318,6 +325,7 @@ export async function createStaffRegistration(
         v.allergyDetails,
         v.hasDietary,
         v.dietaryDetails,
+        input.gender ?? null,
         registrationNumber,
         nowIso
       )

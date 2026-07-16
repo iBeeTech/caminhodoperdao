@@ -53,6 +53,7 @@ interface SignupRefs {
   nameRef: RefObject<HTMLInputElement | null>;
   emailRef: RefObject<HTMLInputElement | null>;
   cpfRef: RefObject<HTMLInputElement | null>;
+  genderRef: RefObject<HTMLSelectElement | null>;
   dateOfBirthRef: RefObject<HTMLInputElement | null>;
   phoneRef: RefObject<HTMLInputElement | null>;
   cepRef: RefObject<HTMLInputElement | null>;
@@ -124,7 +125,7 @@ interface SignupSectionProps {
   registerIntent: boolean;
   registeredAsStaff: boolean;
   onViewMyRegistration: () => void;
-  onCancelRegistration: () => Promise<void>;
+  onCancelRegistration: (pixKey?: string) => Promise<void>;
   /** CPF (dígitos) da inscrição consultada — usado na troca geral↔pernoite. */
   registrationCpf: string | null;
   /** Modalidade atual da inscrição consultada: 1 = pernoite, 0 = geral. */
@@ -191,8 +192,13 @@ const SignupSection: React.FC<SignupSectionProps> = ({
   const { t } = useTranslation("landing");
   const { isEnabled: enrollmentEnabled } = useFeatureFlags("enrollment");
 
+  // Chave PIX para o estorno, perguntada no modal de confirmação. Só faz
+  // sentido quando há dinheiro a devolver (inscrição/camiseta já paga).
+  const [refundPixKey, setRefundPixKey] = useState("");
+
   const openCancelModal = () => {
     setCancelError(null);
+    setRefundPixKey("");
     setIsCancelOpen(true);
   };
 
@@ -206,7 +212,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     setIsCanceling(true);
     setCancelError(null);
     try {
-      await onCancelRegistration();
+      await onCancelRegistration(refundPixKey.trim() || undefined);
       setIsCancelOpen(false);
       setIsCanceledModalOpen(true);
     } catch {
@@ -347,6 +353,7 @@ const SignupSection: React.FC<SignupSectionProps> = ({
     nameRef,
     emailRef,
     cpfRef,
+    genderRef,
     dateOfBirthRef,
     phoneRef,
     cepRef,
@@ -743,6 +750,32 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                   ref={dateOfBirthRef as RefObject<HTMLInputElement>}
                   autoComplete="bday"
                 />
+              </FormField>
+
+              <FormField
+                label={t("signup.registrationForm.genderLabel")}
+                htmlFor="gender"
+                error={errors.gender}
+                required
+              >
+                <Select
+                  id="gender"
+                  name="gender"
+                  ref={genderRef as RefObject<HTMLSelectElement>}
+                  defaultValue=""
+                  onChange={() => {
+                    onClearFieldError("gender");
+                  }}
+                >
+                  <option value="" disabled>
+                    {t("signup.registrationForm.genderPlaceholder")}
+                  </option>
+                  <option value="MASCULINO">{t("signup.registrationForm.genderMale")}</option>
+                  <option value="FEMININO">{t("signup.registrationForm.genderFemale")}</option>
+                  <option value="NAO_INFORMADO">
+                    {t("signup.registrationForm.genderUnspecified")}
+                  </option>
+                </Select>
               </FormField>
 
               <FormField label={t("signup.registrationForm.whatsappLabel")} htmlFor="phone" error={errors.phone} required>
@@ -1564,6 +1597,27 @@ const SignupSection: React.FC<SignupSectionProps> = ({
                 <ConfirmationModalDescription>
                   {t("cancellation.notice", { ns: "common" })}
                 </ConfirmationModalDescription>
+
+                {/* Só faz sentido pedir a chave quando há o que devolver: quem
+                    deixou o PIX vencer não pagou nada. */}
+                {currentStatus === "PAID" && (
+                  <FormField
+                    label={t("cancellation.pixKeyLabel", { ns: "common" })}
+                    htmlFor="refund-pix-key"
+                  >
+                    <Input
+                      id="refund-pix-key"
+                      name="refundPixKey"
+                      type="text"
+                      value={refundPixKey}
+                      onChange={event => setRefundPixKey(event.target.value)}
+                      placeholder={t("cancellation.pixKeyPlaceholder", { ns: "common" })}
+                      disabled={isCanceling}
+                      autoComplete="off"
+                    />
+                    <MonasteryNote>{t("cancellation.pixKeyHint", { ns: "common" })}</MonasteryNote>
+                  </FormField>
+                )}
 
                 {cancelError && <ErrorText role="alert">{cancelError}</ErrorText>}
 

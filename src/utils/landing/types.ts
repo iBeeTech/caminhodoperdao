@@ -8,6 +8,7 @@ export type FieldRefsType = {
   name: React.RefObject<HTMLInputElement | null>;
   email: React.RefObject<HTMLInputElement | null>;
   cpf: React.RefObject<HTMLInputElement | null>;
+  gender: React.RefObject<HTMLSelectElement | null>;
   dateOfBirth: React.RefObject<HTMLInputElement | null>;
   phone: React.RefObject<HTMLInputElement | null>;
   cep: React.RefObject<HTMLInputElement | null>;
@@ -42,6 +43,7 @@ export interface RegistrationFormData {
   name: string;
   email: string;
   cpf: string;
+  gender: string;
   dateOfBirth: string;
   phone: string;
   cep: string;

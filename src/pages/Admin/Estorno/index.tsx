@@ -14,6 +14,9 @@ interface RefundRequest {
   email: string | null;
   amount_cents: number;
   refund_status: RefundStatus;
+  /** Informada por quem cancelou. Nula nos estornos anteriores ao campo e
+      quando a pessoa preferiu combinar por fora. */
+  pix_key: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -152,6 +155,7 @@ const EstornoPage: React.FC = () => {
                 <th style={styles.th}>Nome</th>
                 <th style={styles.th}>Telefone</th>
                 <th style={styles.th}>E-mail</th>
+                <th style={styles.th}>Pix</th>
                 <th style={styles.th}>Valor</th>
                 <th style={styles.th}>Estorno</th>
               </tr>
@@ -162,7 +166,11 @@ const EstornoPage: React.FC = () => {
                   <td style={styles.td}>{TYPE_LABEL[r.type]}</td>
                   <td style={styles.td}>{r.name || "—"}</td>
                   <td style={styles.td}>{r.phone || "—"}</td>
+                  {/* user-select: all — a chave é copiada para fazer o PIX. */}
                   <td style={styles.td}>{r.email || "—"}</td>
+                  <td style={{ ...styles.td, userSelect: "all", fontFamily: "monospace" }}>
+                    {r.pix_key || "—"}
+                  </td>
                   <td style={styles.td}>{formatBRL(r.amount_cents)}</td>
                   <td style={styles.td}>
                     <select

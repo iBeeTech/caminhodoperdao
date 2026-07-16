@@ -78,7 +78,10 @@
         "canceledNotice": "Sua inscrição foi cancelada. Para solicitar o estorno do pagamento, entre em contato com a organização pelo WhatsApp.",
         "refundWhatsapp": "Falar no WhatsApp para estorno",
         "refundWhatsappMessage": "Olá! Cancelei minha inscrição e gostaria de solicitar o estorno do pagamento.",
-        "canceledClose": "Fechar"
+        "canceledClose": "Fechar",
+        "pixKeyLabel": "Pix para estorno",
+        "pixKeyPlaceholder": "CPF, e-mail, telefone ou chave aleatória",
+        "pixKeyHint": "Para onde devolvemos o valor pago. Se preferir, deixe em branco e combine o estorno pelo WhatsApp."
     },
     "consent": {
         "title": "Privacidade e cookies",

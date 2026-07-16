@@ -35,10 +35,14 @@ export interface RegistrationStatusResponse {
   message?: string;
 }
 
+/** Valores aceitos pelo servidor (functions/_utils/registrations.ts). */
+export type Gender = "MASCULINO" | "FEMININO" | "NAO_INFORMADO";
+
 export interface RegistrationPayload {
   name: string;
   email: string;
   cpf: string;
+  gender: Gender;
   dateOfBirth: string;
   phone: string;
   cep: string;

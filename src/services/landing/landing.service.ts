@@ -27,10 +27,16 @@ export const landingService = {
     return httpClient.get<RegistrationStatusResponse>(url);
   },
 
-  async cancelRegistration(cpf: string): Promise<{ status?: string; refund?: boolean }> {
+  // pixKey: para onde devolver o dinheiro, quando houver estorno. Opcional —
+  // sem ela o cancelamento acontece igual e o estorno é combinado por fora.
+  async cancelRegistration(
+    cpf: string,
+    pixKey?: string
+  ): Promise<{ status?: string; refund?: boolean }> {
     // POST (não DELETE): corpo em DELETE é descartado por alguns proxies.
     return httpClient.post<{ status?: string; refund?: boolean }>("/api/registration/cancel", {
       cpf,
+      pixKey,
     });
   },
 
@@ -59,10 +65,15 @@ export const landingService = {
   },
 
   // Cancela UMA compra de camiseta (pendente ou paga). Paga gera estorno.
-  async cancelTshirt(cpf: string, purchaseId: string): Promise<{ status?: string; refund?: boolean }> {
+  async cancelTshirt(
+    cpf: string,
+    purchaseId: string,
+    pixKey?: string
+  ): Promise<{ status?: string; refund?: boolean }> {
     return httpClient.post<{ status?: string; refund?: boolean }>("/api/tshirt/cancel", {
       cpf,
       purchaseId,
+      pixKey,
     });
   },
 

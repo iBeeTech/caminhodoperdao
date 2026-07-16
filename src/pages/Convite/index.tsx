@@ -11,6 +11,7 @@ import { getFieldValue, focusFirstError } from "../../utils/dom/forms";
 import { validateRegistrationForm } from "../../utils/landing/validation";
 import { useAddressByCep } from "../../hooks/useAddressByCep";
 import type { FieldRefsType } from "../../utils/landing/types";
+import type { RegistrationPayload } from "../../services/landing/landing.types";
 
 const normalizeCode = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
@@ -21,6 +22,12 @@ const s: Record<string, React.CSSProperties> = {
   card: {
     border: "1px solid #e5e7eb", borderRadius: 16, padding: "1.75rem 1.5rem", background: "#fff",
     boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+  },
+  // Espelha o visual dos Inputs do design system usados nesta página.
+  select: {
+    width: "100%", boxSizing: "border-box", padding: "0.75rem 0.9rem", borderRadius: 8,
+    border: "1px solid #d1d5db", fontSize: "1rem", background: "#fff", color: "#111827",
+    font: "inherit",
   },
   title: { fontSize: "1.5rem", margin: "0 0 0.5rem", color: "#111827" },
   subtitle: { color: "#4b5563", marginBottom: "1.5rem", lineHeight: 1.5 },
@@ -81,6 +88,7 @@ const ConvitePage: React.FC = () => {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const cpfRef = useRef<HTMLInputElement>(null);
+  const genderRef = useRef<HTMLSelectElement>(null);
   const dateOfBirthRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const cepRef = useRef<HTMLInputElement>(null);
@@ -105,6 +113,7 @@ const ConvitePage: React.FC = () => {
     name: nameRef,
     email: emailRef,
     cpf: cpfRef,
+    gender: genderRef,
     dateOfBirth: dateOfBirthRef,
     phone: phoneRef,
     cep: cepRef,
@@ -224,6 +233,7 @@ const ConvitePage: React.FC = () => {
         name: getFieldValue(nameRef.current),
         email: getFieldValue(emailRef.current),
         cpf: getFieldValue(cpfRef.current).replace(/\D/g, ""),
+        gender: (genderRef.current?.value ?? "") as RegistrationPayload["gender"],
         dateOfBirth: getFieldValue(dateOfBirthRef.current),
         phone: getFieldValue(phoneRef.current),
         cep: getFieldValue(cepRef.current),
@@ -349,6 +359,31 @@ const ConvitePage: React.FC = () => {
 
             <FormField label={t("signup.registrationForm.emailLabel")} htmlFor="c-email" error={errors.email} required>
               <Input id="c-email" ref={emailRef} type="email" placeholder={t("signup.registrationForm.emailPlaceholder")} onChange={() => clearError("email")} autoComplete="email" />
+            </FormField>
+
+            <FormField
+              label={t("signup.registrationForm.genderLabel")}
+              htmlFor="c-gender"
+              error={errors.gender}
+              required
+            >
+              {/* <select> nativo: esta página não usa o design system de Select. */}
+              <select
+                id="c-gender"
+                ref={genderRef}
+                defaultValue=""
+                onChange={() => clearError("gender")}
+                style={s.select}
+              >
+                <option value="" disabled>
+                  {t("signup.registrationForm.genderPlaceholder")}
+                </option>
+                <option value="MASCULINO">{t("signup.registrationForm.genderMale")}</option>
+                <option value="FEMININO">{t("signup.registrationForm.genderFemale")}</option>
+                <option value="NAO_INFORMADO">
+                  {t("signup.registrationForm.genderUnspecified")}
+                </option>
+              </select>
             </FormField>
 
             <FormField label={t("signup.registrationForm.dateOfBirthLabel")} htmlFor="c-dob" error={errors.dateOfBirth} required>

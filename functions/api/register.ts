@@ -13,6 +13,7 @@ import {
   expirePending,
   getByCpfEncrypted,
   insertRegistration,
+  isValidGender,
   updateRegistration,
   setRegistrationInviteCode,
 } from "../_utils/registrations";
@@ -62,6 +63,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     hasDietaryRestriction,
     dietaryRestrictionDetails,
     inviteCode,
+    gender,
   } = body as {
     name?: string;
     email?: string;
@@ -84,12 +86,19 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
     hasDietaryRestriction?: boolean;
     dietaryRestrictionDetails?: string;
     inviteCode?: string;
+    gender?: string;
   };
 
   // Convite (override do teto de 500): quando presente, a inscrição é sempre SEM
   // pernoite e fura o teto geral, desde que o código seja válido (checado adiante).
   const normalizedInviteCode = normalizeInviteCode(inviteCode);
   const hasInvite = normalizedInviteCode.length > 0;
+
+  // O SQLite não valida CHECK adicionado por ALTER, então a lista fechada de
+  // valores é garantida aqui.
+  if (!isValidGender(gender)) {
+    return badRequest("invalid_gender");
+  }
 
   if (!email || !isValidEmail(email)) {
     return badRequest("invalid_email");
@@ -315,6 +324,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         allergy_medication_details: hasAllergyMedication ? allergyDetails : null,
         has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
         dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
+        gender,
       });
     } else {
       await insertRegistration(env.DB, {
@@ -342,6 +352,7 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         allergy_medication_details: hasAllergyMedication ? allergyDetails : null,
         has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
         dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
+        gender,
       });
     }
   } catch (error) {

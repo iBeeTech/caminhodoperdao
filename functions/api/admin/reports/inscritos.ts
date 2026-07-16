@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import { formatGender } from "../../../_utils/registrations";
 import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type InscritosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
@@ -15,6 +16,7 @@ interface InscritoRow {
   city: string | null;
   state: string | null;
   cpf_encrypted: string | null;
+  gender: string | null;
   date_of_birth: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
@@ -75,6 +77,7 @@ export const onRequestGet: PagesFunction<InscritosEnv> = async context => {
       r.city,
       r.state,
       r.cpf_encrypted,
+      r.gender,
       r.date_of_birth,
       r.emergency_contact_name,
       r.emergency_contact_phone,
@@ -143,6 +146,7 @@ function buildInscritosSheet(
     "NOME",
     "EMAIL",
     "CPF",
+    "SEXO",
     "DATA DE NASCIMENTO",
     "TELEFONE",
     "CONTATO EMERGÊNCIA (NOME)",
@@ -174,6 +178,7 @@ function buildInscritosSheet(
       row.name || "",
       row.email || "",
       row.cpfDecrypted || "",
+      formatGender(row.gender),
       formatDateOfBirth(row.date_of_birth),
       row.phone ?? "",
       row.emergency_contact_name ?? "",

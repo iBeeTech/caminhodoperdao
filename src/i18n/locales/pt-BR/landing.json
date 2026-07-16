@@ -385,7 +385,12 @@
             "loading": "Enviando...",
             "termsLabel": "Ao realizar a inscrição você concorda com os nossos",
             "termsLinkText": "Termos de Responsabilidade",
-            "title": "Fazer inscrição"
+            "title": "Fazer inscrição",
+            "genderLabel": "Sexo",
+            "genderPlaceholder": "Selecione",
+            "genderMale": "Masculino",
+            "genderFemale": "Feminino",
+            "genderUnspecified": "Prefiro não identificar"
         },
         "status": {
             "pendingReload": "Você também pode fazer o reload da página e fornecer seu nome e email usados na inscrição para saber o status dela a qualquer momento, ou entre em contato conosco via WhatsApp.",
@@ -454,7 +459,8 @@
             "dietaryRestrictionDetailsRequired": "Informe qual restrição alimentar",
             "emergencyContactNameRequired": "Informe o nome do contato de emergência",
             "emergencyContactPhoneInvalid": "Informe o telefone do contato de emergência (DDD + 9 dígitos)",
-            "emergencyContactPhoneSameAsRegistration": "Este é o mesmo telefone usado na inscrição, utilize um telefone de outra pessoa"
+            "emergencyContactPhoneSameAsRegistration": "Este é o mesmo telefone usado na inscrição, utilize um telefone de outra pessoa",
+            "genderRequired": "Selecione uma opção."
         },
         "intent": {
             "pricing": {

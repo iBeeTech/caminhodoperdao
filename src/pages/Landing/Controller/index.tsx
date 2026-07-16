@@ -285,6 +285,7 @@ const LandingController: React.FC = () => {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const cpfRef = useRef<HTMLInputElement>(null);
+  const genderRef = useRef<HTMLSelectElement>(null);
   const dateOfBirthRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const cepRef = useRef<HTMLInputElement>(null);
@@ -309,6 +310,7 @@ const LandingController: React.FC = () => {
     name: nameRef,
     email: emailRef,
     cpf: cpfRef,
+    gender: genderRef,
     dateOfBirth: dateOfBirthRef,
     phone: phoneRef,
     cep: cepRef,
@@ -627,6 +629,8 @@ const LandingController: React.FC = () => {
       name: getFieldValue(nameRef?.current ?? null),
       email: getFieldValue(emailRef?.current ?? null),
       cpf: getFieldValue(cpfRef?.current ?? null).replace(/\D/g, ""),
+      // validateRegistrationForm já garantiu que é um dos três valores.
+      gender: (genderRef.current?.value ?? "") as RegistrationPayload["gender"],
       dateOfBirth: getFieldValue(dateOfBirthRef?.current ?? null),
       phone: getFieldValue(phoneRef?.current ?? null),
       cep: getFieldValue(cepRef?.current ?? null),
@@ -919,9 +923,11 @@ const LandingController: React.FC = () => {
 
   // Cancela a inscrição (PENDING/PAID) pelo CPF usado na consulta. Em caso de
   // sucesso, mostra o estado de inscrição cancelada (libera a vaga no servidor).
-  const handleCancelRegistration = async () => {
+  // pixKey chega do modal de confirmação. Opcional: se a pessoa não informar,
+  // o cancelamento acontece igual e o estorno é combinado por fora.
+  const handleCancelRegistration = async (pixKey?: string) => {
     if (!statusPollingCpf) return;
-    await landingService.cancelRegistration(statusPollingCpf);
+    await landingService.cancelRegistration(statusPollingCpf, pixKey);
     setCurrentStatus("CANCELED");
     setStatusTone("error");
   };
@@ -945,6 +951,7 @@ const LandingController: React.FC = () => {
         nameRef,
         emailRef,
         cpfRef,
+        genderRef,
         dateOfBirthRef,
         phoneRef,
         cepRef,

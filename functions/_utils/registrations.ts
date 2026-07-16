@@ -1,8 +1,29 @@
 /// <reference types="@cloudflare/workers-types" />
+export type Gender = "MASCULINO" | "FEMININO" | "NAO_INFORMADO";
+
+/** Aceitos no cadastro. Inscrições antigas ficam com gender nulo. */
+export const GENDER_VALUES: readonly Gender[] = ["MASCULINO", "FEMININO", "NAO_INFORMADO"];
+
+export function isValidGender(value: unknown): value is Gender {
+  return typeof value === "string" && (GENDER_VALUES as readonly string[]).includes(value);
+}
+
+const GENDER_LABEL: Record<Gender, string> = {
+  MASCULINO: "Masculino",
+  FEMININO: "Feminino",
+  NAO_INFORMADO: "Prefiro não identificar",
+};
+
+/** Rótulo para planilha. "-" nas inscrições anteriores ao campo existir. */
+export function formatGender(value: string | null | undefined): string {
+  return isValidGender(value) ? GENDER_LABEL[value] : "-";
+}
+
 export interface Registration {
   id: string;
   email: string;
   name: string;
+  gender: Gender | null;
   status: "PENDING" | "PAID" | "CANCELED";
   payment_provider: string | null;
   payment_ref: string | null;
@@ -87,10 +108,13 @@ export async function insertRegistration(
     allergy_medication_details: string | null;
     has_dietary_restriction: number;
     dietary_restriction_details: string | null;
+    /** 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'. Nulo nas inscrições
+        anteriores à existência do campo. Validado no endpoint. */
+    gender?: string | null;
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, datetime('now'))"
+    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, gender, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, datetime('now'))"
   ).bind(
     input.id,
     input.email.toLowerCase(),
@@ -116,6 +140,7 @@ export async function insertRegistration(
     input.allergy_medication_details,
     input.has_dietary_restriction,
     input.dietary_restriction_details,
+    input.gender ?? null,
   );
   await stmt.run();
 }
@@ -146,10 +171,12 @@ export async function updateRegistration(
     allergy_medication_details: string | null;
     has_dietary_restriction: number;
     dietary_restriction_details: string | null;
+    /** Reinscrição também grava o sexo; senão quem se reinscreve ficaria nulo. */
+    gender?: string | null;
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, created_at = datetime('now'), paid_at = NULL WHERE id = ?23"
+    "UPDATE registrations SET name = ?1, status = ?2, payment_provider = ?3, payment_ref = ?4, sleep_at_monastery = ?5, companion_name = ?6, phone = ?7, cep = ?8, address = ?9, number = ?10, complement = ?11, city = ?12, state = ?13, cpf_encrypted = ?14, date_of_birth = ?15, terms_accepted_at = ?16, emergency_contact_name = ?17, emergency_contact_phone = ?18, has_allergy_medication = ?19, allergy_medication_details = ?20, has_dietary_restriction = ?21, dietary_restriction_details = ?22, gender = ?23, created_at = datetime('now'), paid_at = NULL WHERE id = ?24"
   ).bind(
     input.name,
     input.status,
@@ -173,6 +200,7 @@ export async function updateRegistration(
     input.allergy_medication_details,
     input.has_dietary_restriction,
     input.dietary_restriction_details,
+    input.gender ?? null,
     id
   );
   await stmt.run();

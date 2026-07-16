@@ -21,6 +21,7 @@ export const onRequestPost: PagesFunction<StaffRegistrationEnv> = async context 
     name: typeof body.name === "string" ? body.name : undefined,
     phone: typeof body.phone === "string" ? body.phone : undefined,
     cpf: typeof body.cpf === "string" ? body.cpf : undefined,
+    gender: typeof body.gender === "string" ? body.gender : undefined,
     dateOfBirth: typeof body.dateOfBirth === "string" ? body.dateOfBirth : undefined,
     termsAccepted: body.termsAccepted === true,
     emergencyContactName:

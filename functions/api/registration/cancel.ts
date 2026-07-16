@@ -5,7 +5,7 @@ import { encryptCpf } from "../../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../../_utils/cpfValidation";
 import { deleteWooviCharge } from "../../_utils/woovi";
 import { getByCpfEncrypted } from "../../_utils/registrations";
-import { createRefundRequest } from "../../_utils/refunds";
+import { createRefundRequest, normalizePixKey } from "../../_utils/refunds";
 
 interface Env {
   DB: D1Database;
@@ -28,10 +28,13 @@ export async function handleCancelRegistration(env: Env, body: unknown): Promise
   if (!body || typeof body !== "object") {
     return badRequest("invalid_body");
   }
-  const { cpf } = body as { cpf?: string };
+  const { cpf, pixKey } = body as { cpf?: string; pixKey?: string };
   if (!cpf || !isValidCpf(cpf)) {
     return badRequest("invalid_cpf");
   }
+  // Opcional de propósito: faltar a chave não pode impedir o cancelamento — a
+  // vaga precisa ser liberada. Sem ela, o estorno é combinado por fora.
+  const normalizedPixKey = normalizePixKey(pixKey);
 
   const key = env.CPF_ENCRYPTION_KEY;
   const iv = env.CPF_ENCRYPTION_IV;
@@ -84,6 +87,7 @@ export async function handleCancelRegistration(env: Env, body: unknown): Promise
       phone: registration.phone,
       email: registration.email,
       amountCents,
+      pixKey: normalizedPixKey,
     });
     refund = true;
   }

@@ -46,6 +46,7 @@ interface FormState {
   name: string;
   email: string;
   cpf: string;
+  gender: string;
   dateOfBirth: string;
   phone: string;
   emergencyContactName: string;
@@ -69,6 +70,7 @@ const EMPTY_FORM: FormState = {
   name: "",
   email: "",
   cpf: "",
+  gender: "",
   dateOfBirth: "",
   phone: "",
   emergencyContactName: "",
@@ -147,6 +149,7 @@ const StaffPageComponent: React.FC = () => {
       name: (data.name as string) ?? "",
       email: (data.email as string) ?? "",
       cpf: formatCpfBR((data.cpf as string) ?? ""),
+      gender: (data.gender as string) ?? "",
       dateOfBirth: (data.dateOfBirth as string) ?? "",
       phone: formatPhoneBR((data.phone as string) ?? ""),
       emergencyContactName: (data.emergencyContactName as string) ?? "",
@@ -268,6 +271,7 @@ const StaffPageComponent: React.FC = () => {
       if (!form.email.trim()) e.email = req;
       if (!isValidCpf(canonicalizeCpf(form.cpf))) e.cpf = t("validation.invalidCpf");
     }
+    if (!form.gender) e.gender = req;
     if (!form.dateOfBirth) e.dateOfBirth = req;
     if (!form.phone.trim()) e.phone = req;
     if (!form.emergencyContactName.trim()) e.emergencyContactName = req;
@@ -291,6 +295,7 @@ const StaffPageComponent: React.FC = () => {
     name: form.name,
     email: form.email,
     cpf: canonicalizeCpf(form.cpf),
+    gender: form.gender,
     dateOfBirth: form.dateOfBirth,
     phone: form.phone,
     emergencyContactName: form.emergencyContactName,
@@ -400,6 +405,15 @@ const StaffPageComponent: React.FC = () => {
       <FormField label={rf("emailLabel")} htmlFor="email" error={errors.email} required>
         <Input id="email" type="email" value={form.email} placeholder={rf("emailPlaceholder")}
           onChange={e => update("email", e.target.value)} autoComplete="email" disabled={isEdit} />
+      </FormField>
+
+      <FormField label={rf("genderLabel")} htmlFor="gender" error={errors.gender} required>
+        <Select id="gender" value={form.gender} onChange={e => update("gender", e.target.value)}>
+          <option value="" disabled>{rf("genderPlaceholder")}</option>
+          <option value="MASCULINO">{rf("genderMale")}</option>
+          <option value="FEMININO">{rf("genderFemale")}</option>
+          <option value="NAO_INFORMADO">{rf("genderUnspecified")}</option>
+        </Select>
       </FormField>
 
       <FormField label={rf("dateOfBirthLabel")} htmlFor="dateOfBirth" error={errors.dateOfBirth} required>

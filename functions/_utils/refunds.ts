@@ -12,8 +12,21 @@ export interface RefundRequest {
   email: string | null;
   amount_cents: number;
   refund_status: RefundStatus;
+  /** Chave PIX informada por quem cancelou. Nula nos estornos anteriores ao
+      campo existir e quando a pessoa não informou. */
+  pix_key: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Limite defensivo: chave PIX é curta (CPF, e-mail, telefone ou UUID). */
+const PIX_KEY_MAX_LENGTH = 120;
+
+export function normalizePixKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, PIX_KEY_MAX_LENGTH);
 }
 
 /**
@@ -29,13 +42,15 @@ export async function createRefundRequest(
     phone: string | null;
     email: string | null;
     amountCents: number;
+    /** Onde devolver o dinheiro. Opcional: o downgrade automático não pergunta. */
+    pixKey?: string | null;
   }
 ): Promise<void> {
   try {
     await DB.prepare(
       `INSERT OR IGNORE INTO refund_requests
-        (id, type, source_id, name, phone, email, amount_cents, refund_status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDENTE', datetime('now'), datetime('now'))`
+        (id, type, source_id, name, phone, email, amount_cents, refund_status, pix_key, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDENTE', ?, datetime('now'), datetime('now'))`
     )
       .bind(
         crypto.randomUUID(),
@@ -44,7 +59,8 @@ export async function createRefundRequest(
         input.name ?? "",
         input.phone,
         input.email,
-        Math.max(0, Math.trunc(input.amountCents || 0))
+        Math.max(0, Math.trunc(input.amountCents || 0)),
+        input.pixKey ?? null
       )
       .run();
   } catch (error) {
@@ -55,7 +71,7 @@ export async function createRefundRequest(
 
 export async function listRefundRequests(DB: D1Database): Promise<RefundRequest[]> {
   const result = await DB.prepare(
-    `SELECT id, type, source_id, name, phone, email, amount_cents, refund_status, created_at, updated_at
+    `SELECT id, type, source_id, name, phone, email, amount_cents, refund_status, pix_key, created_at, updated_at
      FROM refund_requests
      ORDER BY (refund_status = 'PENDENTE') DESC, datetime(created_at) DESC`
   ).all<RefundRequest>();

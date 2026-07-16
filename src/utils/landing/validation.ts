@@ -78,6 +78,13 @@ export function validateRegistrationForm(
       validator: (v) => isValidCpf(v),
     },
     {
+      key: "gender",
+      value: refs.gender.current?.value ?? "",
+      message: t("signup.errors.genderRequired"),
+      // Lista fechada, igual à do servidor: o select não deve chegar vazio.
+      validator: (v) => ["MASCULINO", "FEMININO", "NAO_INFORMADO"].includes(v),
+    },
+    {
       key: "dateOfBirth",
       value: getFieldValue(refs.dateOfBirth.current),
       message: t("signup.errors.dateOfBirthInvalid"),

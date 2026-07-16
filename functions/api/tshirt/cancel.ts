@@ -3,7 +3,7 @@ import { json, badRequest, notFound, serverError } from "../../_utils/responses"
 import { encryptCpf } from "../../_utils/cpfCrypto";
 import { canonicalizeCpf, isValidCpf } from "../../_utils/cpfValidation";
 import { deleteWooviCharge } from "../../_utils/woovi";
-import { createRefundRequest } from "../../_utils/refunds";
+import { createRefundRequest, normalizePixKey } from "../../_utils/refunds";
 
 interface Env {
   DB: D1Database;
@@ -32,7 +32,13 @@ export async function handleCancelTshirt(env: Env, body: unknown): Promise<Respo
   if (!body || typeof body !== "object") {
     return badRequest("invalid_body");
   }
-  const { cpf, purchaseId } = body as { cpf?: string; purchaseId?: string };
+  const { cpf, purchaseId, pixKey } = body as {
+    cpf?: string;
+    purchaseId?: string;
+    pixKey?: string;
+  };
+  // Opcional: faltar a chave não pode impedir o cancelamento.
+  const normalizedPixKey = normalizePixKey(pixKey);
   if (!cpf || !isValidCpf(cpf)) {
     return badRequest("invalid_cpf");
   }
@@ -98,6 +104,7 @@ export async function handleCancelTshirt(env: Env, body: unknown): Promise<Respo
       phone: purchase.phone,
       email: purchase.email,
       amountCents: purchase.amount_cents,
+      pixKey: normalizedPixKey,
     });
     refund = true;
   }
