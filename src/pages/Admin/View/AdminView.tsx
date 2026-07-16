@@ -73,6 +73,12 @@ interface AdminViewProps {
   onAddAdmin: () => void;
 }
 
+/** Submete no Enter sem recarregar a página. */
+const handleSubmit = (action: () => void) => (event: React.FormEvent) => {
+  event.preventDefault();
+  action();
+};
+
 const AdminView: React.FC<AdminViewProps> = ({
   status,
   email,
@@ -148,13 +154,16 @@ const AdminView: React.FC<AdminViewProps> = ({
     return (
       <AdminPage>
         <AdminContainer>
-          <AdminCard>
+          {/* <form> para o Enter submeter; sem ele o campo não tem o que
+              acionar e só o clique no botão funciona. */}
+          <AdminCard as="form" onSubmit={handleSubmit(onSubmit)}>
             <AdminTitle>{t("login.title")}</AdminTitle>
             <FieldGroup>
               <Label htmlFor="admin-email">{t("login.emailLabel")}</Label>
               <input
                 id="admin-email"
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={event => onEmailChange(event.target.value)}
                 placeholder={t("login.emailPlaceholder")}
@@ -165,6 +174,7 @@ const AdminView: React.FC<AdminViewProps> = ({
               <input
                 id="admin-password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={event => onPasswordChange(event.target.value)}
                 placeholder={t("login.passwordPlaceholder")}
@@ -172,9 +182,10 @@ const AdminView: React.FC<AdminViewProps> = ({
             </FieldGroup>
             {error && <ErrorText>{error}</ErrorText>}
             {success && <SuccessText>{success}</SuccessText>}
-            <PrimaryButton type="button" onClick={onSubmit} disabled={isSubmitting}>
+            <PrimaryButton type="submit" disabled={isSubmitting}>
               {isSubmitting ? t("login.submitting") : t("login.submit")}
             </PrimaryButton>
+            {/* type="button": senão o Enter no campo dispararia este link. */}
             <LinkButton type="button" onClick={onOpenForgot} disabled={isSubmitting}>
               {t("login.forgotPassword")}
             </LinkButton>
@@ -190,7 +201,13 @@ const AdminView: React.FC<AdminViewProps> = ({
     return (
       <AdminPage>
         <AdminContainer>
-          <AdminCard>
+          {/* Já concluído não tem campo: o submit só vale no passo do e-mail. */}
+          <AdminCard
+            as="form"
+            onSubmit={handleSubmit(() => {
+              if (!forgotDone) onForgotPassword();
+            })}
+          >
             <AdminTitle>{t("forgot.title")}</AdminTitle>
             {forgotDone ? (
               <>
@@ -216,7 +233,7 @@ const AdminView: React.FC<AdminViewProps> = ({
                   />
                 </FieldGroup>
                 {error && <ErrorText>{error}</ErrorText>}
-                <PrimaryButton type="button" onClick={onForgotPassword} disabled={isSubmitting}>
+                <PrimaryButton type="submit" disabled={isSubmitting}>
                   {isSubmitting ? t("forgot.submitting") : t("forgot.submit")}
                 </PrimaryButton>
                 <SecondaryButton type="button" onClick={onCloseForgot} disabled={isSubmitting}>
@@ -236,7 +253,7 @@ const AdminView: React.FC<AdminViewProps> = ({
     return (
       <AdminPage>
         <AdminContainer>
-          <AdminCard>
+          <AdminCard as="form" onSubmit={handleSubmit(onChangePassword)}>
             <AdminTitle>{t("changePassword.title")}</AdminTitle>
             <HelpText>{t("changePassword.help")}</HelpText>
             <FieldGroup>
@@ -262,7 +279,7 @@ const AdminView: React.FC<AdminViewProps> = ({
               />
             </FieldGroup>
             {error && <ErrorText>{error}</ErrorText>}
-            <PrimaryButton type="button" onClick={onChangePassword} disabled={isSubmitting}>
+            <PrimaryButton type="submit" disabled={isSubmitting}>
               {isSubmitting ? t("changePassword.submitting") : t("changePassword.submit")}
             </PrimaryButton>
           </AdminCard>
