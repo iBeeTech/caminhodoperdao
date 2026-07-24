@@ -1,6 +1,11 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import {
+  compareByName,
+  numberedDataRows,
+  numberedHeaderRow,
+} from "../../../_utils/reportRows";
 import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type CanceladosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
@@ -18,7 +23,6 @@ interface CanceladoRow {
   paid_at: string | null;
 }
 
-const HEADER_FILL = "F0F0F0";
 const STAFF_COLOR = "1D2C5E";
 const ALERT_COLOR = "C62828";
 
@@ -101,12 +105,7 @@ function buildCanceladosSheet(
     "JÁ TINHA PAGO?",
     "DATA DO PAGAMENTO",
   ];
-  const headerRow: CellInput[] = header.map(value => ({
-    value,
-    style: { bold: true, fill: HEADER_FILL },
-  }));
-
-  const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...rows].sort((a, b) => compareByName(a.name, b.name));
   const dataRows: CellInput[][] = sorted.map(row => [
     row.registration_number ?? "",
     {
@@ -127,5 +126,8 @@ function buildCanceladosSheet(
     formatDateTime(row.paid_at),
   ]);
 
-  return { sheetName: "Cancelados", rows: [headerRow, ...dataRows] };
+  return {
+    sheetName: "Cancelados",
+    rows: [numberedHeaderRow(header), ...numberedDataRows(dataRows)],
+  };
 }

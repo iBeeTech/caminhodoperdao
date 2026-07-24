@@ -1,5 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
+import { compareByName, ROW_NUMBER_HEADER } from "../../../_utils/reportRows";
 
 interface MonasteryRow {
   companion_name: string | null;
@@ -33,24 +34,26 @@ export const onRequestGet: PagesFunction<AdminAuthEnv> = async context => {
 };
 
 function buildMonasteryCsv(rows: MonasteryRow[]): string {
-  const header = "NOME,TELEFONE,GRUPO/FAMILIA\n";
+  const header = `${ROW_NUMBER_HEADER},NOME,TELEFONE,GRUPO/FAMILIA\n`;
   if (!rows.length) {
     return header;
   }
+  // O agrupamento por família vem antes do nome: a planilha existe para
+  // organizar os quartos, então quem viaja junto precisa ficar junto.
   const sorted = [...rows].sort((a, b) => {
     const groupA = a.companion_name && a.companion_name !== "null" ? a.companion_name : "ZZZ_Sem Grupo";
     const groupB = b.companion_name && b.companion_name !== "null" ? b.companion_name : "ZZZ_Sem Grupo";
-    if (groupA !== groupB) return groupA.localeCompare(groupB);
-    return a.name.localeCompare(b.name);
+    if (groupA !== groupB) return compareByName(groupA, groupB);
+    return compareByName(a.name, b.name);
   });
 
   const body = sorted
-    .map(row => {
+    .map((row, index) => {
       const name = `"${row.name}"`;
       const phone = `"${row.phone ?? ""}"`;
       const group =
         row.companion_name && row.companion_name !== "null" ? row.companion_name : "Sem Grupo";
-      return `${name},${phone},"${group}"`;
+      return `${index + 1},${name},${phone},"${group}"`;
     })
     .join("\n");
 

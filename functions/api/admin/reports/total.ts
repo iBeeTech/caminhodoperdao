@@ -2,6 +2,12 @@
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
 import { formatGender } from "../../../_utils/registrations";
+import {
+  compareByName,
+  footerRow,
+  numberedDataRows,
+  numberedHeaderRow,
+} from "../../../_utils/reportRows";
 import { CellInput, CellStyle, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type TotalEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
@@ -35,7 +41,6 @@ interface TotalRow {
   amount_cents: number | null;
 }
 
-const HEADER_FILL = "F0F0F0";
 const STAFF_COLOR = "1D2C5E";
 const ALERT_COLOR = "C62828";
 const PAID_COLOR = "1F7A3D";
@@ -80,7 +85,7 @@ export const onRequestGet: PagesFunction<TotalEnv> = async context => {
       p.amount_cents AS amount_cents
     FROM registrations r
     LEFT JOIN payments p ON p.correlation_id = r.payment_ref
-    ORDER BY r.status, r.name
+    ORDER BY r.name
   `;
 
   const results = await context.env.DB.prepare(query).all<TotalRow>();
@@ -189,13 +194,10 @@ function buildTotalSheet(
     "DATA DO PAGAMENTO",
     "VALOR",
   ];
-  const headerRow: CellInput[] = header.map(value => ({
-    value,
-    style: { bold: true, fill: HEADER_FILL },
-  }));
+  const sorted = [...rows].sort((a, b) => compareByName(a.name, b.name));
 
   let totalCents = 0;
-  const dataRows: CellInput[][] = rows.map(row => {
+  const dataRows: CellInput[][] = sorted.map(row => {
     const medicationDetails = (row.allergy_medication_details ?? "").trim();
     const dietaryDetails = (row.dietary_restriction_details ?? "").trim();
     const amountCents = typeof row.amount_cents === "number" ? row.amount_cents : 0;
@@ -241,16 +243,19 @@ function buildTotalSheet(
     ];
   });
 
-  const sheetRows: CellInput[][] = [headerRow, ...dataRows];
+  const sheetRows: CellInput[][] = [
+    numberedHeaderRow(header),
+    ...numberedDataRows(dataRows),
+  ];
 
-  if (rows.length) {
-    const totalRow: CellInput[] = new Array(header.length).fill("");
-    totalRow[header.length - 2] = {
+  if (sorted.length) {
+    const totalCells: CellInput[] = new Array(header.length).fill("");
+    totalCells[header.length - 2] = {
       value: "TOTAL PAGO",
       style: { bold: true, align: "right" },
     };
-    totalRow[header.length - 1] = { value: formatBRL(totalCents), style: { bold: true } };
-    sheetRows.push(totalRow);
+    totalCells[header.length - 1] = { value: formatBRL(totalCents), style: { bold: true } };
+    sheetRows.push(footerRow(totalCells));
   }
 
   return { sheetName: "Total", rows: sheetRows };

@@ -1,6 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import {
+  compareByName,
+  footerRow,
+  numberedDataRows,
+  numberedHeaderRow,
+} from "../../../_utils/reportRows";
 import { CellInput, CellValue, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type TshirtReportEnv = AdminAuthEnv & {
@@ -30,7 +36,6 @@ interface TshirtBuyerGroup {
   amount: number;
 }
 
-const HEADER_FILL = "F0F0F0";
 const TOTALS_FILL = "F0F0F0";
 
 export const onRequestGet: PagesFunction<TshirtReportEnv> = async context => {
@@ -120,12 +125,7 @@ function formatCurrencyBRL(valueInCents: number): string {
 
 function buildTshirtSheet(groups: TshirtBuyerGroup[]): SheetSpec {
   const header = ["NOME", "CPF", "P", "M", "G", "GG", "TOTAL", "VALOR"];
-  const headerRow: CellInput[] = header.map(value => ({
-    value,
-    style: { bold: true, fill: HEADER_FILL },
-  }));
-
-  const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...groups].sort((a, b) => compareByName(a.name, b.name));
 
   const totals = sorted.reduce(
     (acc, group) => {
@@ -151,23 +151,28 @@ function buildTshirtSheet(groups: TshirtBuyerGroup[]): SheetSpec {
     formatCurrencyBRL(group.amount),
   ]);
 
-  const sheetRows: CellInput[][] = [headerRow, ...dataRows];
+  const sheetRows: CellInput[][] = [
+    numberedHeaderRow(header),
+    ...numberedDataRows(dataRows),
+  ];
 
   if (sorted.length) {
     const totalsCell = (value: CellValue): CellInput => ({
       value,
       style: { bold: true, fill: TOTALS_FILL },
     });
-    sheetRows.push([
-      totalsCell("TOTAIS"),
-      totalsCell(""),
-      totalsCell(totals.p),
-      totalsCell(totals.m),
-      totalsCell(totals.g),
-      totalsCell(totals.gg),
-      totalsCell(totals.quantity),
-      totalsCell(formatCurrencyBRL(totals.amount)),
-    ]);
+    sheetRows.push(
+      footerRow([
+        totalsCell("TOTAIS"),
+        totalsCell(""),
+        totalsCell(totals.p),
+        totalsCell(totals.m),
+        totalsCell(totals.g),
+        totalsCell(totals.gg),
+        totalsCell(totals.quantity),
+        totalsCell(formatCurrencyBRL(totals.amount)),
+      ], { bold: true, fill: TOTALS_FILL })
+    );
   }
 
   return { sheetName: "Camisetas", rows: sheetRows };

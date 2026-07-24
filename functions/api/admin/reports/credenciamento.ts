@@ -1,6 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
+import {
+  compareByName,
+  numberedColumnWidths,
+  numberedDataRows,
+  numberedHeaderRow,
+} from "../../../_utils/reportRows";
 import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type Env = AdminAuthEnv & {
@@ -16,8 +22,6 @@ interface Row {
   phone: string | null;
   cpf_encrypted: string | null;
 }
-
-const HEADER_FILL = "F0F0F0";
 
 function formatDateOfBirth(value: string | null): string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value ?? "";
@@ -61,7 +65,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const result = await context.env.DB.prepare(query).all<Row>();
   const rows = (result.results ?? []).slice();
-  rows.sort((a, b) => (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" }));
+  rows.sort((a, b) => compareByName(a.name, b.name));
 
   const dataRows: CellInput[][] = [];
   for (const row of rows) {
@@ -87,11 +91,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
   }
 
-  const headerRow: CellInput[] = headers.map(value => ({
-    value,
-    style: { bold: true, fill: HEADER_FILL },
-  }));
-
   // Coluna de assinatura em branco fica mais larga para preenchimento à mão.
   const widths = headers.map(h => {
     if (h === "ASSINATURA") return 30;
@@ -101,8 +100,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   });
   const sheet: SheetSpec = {
     sheetName,
-    rows: [headerRow, ...dataRows],
-    columnWidths: widths,
+    rows: [numberedHeaderRow(headers), ...numberedDataRows(dataRows)],
+    columnWidths: numberedColumnWidths(widths),
   };
 
   return xlsxResponse(sheet, filename);

@@ -2,6 +2,12 @@
 import { AdminAuthEnv, authorizeAdminRequest } from "../../../_utils/adminAuth";
 import { decryptCpf } from "../../../_utils/cpfCrypto";
 import { formatGender } from "../../../_utils/registrations";
+import {
+  compareByName,
+  footerRow,
+  numberedDataRows,
+  numberedHeaderRow,
+} from "../../../_utils/reportRows";
 import { CellInput, SheetSpec, xlsxResponse } from "../../../_utils/xlsx";
 
 type InscritosEnv = AdminAuthEnv & { CPF_ENCRYPTION_KEY?: string; CPF_ENCRYPTION_IV?: string };
@@ -28,7 +34,6 @@ interface InscritoRow {
 }
 
 // Cores reaproveitadas dos relatórios (hex RRGGBB).
-const HEADER_FILL = "F0F0F0";
 const STAFF_COLOR = "1D2C5E";
 const ALERT_COLOR = "C62828";
 
@@ -133,10 +138,6 @@ function formatDateOfBirth(value: string | null): string {
   return `${d}/${m}/${y}`;
 }
 
-function headerRow(cells: string[]): CellInput[] {
-  return cells.map(value => ({ value, style: { bold: true, fill: HEADER_FILL } }));
-}
-
 function buildInscritosSheet(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
 ): SheetSpec {
@@ -161,7 +162,7 @@ function buildInscritosSheet(
     "VALOR",
   ];
 
-  const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...rows].sort((a, b) => compareByName(a.name, b.name));
   let totalCents = 0;
   const dataRows: CellInput[][] = sorted.map(row => {
     const medicationDetails = (row.allergy_medication_details ?? "").trim();
@@ -200,26 +201,30 @@ function buildInscritosSheet(
     ];
   });
 
-  const totalRow: CellInput[] = new Array(header.length).fill("");
-  totalRow[header.length - 2] = {
+  const totalCells: CellInput[] = new Array(header.length).fill("");
+  totalCells[header.length - 2] = {
     value: "TOTAL",
     style: { bold: true, align: "right" },
   };
-  totalRow[header.length - 1] = {
+  totalCells[header.length - 1] = {
     value: formatBRL(totalCents),
     style: { bold: true },
   };
 
   return {
     sheetName: "Inscritos",
-    rows: [headerRow(header), ...dataRows, totalRow],
+    rows: [
+      numberedHeaderRow(header),
+      ...numberedDataRows(dataRows),
+      footerRow(totalCells),
+    ],
   };
 }
 
 function buildMonasterySheet(
   rows: Array<InscritoRow & { cpfDecrypted: string }>
 ): SheetSpec {
-  const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...rows].sort((a, b) => compareByName(a.name, b.name));
   const dataRows: CellInput[][] = sorted.map(row => [
     row.name || "",
     row.cpfDecrypted || "",
@@ -227,6 +232,6 @@ function buildMonasterySheet(
 
   return {
     sheetName: "Mosteiro",
-    rows: [headerRow(["NOME", "CPF"]), ...dataRows],
+    rows: [numberedHeaderRow(["NOME", "CPF"]), ...numberedDataRows(dataRows)],
   };
 }
