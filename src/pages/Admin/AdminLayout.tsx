@@ -36,7 +36,6 @@ const NAV: readonly NavEntry[] = [
       { to: "/admin/inscritos", label: "Inscritos" },
       { to: "/admin/lista-espera", label: "Lista de espera" },
       { to: "/admin/estorno", label: "Estornos" },
-      { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
       { to: "/admin", label: "Planilhas", exact: true },
     ],
   },
@@ -54,7 +53,7 @@ const NAV: readonly NavEntry[] = [
     items: [
       { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/convites", label: "Convites" },
-      { to: "/admin/passar-cpf", label: "Passar CPF" },
+      { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
     ],
   },
 ];

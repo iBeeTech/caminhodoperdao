@@ -1,29 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
+import Credenciamento from "./Credenciamento";
+import { byName, formatDob, formatName, hasText, inc, norm } from "./format";
+import { Registration, Tshirt } from "./types";
 
 const STORAGE_KEY = "admin_jwt";
 const PAGE_SIZE = 50;
 
-type Status = "PENDING" | "PAID" | "CANCELED";
-interface Registration {
-  name: string;
-  phone: string | null;
-  email: string | null;
-  status: Status;
-  sleep_at_monastery: number;
-  pernoite_granted: number;
-  is_staff: number;
-  date_of_birth: string | null;
-  allergy_medication_details: string | null;
-  dietary_restriction_details: string | null;
-  city: string | null;
-}
-interface Tshirt {
-  name: string;
-  email: string | null;
-  status: Status;
-}
+type Tab = "inscricoes" | "camisetas" | "credenciamento";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendente",
@@ -129,40 +114,8 @@ const tag = (color: string, bg: string, border: string): React.CSSProperties => 
   fontSize: "0.78rem", border: `1px solid ${border}`, color, background: bg,
 });
 
-// Remove acentos e baixa a caixa para a busca ignorar diacríticos
-// (ex.: "julio" encontra "Júlio", "jose" encontra "José").
-const norm = (v: string | null | undefined) =>
-  (v ?? "")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-const inc = (v: string | null | undefined, q: string) =>
-  norm(v).includes(norm(q).trim());
-
-const hasText = (v: string | null | undefined) => (v ?? "").trim().length > 0;
 const matchYesNo = (v: string | null | undefined, f: string) =>
   !f || (f === "1" ? hasText(v) : !hasText(v));
-
-// Ordenação que ignora acento e caixa (ex.: "Élida" entra junto do E).
-const byName = (a: { name: string }, b: { name: string }) =>
-  (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" });
-
-const LOWER = new Set(["de", "da", "do", "das", "dos", "e", "di", "du", "del", "della", "van", "von", "y"]);
-const formatName = (raw: string | null | undefined): string => {
-  const v = (raw ?? "").trim();
-  if (!v) return "—";
-  return v
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w, i) => (i > 0 && LOWER.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(" ");
-};
-
-const formatDob = (dob: string | null): string => {
-  if (!dob) return "—";
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : dob;
-};
 
 const InscritosPage: React.FC = () => {
   const token = React.useMemo(() => localStorage.getItem(STORAGE_KEY), []);
@@ -171,12 +124,15 @@ const InscritosPage: React.FC = () => {
   const superAdmin = React.useMemo(() => isSuperAdmin(), []);
   const [isReconciling, setIsReconciling] = React.useState(false);
   const [reconcileMsg, setReconcileMsg] = React.useState<string | null>(null);
-  const [tab, setTab] = React.useState<"inscricoes" | "camisetas">("inscricoes");
+  const [tab, setTab] = React.useState<Tab>("inscricoes");
   const [regs, setRegs] = React.useState<Registration[]>([]);
   const [tshirts, setTshirts] = React.useState<Tshirt[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [authError, setAuthError] = React.useState(false);
   const [page, setPage] = React.useState(1);
+  // Quando os dados vieram do servidor. O credenciamento mostra essa idade para
+  // ninguém dar baixa olhando uma lista velha.
+  const [lastLoadedAt, setLastLoadedAt] = React.useState<number | null>(null);
 
   // filtros inscrições
   const [fNome, setFNome] = React.useState("");
@@ -211,6 +167,7 @@ const InscritosPage: React.FC = () => {
         const d2 = await r2.json();
         setRegs(d1.registrations ?? []);
         setTshirts(d2.tshirts ?? []);
+        setLastLoadedAt(Date.now());
       })
       .catch(() => setAuthError(true))
       .finally(() => setLoading(false));
@@ -422,6 +379,10 @@ const InscritosPage: React.FC = () => {
         </p>
       )}
 
+      {/* No credenciamento a tela é de ação, no celular: os painéis de números
+          empurrariam a busca para fora da primeira dobra. */}
+      {tab !== "credenciamento" && (
+      <>
       <div style={s.hero}>
         <span style={s.heroNum}>{dormindoNoMosteiro}</span>
         <span>
@@ -451,6 +412,8 @@ const InscritosPage: React.FC = () => {
           </div>
         ))}
       </div>
+      </>
+      )}
 
       <div style={s.tabs}>
         <button style={{ ...s.tab, ...(tab === "inscricoes" ? s.tabActive : {}) }} onClick={() => setTab("inscricoes")}>
@@ -459,9 +422,20 @@ const InscritosPage: React.FC = () => {
         <button style={{ ...s.tab, ...(tab === "camisetas" ? s.tabActive : {}) }} onClick={() => setTab("camisetas")}>
           Camisetas
         </button>
+        <button style={{ ...s.tab, ...(tab === "credenciamento" ? s.tabActive : {}) }} onClick={() => setTab("credenciamento")}>
+          ✓ Credenciamento
+        </button>
       </div>
 
-      {loading ? (
+      {tab === "credenciamento" ? (
+        <Credenciamento
+          regs={regs}
+          loading={loading}
+          lastLoadedAt={lastLoadedAt}
+          onReload={load}
+          token={token}
+        />
+      ) : loading ? (
         <p>Carregando…</p>
       ) : tab === "inscricoes" ? (
         <>

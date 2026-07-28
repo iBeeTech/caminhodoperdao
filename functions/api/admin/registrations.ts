@@ -10,6 +10,7 @@ const CORS = {
 };
 
 interface Row {
+  id: string;
   name: string;
   phone: string | null;
   email: string | null;
@@ -21,18 +22,25 @@ interface Row {
   allergy_medication_details: string | null;
   dietary_restriction_details: string | null;
   city: string | null;
+  checked_in_at: string | null;
+  checked_in_by: string | null;
 }
 
 // GET /api/admin/registrations -> TODAS as inscrições (inclui staff) para a tela
 // /admin/inscritos. O total bate com a tabela registrations; os callouts de pagos
 // usam is_staff para contar só peregrinos.
+//
+// Devolve também id e a baixa do credenciamento (checked_in_at/by): é desta
+// mesma lista que a aba Credenciamento vive, e o id é o que identifica a pessoa
+// no POST /api/admin/checkin.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authorizeAdminRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
   const result = await context.env.DB.prepare(
-    `SELECT name, phone, email, status, sleep_at_monastery, pernoite_granted, is_staff,
-            date_of_birth, allergy_medication_details, dietary_restriction_details, city
+    `SELECT id, name, phone, email, status, sleep_at_monastery, pernoite_granted, is_staff,
+            date_of_birth, allergy_medication_details, dietary_restriction_details, city,
+            checked_in_at, checked_in_by
      FROM registrations
      ORDER BY name COLLATE NOCASE`
   ).all<Row>();

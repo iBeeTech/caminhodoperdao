@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS registrations (
   -- Código de convite que liberou esta inscrição extra (override do teto). Quando
   -- preenchido, a inscrição não é cancelada pela varredura de lotação (ver migration 016).
   invite_code TEXT,
+  -- Credenciamento presencial no dia do evento (ver migration 023). NULL = ainda
+  -- não credenciado; checked_in_by é o e-mail do admin que deu a baixa.
+  checked_in_at TEXT,
+  checked_in_by TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   paid_at TEXT
 );
@@ -44,6 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_registrations_status_sleep ON registrations(statu
 CREATE INDEX IF NOT EXISTS idx_registrations_is_staff ON registrations(is_staff);
 CREATE INDEX IF NOT EXISTS idx_registrations_pernoite_granted ON registrations(pernoite_granted);
 CREATE INDEX IF NOT EXISTS idx_registrations_invite_code ON registrations(invite_code);
+CREATE INDEX IF NOT EXISTS idx_registrations_checked_in_at ON registrations(checked_in_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_registrations_cpf_encrypted ON registrations(cpf_encrypted) WHERE cpf_encrypted IS NOT NULL;
 
 -- D1 schema for t-shirt purchases (Caminhada do Perdao)
