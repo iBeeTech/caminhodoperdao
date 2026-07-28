@@ -30,9 +30,12 @@ const s: Record<string, React.CSSProperties> = {
     padding: "0.75rem 0", marginBottom: "0.75rem", borderBottom: "1px solid #e5e7eb",
     display: "flex", flexDirection: "column", gap: 8,
   },
+  // Azul, e não verde: o verde é a cor de "credenciar". Duas ações diferentes
+  // com a mesma cor viram o mesmo botão aos olhos de quem está com pressa.
   refreshBtn: {
-    width: "100%", minHeight: 56, borderRadius: 12, border: "none", background: "#1f7a3d",
+    width: "100%", minHeight: 56, borderRadius: 12, border: "none", background: "#1d4ed8",
     color: "#fff", fontWeight: 800, fontSize: "1.05rem", cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(29,78,216,0.35)",
   },
   freshLine: { fontSize: "0.82rem", fontWeight: 700, textAlign: "center" },
   hint: {
@@ -81,6 +84,7 @@ const s: Record<string, React.CSSProperties> = {
   actionBtn: {
     width: "100%", minHeight: 52, borderRadius: 10, border: "none", background: "#15803d",
     color: "#fff", fontWeight: 800, fontSize: "1rem", cursor: "pointer", marginTop: "auto",
+    boxShadow: "0 2px 6px rgba(21,128,61,0.35)",
   },
   doneBox: {
     marginTop: "auto", borderRadius: 10, background: "#dcfce7", border: "1px solid #86efac",

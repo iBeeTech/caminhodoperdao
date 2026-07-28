@@ -52,11 +52,16 @@ const s: Record<string, React.CSSProperties> = {
   totalNum: { fontSize: "1.6rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 },
   totalLabel: { color: "#166534", fontWeight: 600, fontSize: "0.85rem" },
   tabs: { display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" },
+  // Abas são navegação, não ação: ficam em contorno para os botões sólidos
+  // (verde = credenciar, azul = atualizar) serem os únicos blocos de cor cheia.
   tab: {
-    flex: "1 1 140px", padding: "0.7rem 1rem", borderRadius: 10, border: "1px solid #d1d5db",
-    background: "#fff", color: "#374151", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem",
+    flex: "1 1 140px", padding: "0.7rem 1rem", borderRadius: 10, border: "2px solid #e5e7eb",
+    background: "#fff", color: "#6b7280", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem",
   },
-  tabActive: { background: "#1f7a3d", color: "#fff", borderColor: "#1f7a3d" },
+  tabActive: {
+    background: "#eaf5ee", color: "#166534", borderColor: "#1f7a3d",
+    boxShadow: "inset 0 -3px 0 #1f7a3d",
+  },
   filterBar: { display: "flex", flexDirection: "column", gap: 10, marginBottom: "1rem" },
   search: {
     width: "100%", boxSizing: "border-box", padding: "0.75rem 0.9rem", borderRadius: 10,
@@ -348,30 +353,37 @@ const InscritosPage: React.FC = () => {
   return (
     <div style={s.page}>
 
+      {/* No credenciamento o topo só tem o título: "Atualizar informações" seria
+          um segundo botão fazendo o mesmo que o "Atualizar lista" da aba, e a
+          reconciliação PIX é operação pesada demais para o meio da portaria. */}
       <div style={s.topbar}>
         <h1 style={s.title}>Inscritos</h1>
-        {superAdmin && (
-          <button
-            type="button"
-            style={{
-              padding: "0.55rem 1.1rem", borderRadius: 8, border: "none", background: "#4338ca",
-              color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem",
-              marginLeft: "auto", opacity: isReconciling ? 0.7 : 1,
-            }}
-            onClick={handleReconcilePix}
-            disabled={isReconciling}
-          >
-            {isReconciling ? "Atualizando PIX…" : "Atualizar status PIX (Woovi)"}
-          </button>
+        {tab !== "credenciamento" && (
+          <>
+            {superAdmin && (
+              <button
+                type="button"
+                style={{
+                  padding: "0.55rem 1.1rem", borderRadius: 8, border: "none", background: "#4338ca",
+                  color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem",
+                  marginLeft: "auto", opacity: isReconciling ? 0.7 : 1,
+                }}
+                onClick={handleReconcilePix}
+                disabled={isReconciling}
+              >
+                {isReconciling ? "Atualizando PIX…" : "Atualizar status PIX (Woovi)"}
+              </button>
+            )}
+            <button
+              type="button"
+              style={{ ...s.refresh, marginLeft: superAdmin ? 0 : "auto" }}
+              onClick={load}
+              disabled={loading}
+            >
+              {loading ? "Atualizando…" : "Atualizar informações"}
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          style={{ ...s.refresh, marginLeft: superAdmin ? 0 : "auto" }}
-          onClick={load}
-          disabled={loading}
-        >
-          {loading ? "Atualizando…" : "Atualizar informações"}
-        </button>
       </div>
       {reconcileMsg && (
         <p style={{ margin: "0 0 1rem", color: "#4338ca", fontWeight: 600, fontSize: "0.9rem" }}>
