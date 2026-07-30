@@ -27,8 +27,29 @@ const TYPE_LABEL: Record<RefundRequest["type"], string> = {
   downgrade: "Pernoite → Geral",
 };
 
+// O que a pessoa cancelou, na frase da cobrança do estorno. Sem isso a mensagem
+// diria "cancelou sua inscrição" para quem só cancelou a camiseta ou trocou o pernoite.
+const TYPE_PHRASE: Record<RefundRequest["type"], string> = {
+  inscricao: "Você cancelou sua inscrição.",
+  camiseta: "Você cancelou seu pedido de camiseta.",
+  downgrade: "Você trocou a inscrição com pernoite no mosteiro pela geral.",
+};
+
 const formatBRL = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// wa.me exige o número com código do país. Alguns telefones já vieram gravados
+// com o 55 na frente (13 dígitos), então só prefixamos quando falta.
+const buildWhatsappUrl = (r: RefundRequest): string | null => {
+  const digits = (r.phone ?? "").replace(/\D/g, "");
+  if (!digits) return null;
+  const national = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
+  const firstName = r.name.trim().split(/\s+/)[0] || r.name;
+  const message =
+    `Olá ${firstName}, sou o Cássio do Caminho do Perdão! ` +
+    `${TYPE_PHRASE[r.type]} Já recebeu o estorno?`;
+  return `https://wa.me/55${national}?text=${encodeURIComponent(message)}`;
+};
 
 // Cores por status do estorno: Pendente (amarelo), Feito (verde), Cancelado (vermelho).
 const STATUS_STYLE: Record<RefundStatus, React.CSSProperties> = {
@@ -45,6 +66,11 @@ const styles: Record<string, React.CSSProperties> = {
   th: { textAlign: "left", borderBottom: "2px solid #ddd", padding: "0.5rem", whiteSpace: "nowrap" },
   td: { borderBottom: "1px solid #eee", padding: "0.5rem", verticalAlign: "middle" },
   select: { padding: "0.35rem 0.5rem", borderRadius: 6, border: "1px solid #bbb" },
+  waBtn: {
+    display: "inline-flex", alignItems: "center", gap: "0.35rem", padding: "0.4rem 0.8rem",
+    borderRadius: 8, border: "none", background: "#25d366", color: "#fff", fontWeight: 600,
+    fontSize: "0.85rem", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap",
+  },
   saveBtn: {
     marginTop: "1.25rem", padding: "0.6rem 1.4rem", borderRadius: 8, border: "none",
     background: "#1f7a3d", color: "#fff", fontWeight: 600, cursor: "pointer",
@@ -139,7 +165,8 @@ const EstornoPage: React.FC = () => {
       <h1 style={styles.title}>Estornos — cancelamentos pelo site</h1>
       <p style={styles.subtitle}>
         Pessoas que cancelaram inscrição/camiseta paga ou trocaram pernoite→geral. Defina o status do
-        estorno e clique em Salvar. (Quem deixou o PIX expirar não aparece aqui.)
+        estorno e clique em Salvar. Em "Cobrar no WhatsApp" a mensagem perguntando se o estorno já
+        chegou abre pronta. (Quem deixou o PIX expirar não aparece aqui.)
       </p>
 
       {loading ? (
@@ -158,10 +185,13 @@ const EstornoPage: React.FC = () => {
                 <th style={styles.th}>Pix</th>
                 <th style={styles.th}>Valor</th>
                 <th style={styles.th}>Estorno</th>
+                <th style={styles.th}>WhatsApp</th>
               </tr>
             </thead>
             <tbody>
-              {refunds.map((r) => (
+              {refunds.map((r) => {
+                const whatsappUrl = buildWhatsappUrl(r);
+                return (
                 <tr key={r.id}>
                   <td style={styles.td}>{TYPE_LABEL[r.type]}</td>
                   <td style={styles.td}>{r.name || "—"}</td>
@@ -183,8 +213,23 @@ const EstornoPage: React.FC = () => {
                       <option value="CANCELADO">Cancelado</option>
                     </select>
                   </td>
+                  <td style={{ ...styles.td, whiteSpace: "nowrap" }}>
+                    {whatsappUrl ? (
+                      <a
+                        style={styles.waBtn}
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Cobrar no WhatsApp
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
 
