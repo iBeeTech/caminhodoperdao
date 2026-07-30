@@ -30,45 +30,62 @@ const s: Record<string, React.CSSProperties> = {
   // quebra é a caixa dos chips, que empilha um sobre o outro à direita do botão
   // quando a tela é estreita. Assim eles nunca caem para baixo do botão.
   actionsRow: {
-    display: "flex", alignItems: "center", gap: 10, flexWrap: "nowrap", margin: "10px 0",
+    display: "flex", alignItems: "center", gap: 8, flexWrap: "nowrap", margin: "10px 0",
+    minWidth: 0,
   },
-  chipsBox: { display: "flex", gap: 8, flexWrap: "wrap", minWidth: 0 },
+  // flex 1 1 auto + minWidth 0: a caixa encolhe até o espaço que sobrou do botão,
+  // em vez de empurrar o conteúdo para fora da tela.
+  chipsBox: { display: "flex", gap: 6, flexWrap: "wrap", flex: "1 1 auto", minWidth: 0 },
   // Azul, e não verde: o verde é a cor de "credenciar". Duas ações diferentes
   // com a mesma cor viram o mesmo botão aos olhos de quem está com pressa.
   // Medidas apertadas de propósito: num celular de 360px o botão e os dois chips
   // precisam caber sem estourar a largura da página.
   refreshBtn: {
-    flexShrink: 0, minHeight: 52, padding: "0 0.9rem", borderRadius: 12, border: "none",
-    background: "#1d4ed8", color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer",
+    flexShrink: 0, minHeight: 52, padding: "0 0.8rem", borderRadius: 12, border: "none",
+    background: "#1d4ed8", color: "#fff", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer",
     whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(29,78,216,0.35)",
   },
+  // Sem whiteSpace nowrap: se ainda assim faltar espaço, o rótulo quebra dentro
+  // do chip. Feio é aceitável; barra de rolagem horizontal não é.
   chip: {
-    display: "inline-flex", alignItems: "baseline", gap: 5, padding: "0.4rem 0.7rem",
-    borderRadius: 999, border: "1px solid", fontWeight: 700, fontSize: "0.8rem",
-    whiteSpace: "nowrap",
+    display: "inline-flex", alignItems: "baseline", gap: 4, padding: "0.3rem 0.55rem",
+    borderRadius: 999, border: "1px solid", fontWeight: 700, fontSize: "0.7rem",
+    minWidth: 0,
   },
-  chipNum: { fontSize: "1.05rem", fontWeight: 900 },
+  chipNum: { fontSize: "0.9rem", fontWeight: 900 },
   freshLine: { fontSize: "0.82rem", fontWeight: 700, margin: "0 0 0.75rem" },
   feedback: {
     margin: "0 0 0.75rem", padding: "0.6rem 0.8rem", borderRadius: 10, border: "1px solid",
     fontWeight: 700, fontSize: "0.9rem",
   },
   count: { color: "#6b7280", fontSize: "0.85rem", margin: "0 0 0.6rem" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 },
+  // min(300px, 100%): em tela mais estreita que 300px a coluna acompanha a tela
+  // em vez de forçar 300px e criar rolagem lateral.
+  grid: {
+    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))",
+    gap: 12,
+  },
   card: {
     border: "1px solid #e5e7eb", borderRadius: 12, padding: "0.9rem 1rem", background: "#fff",
     display: "flex", flexDirection: "column", gap: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
   },
   cardDone: { borderColor: "#86efac", background: "#f6fef9" },
-  cardName: { fontSize: "1.1rem", fontWeight: 800, color: "#111827", lineHeight: 1.25 },
-  cardRow: { fontSize: "0.86rem", color: "#374151" },
+  // overflowWrap anywhere: remédio ou restrição vem digitado pela pessoa e às
+  // vezes é uma palavra só, enorme. Sem isso ela estica o cartão e a página.
+  cardName: {
+    fontSize: "1.1rem", fontWeight: 800, color: "#111827", lineHeight: 1.25,
+    overflowWrap: "anywhere",
+  },
+  cardRow: { fontSize: "0.86rem", color: "#374151", overflowWrap: "anywhere" },
   alertMed: {
     fontSize: "0.86rem", fontWeight: 700, color: "#b91c1c", background: "#fef2f2",
     border: "1px solid #fecaca", borderRadius: 8, padding: "0.45rem 0.6rem",
+    overflowWrap: "anywhere",
   },
   alertRestr: {
     fontSize: "0.86rem", fontWeight: 700, color: "#92400e", background: "#fffbeb",
     border: "1px solid #fde68a", borderRadius: 8, padding: "0.45rem 0.6rem",
+    overflowWrap: "anywhere",
   },
   actionBtn: {
     width: "100%", minHeight: 52, borderRadius: 10, border: "none", background: "#15803d",
