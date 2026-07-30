@@ -6,6 +6,7 @@ export { default as Admin } from "./Admin/Controller";
 export { default as AdminEstorno } from "./Admin/Estorno";
 export { default as AdminTutoriais } from "./Admin/Tutoriais";
 export { default as AdminInscritos } from "./Admin/Inscritos";
+export { default as AdminCredenciamento } from "./Admin/Credenciamento";
 export { default as AdminListaEspera } from "./Admin/ListaEspera";
 export { default as AdminPernoiteExtra } from "./Admin/PernoiteExtra";
 export { default as AdminConvites } from "./Admin/Convites";

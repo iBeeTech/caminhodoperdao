@@ -29,13 +29,14 @@ interface NavEntry {
   superAdminOnly?: boolean;
 }
 
-const NAV: readonly NavEntry[] = [
+const GROUPS: readonly NavEntry[] = [
   {
     label: "Inscrições",
     items: [
+      { to: "/admin/credenciamento", label: "Credenciamento" },
+      { to: "/admin/estorno", label: "Estornos" },
       { to: "/admin/inscritos", label: "Inscritos" },
       { to: "/admin/lista-espera", label: "Lista de espera" },
-      { to: "/admin/estorno", label: "Estornos" },
       { to: "/admin", label: "Planilhas", exact: true },
     ],
   },
@@ -51,12 +52,22 @@ const NAV: readonly NavEntry[] = [
     label: "Sistema",
     superAdminOnly: true,
     items: [
-      { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/convites", label: "Convites" },
+      { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
     ],
   },
 ];
+
+/** Ignora acento e caixa: "Órgão" cai junto do O, não depois de Z. */
+const byLabel = (a: NavItem, b: NavItem): number =>
+  a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" });
+
+// A ordem alfabética é garantida aqui, e não na mão em GROUPS: um item novo
+// entra no lugar certo mesmo que quem o adicionou o cole no fim da lista.
+const NAV: readonly NavEntry[] = GROUPS.map(entry =>
+  entry.items ? { ...entry, items: [...entry.items].sort(byLabel) } : entry
+);
 
 const Shell = styled.div`
   min-height: 100vh;

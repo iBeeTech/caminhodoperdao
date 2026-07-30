@@ -1,6 +1,6 @@
-// Tipos compartilhados pela tela /admin/inscritos e pela aba de Credenciamento.
-// Vivem aqui, e não no index, para o componente de credenciamento não importar
-// de quem o importa (ciclo).
+// Tipos compartilhados por /admin/inscritos e /admin/credenciamento. Vivem em
+// arquivo próprio, e não no index da tela de inscritos, para o credenciamento
+// não importar de quem o importa (ciclo).
 
 export type Status = "PENDING" | "PAID" | "CANCELED";
 

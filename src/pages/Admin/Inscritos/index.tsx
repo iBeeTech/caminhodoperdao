@@ -1,14 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
-import Credenciamento from "./Credenciamento";
 import { byName, formatDob, formatName, hasText, inc, norm } from "./format";
 import { Registration, Tshirt } from "./types";
 
 const STORAGE_KEY = "admin_jwt";
 const PAGE_SIZE = 50;
 
-type Tab = "inscricoes" | "camisetas" | "credenciamento";
+type Tab = "inscricoes" | "camisetas";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendente",
@@ -52,8 +51,8 @@ const s: Record<string, React.CSSProperties> = {
   totalNum: { fontSize: "1.6rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 },
   totalLabel: { color: "#166534", fontWeight: 600, fontSize: "0.85rem" },
   tabs: { display: "flex", gap: 8, marginBottom: "1rem", flexWrap: "wrap" },
-  // Abas são navegação, não ação: ficam em contorno para os botões sólidos
-  // (verde = credenciar, azul = atualizar) serem os únicos blocos de cor cheia.
+  // Abas são navegação, não ação: ficam em contorno para os botões sólidos do
+  // topo serem os únicos blocos de cor cheia.
   tab: {
     flex: "1 1 140px", padding: "0.7rem 1rem", borderRadius: 10, border: "2px solid #e5e7eb",
     background: "#fff", color: "#6b7280", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem",
@@ -135,9 +134,6 @@ const InscritosPage: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [authError, setAuthError] = React.useState(false);
   const [page, setPage] = React.useState(1);
-  // Quando os dados vieram do servidor. O credenciamento mostra essa idade para
-  // ninguém dar baixa olhando uma lista velha.
-  const [lastLoadedAt, setLastLoadedAt] = React.useState<number | null>(null);
 
   // filtros inscrições
   const [fNome, setFNome] = React.useState("");
@@ -172,7 +168,6 @@ const InscritosPage: React.FC = () => {
         const d2 = await r2.json();
         setRegs(d1.registrations ?? []);
         setTshirts(d2.tshirts ?? []);
-        setLastLoadedAt(Date.now());
       })
       .catch(() => setAuthError(true))
       .finally(() => setLoading(false));
@@ -353,37 +348,30 @@ const InscritosPage: React.FC = () => {
   return (
     <div style={s.page}>
 
-      {/* No credenciamento o topo só tem o título: "Atualizar informações" seria
-          um segundo botão fazendo o mesmo que o "Atualizar lista" da aba, e a
-          reconciliação PIX é operação pesada demais para o meio da portaria. */}
       <div style={s.topbar}>
         <h1 style={s.title}>Inscritos</h1>
-        {tab !== "credenciamento" && (
-          <>
-            {superAdmin && (
-              <button
-                type="button"
-                style={{
-                  padding: "0.55rem 1.1rem", borderRadius: 8, border: "none", background: "#4338ca",
-                  color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem",
-                  marginLeft: "auto", opacity: isReconciling ? 0.7 : 1,
-                }}
-                onClick={handleReconcilePix}
-                disabled={isReconciling}
-              >
-                {isReconciling ? "Atualizando PIX…" : "Atualizar status PIX (Woovi)"}
-              </button>
-            )}
-            <button
-              type="button"
-              style={{ ...s.refresh, marginLeft: superAdmin ? 0 : "auto" }}
-              onClick={load}
-              disabled={loading}
-            >
-              {loading ? "Atualizando…" : "Atualizar informações"}
-            </button>
-          </>
+        {superAdmin && (
+          <button
+            type="button"
+            style={{
+              padding: "0.55rem 1.1rem", borderRadius: 8, border: "none", background: "#4338ca",
+              color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem",
+              marginLeft: "auto", opacity: isReconciling ? 0.7 : 1,
+            }}
+            onClick={handleReconcilePix}
+            disabled={isReconciling}
+          >
+            {isReconciling ? "Atualizando PIX…" : "Atualizar status PIX (Woovi)"}
+          </button>
         )}
+        <button
+          type="button"
+          style={{ ...s.refresh, marginLeft: superAdmin ? 0 : "auto" }}
+          onClick={load}
+          disabled={loading}
+        >
+          {loading ? "Atualizando…" : "Atualizar informações"}
+        </button>
       </div>
       {reconcileMsg && (
         <p style={{ margin: "0 0 1rem", color: "#4338ca", fontWeight: 600, fontSize: "0.9rem" }}>
@@ -391,10 +379,6 @@ const InscritosPage: React.FC = () => {
         </p>
       )}
 
-      {/* No credenciamento a tela é de ação, no celular: os painéis de números
-          empurrariam a busca para fora da primeira dobra. */}
-      {tab !== "credenciamento" && (
-      <>
       <div style={s.hero}>
         <span style={s.heroNum}>{dormindoNoMosteiro}</span>
         <span>
@@ -424,8 +408,6 @@ const InscritosPage: React.FC = () => {
           </div>
         ))}
       </div>
-      </>
-      )}
 
       <div style={s.tabs}>
         <button style={{ ...s.tab, ...(tab === "inscricoes" ? s.tabActive : {}) }} onClick={() => setTab("inscricoes")}>
@@ -434,20 +416,9 @@ const InscritosPage: React.FC = () => {
         <button style={{ ...s.tab, ...(tab === "camisetas" ? s.tabActive : {}) }} onClick={() => setTab("camisetas")}>
           Camisetas
         </button>
-        <button style={{ ...s.tab, ...(tab === "credenciamento" ? s.tabActive : {}) }} onClick={() => setTab("credenciamento")}>
-          ✓ Credenciamento
-        </button>
       </div>
 
-      {tab === "credenciamento" ? (
-        <Credenciamento
-          regs={regs}
-          loading={loading}
-          lastLoadedAt={lastLoadedAt}
-          onReload={load}
-          token={token}
-        />
-      ) : loading ? (
+      {loading ? (
         <p>Carregando…</p>
       ) : tab === "inscricoes" ? (
         <>

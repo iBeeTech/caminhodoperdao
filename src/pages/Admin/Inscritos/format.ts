@@ -1,4 +1,4 @@
-// Formatação e busca compartilhadas pela tela de inscritos e pelo credenciamento.
+// Formatação e busca compartilhadas por /admin/inscritos e /admin/credenciamento.
 
 /**
  * Remove acentos e baixa a caixa para a busca ignorar diacríticos
