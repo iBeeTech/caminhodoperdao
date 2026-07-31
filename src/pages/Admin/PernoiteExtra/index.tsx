@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 
 const STORAGE_KEY = "admin_jwt";
 
@@ -145,9 +145,7 @@ const PernoiteExtraPage: React.FC = () => {
     return (
       <div style={s.page}>
         <h1 style={s.title}>Pernoite extra</h1>
-        <p style={s.subtitle}>
-          Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice />
       </div>
     );
   }

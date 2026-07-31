@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
@@ -154,9 +155,7 @@ const PassarCpfPage: React.FC = () => {
     return (
       <div style={styles.page}>
         <h1 style={styles.title}>Passar CPF</h1>
-        <p style={styles.subtitle}>
-          Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice />
       </div>
     );
   }

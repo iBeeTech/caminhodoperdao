@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 import { getAdminToken } from "../../../utils/auth/adminSession";
 
 interface ResetRequest {
@@ -149,10 +149,7 @@ const PedidosSenhaPage: React.FC = () => {
     return (
       <div style={s.page}>
         <h1 style={s.title}>Pedidos de senha</h1>
-        <p style={s.subtitle}>
-          Você precisa estar logado como administrador geral.{" "}
-          <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice message="Você precisa estar logado como administrador geral." />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 import { byName, formatDob, formatName, hasText, inc, norm } from "./format";
 import { Registration, Tshirt } from "./types";
@@ -338,9 +338,7 @@ const InscritosPage: React.FC = () => {
     return (
       <div style={s.page}>
         <h1 style={s.title}>Inscritos</h1>
-        <p style={{ color: "#555" }}>
-          Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice />
       </div>
     );
   }

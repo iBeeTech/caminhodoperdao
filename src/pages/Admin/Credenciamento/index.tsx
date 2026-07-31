@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 import { byName, formatCheckinTime, formatDob, formatName, inc, shortEmail } from "../Inscritos/format";
 import { Registration } from "../Inscritos/types";
 
@@ -264,9 +264,7 @@ const CredenciamentoPage: React.FC = () => {
     return (
       <div style={s.page}>
         <h1 style={s.title}>Credenciamento</h1>
-        <p style={{ color: "#555" }}>
-          Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice />
       </div>
     );
   }

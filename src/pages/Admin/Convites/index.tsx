@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import AuthNotice from "../AuthNotice";
 import { isSuperAdmin } from "../../../utils/auth/superAdmin";
 
 const STORAGE_KEY = "admin_jwt";
@@ -242,9 +243,7 @@ const ConvitesPage: React.FC = () => {
     return (
       <div style={s.page}>
         <h1 style={s.title}>Convites</h1>
-        <p style={s.subtitle}>
-          Você precisa estar logado como admin. <Link to="/admin">Ir para o login</Link>.
-        </p>
+        <AuthNotice />
       </div>
     );
   }
