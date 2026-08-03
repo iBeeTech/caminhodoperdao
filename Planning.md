@@ -613,6 +613,50 @@ apareça para o usuário. **Destravar isto primeiro.**
 
 ## Ordem sugerida
 
+## Estado em 03/08/2026 (fim da sessão)
+
+Feito e no ar:
+
+- ✅ **Resend** — domínio verificado, `RESEND_API_KEY` como secret, `RESEND_FROM`
+  no `wrangler.toml`. Sem reply-to em nenhum e-mail, por decisão.
+- ✅ **OTP de senha do admin** (migration 024) — testado ponta a ponta pelo
+  organizador. O admin não muda mais.
+- ✅ **`event_year`** (migration 025) — CPF passou a ser único por (CPF, ano).
+- ✅ **Inscrição manual do admin** (migration 026) — `/admin/inscricao-manual`.
+- ✅ **2026 arquivado** (migration 027) — 747 linhas em `registrations_old`,
+  `registrations` zerada. Histórico passa a ser auto-declarado.
+- ✅ **Ambiente de teste isolado** — D1 `caminhodoperdao-db-test`
+  (`1057fea7-…`) e KV `TESTIMONY_AUDIO_TEST` (`03bb1906-…`), apontados no
+  `[env.preview]`. Antes, preview e produção usavam o mesmo banco.
+- ✅ **Conta do peregrino** (migration 028) — tabela `users`, PBKDF2,
+  `/api/auth/signup`, `/confirm-email`, `/login`, e as telas `/entrar` e
+  `/perfil` (este último ainda esqueleto).
+
+Pendências conhecidas, em ordem de risco:
+
+1. **`schema.sql` está divergente da produção.** Declara `cpf_encrypted TEXT
+   UNIQUE`, que não existe no banco real. Quem recriar a base a partir dele
+   monta um banco diferente. Corrigir antes que alguém confie nele.
+2. **`tsc --noEmit` continua sem rodar** pela config do projeto. A checagem
+   manual com TypeScript 5.6 acusa ~27 erros pré-existentes, incluindo
+   `savePayment` inexistente em `api/pix/create.ts` (código morto: a cadeia
+   `pix.service` → `PixPaymentSection` → `PaymentFlowSection` não é usada por
+   ninguém — vale apagar).
+3. **As 38 consultas que leem `registrations` não filtram por ano.** Hoje não
+   incomoda, porque 2026 foi arquivado e a tabela está vazia. Volta a doer no
+   dia em que dois anos coexistirem.
+4. **O Resend é o mesmo em teste e produção.** E-mail de teste é e-mail de
+   verdade e consome a cota de 3.000/mês.
+5. **Recuperar senha do peregrino não existe.** O OTP pronto é do admin
+   (`password_otp_challenges`); falta o equivalente para `users`.
+
+Próximo passo: inscrição dentro da área logada (fluxo fundido: criar conta e
+inscrever na mesma tela, senha no fim), declarar anos anteriores, e então
+`/perfil` de verdade com medalhas.
+
+---
+
+
 Revisada em 03/08/2026, depois de o e-mail entrar e de o escopo do peregrino
 ser fechado (perfil, medalhas, troca, cancelamento, credenciamento).
 
