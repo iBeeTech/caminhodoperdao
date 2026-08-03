@@ -35,6 +35,7 @@ const GROUPS: readonly NavEntry[] = [
     items: [
       { to: "/admin/credenciamento", label: "Credenciamento" },
       { to: "/admin/estorno", label: "Estornos" },
+      { to: "/admin/inscricao-manual", label: "Inscrição manual" },
       { to: "/admin/inscritos", label: "Inscritos" },
       { to: "/admin/lista-espera", label: "Lista de espera" },
       { to: "/admin", label: "Planilhas", exact: true },

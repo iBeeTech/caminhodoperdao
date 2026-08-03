@@ -54,15 +54,40 @@ de papel no JWT**: só o token com papel de admin abre `/admin`.
   (`cpf_encrypted`), que é o que amarra pessoa e histórico.
 
   Consequências, para não descobrir depois:
-  - `registrations` continua funcionando sozinha. Inscrever-se **não** exige
-    conta, e o site não pode passar a exigir — isso quebraria a inscrição.
-  - `users.id` não pode virar coluna obrigatória em `registrations`: a maioria
-    das inscrições nunca terá dono.
   - Perfil só mostra histórico de quem tem CPF gravado. Inscrição antiga sem
     CPF (ver `admin/set-cpf.ts`) fica órfã e não aparece para ninguém.
   - Duas pessoas não podem reivindicar o mesmo CPF. O vínculo precisa de prova
-    de posse — o código por e-mail já resolve, desde que o e-mail confira com o
-    da inscrição.
+    de posse — o código por e-mail resolve, desde que o e-mail confira com o da
+    inscrição.
+
+### ⚠️ Correção de 03/08/2026: a inscrição sai do site público
+
+Decidido depois do texto acima, e o **contradiz de propósito**: o formulário
+público de inscrição será **removido**. Inscrever-se passa a exigir conta, e a
+inscrição acontece dentro da área logada.
+
+O que isso resolve de imediato:
+
+- O e-mail de login **é** o e-mail da inscrição, por construção. A pergunta de
+  "como provar que este CPF é meu" desaparece para toda inscrição nova.
+- Some o buraco atual de "digite o CPF e veja a inscrição": hoje quem souber o
+  CPF de alguém acessa os dados dessa pessoa. Tudo passa a exigir sessão.
+- `registrations.user_id` passa a ser obrigatório **para inscrição nova**. Segue
+  nulo nas 747 de 2026, que continuam sem dono até alguém reivindicar.
+
+O que isso cria, e precisa de decisão consciente:
+
+- **Atrito no pior momento.** Hoje a pessoa entra no site e se inscreve numa
+  tacada. Passa a ter de criar conta antes. Em 2026 esgotaram-se as 500 vagas;
+  cada passo a mais derruba conversão. Se isso preocupar, o caminho é fundir
+  criar-conta e inscrever num fluxo só, com a senha definida no fim.
+- **Quem não tem e-mail.** Parte do público é idosa. Antes dava para inscrever
+  com ajuda de alguém; agora precisa de caixa de e-mail própria. O admin
+  continua conseguindo inscrever à mão (`staffRegistration`), e essa passa a ser
+  a saída oficial para esses casos — não um remendo.
+- **Confirmação de e-mail no cadastro.** Sem confirmar, um e-mail digitado
+  errado gera conta que nunca recebe nada — e agora é por ali que passam
+  inscrição, QR code e troca. Reaproveita o OTP que já existe.
 - **PBKDF2 só na tabela nova.** `users` nasce com PBKDF2; `admin_users` fica com
   o SHA-256 atual, intocada. Evita re-hash dos 11 admins e mexer no que acabou
   de ser estabilizado, e o hash forte entra onde o volume justifica.

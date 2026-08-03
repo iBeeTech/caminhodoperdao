@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminEstorno, AdminTutoriais, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual } from "./pages";
 import AdminLayout from "./pages/Admin/AdminLayout";
 
 const AppRoutes: React.FC = () => {
@@ -22,6 +22,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/testemunhos" element={<AdminTestemunhos />} />
         <Route path="/admin/passar-cpf" element={<AdminPassarCpf />} />
         <Route path="/admin/pedidos-senha" element={<AdminPedidosSenha />} />
+        <Route path="/admin/inscricao-manual" element={<AdminInscricaoManual />} />
       </Route>
       <Route path="/tutoriais" element={<AdminTutoriais />} />
       <Route path="/convite" element={<Convite />} />
