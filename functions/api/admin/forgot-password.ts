@@ -1,23 +1,38 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, json } from "../../_utils/responses";
 import { isValidEmail } from "../../_utils/validation";
-import { AdminAuthEnv } from "../../_utils/adminAuth";
+import { AdminAuthEnv, getAdminByEmail, getJwtSecret } from "../../_utils/adminAuth";
+import { EmailEnv, sendEmail } from "../../_utils/email";
+import {
+  MAX_REQUESTS_PER_EMAIL,
+  MAX_REQUESTS_PER_IP,
+  OTP_TTL_MS,
+  RATE_WINDOW_MS,
+  countRecentRequestsByEmail,
+  countRecentRequestsByIp,
+  createChallenge,
+  generateChallengeId,
+  generateOtpCode,
+  hmacHex,
+  logResetRequest,
+  purgeExpiredChallenges,
+} from "../../_utils/passwordOtp";
 
-/** Janela para não encher a fila com cliques repetidos do mesmo e-mail. */
-const DEDUPE_WINDOW_MS = 15 * 60 * 1000;
+type Env = AdminAuthEnv & EmailEnv;
 
 /**
- * Endpoint PÚBLICO de "Esqueci minha senha". Só registra o pedido: não
- * redefine senha nem envia nada. Quem redefine é o super admin, autenticado,
- * gerando uma senha temporária aleatória (reset-requests.ts).
+ * Endpoint PÚBLICO de "Esqueci minha senha". Gera um código de 6 dígitos e o
+ * envia por e-mail, sozinho — ninguém mais fica no meio do processo.
  *
- * Redefinir a senha aqui — mesmo para um valor "padrão" — daria a qualquer
- * pessoa da internet o acesso de qualquer admin, bastando saber o e-mail.
+ * A resposta é sempre a mesma, exista o e-mail ou não: mesmo formato, mesmo
+ * status e um challengeId de aparência idêntica. Caso contrário o formulário
+ * viraria um detector de quais e-mails são de admin.
  *
- * A resposta é sempre a mesma, exista o e-mail ou não: caso contrário o
- * formulário viraria um detector de quais e-mails são admins.
+ * O envio vai em waitUntil de propósito: e-mail leva centenas de milissegundos
+ * e só acontece para conta existente. Respondendo antes de enviar, o tempo de
+ * resposta deixa de denunciar se a conta existe.
  */
-export const onRequestPost: PagesFunction<AdminAuthEnv> = async context => {
+export const onRequestPost: PagesFunction<Env> = async context => {
   let body: { email?: string } = {};
   try {
     body = (await context.request.json()) as { email?: string };
@@ -30,21 +45,87 @@ export const onRequestPost: PagesFunction<AdminAuthEnv> = async context => {
     return badRequest("invalid_email");
   }
 
-  const now = Date.now();
-  const recent = await context.env.DB.prepare(
-    "SELECT id FROM password_reset_requests WHERE email = ?1 AND handled_at IS NULL AND requested_at > ?2"
-  )
-    .bind(email, now - DEDUPE_WINDOW_MS)
-    .first<{ id: number }>();
-
-  if (!recent) {
-    await context.env.DB.prepare(
-      "INSERT INTO password_reset_requests (email, requested_at) VALUES (?1, ?2)"
-    )
-      .bind(email, now)
-      .run();
+  const secret = getJwtSecret(context.env);
+  if (!secret) {
+    // Sem o segredo não há como guardar o código em HMAC. Falhar aqui é melhor
+    // do que gravar um desafio que nunca poderá ser validado.
+    console.error("forgot-password: ADMIN_JWT_SECRET ausente.");
+    return json(500, { error: "admin_jwt_secret_missing" });
   }
 
-  // Sempre 200 e sempre igual — nada aqui depende de o e-mail existir.
-  return json(200, { received: true });
+  const now = Date.now();
+  const since = now - RATE_WINDOW_MS;
+  const requestIp = context.request.headers.get("CF-Connecting-IP") || "unknown";
+
+  // Sem a conferência humana que existia antes, o limite de pedidos é o que
+  // resta contra abuso. Os dois contadores leem password_reset_requests, que
+  // recebe linha para qualquer e-mail — por isso não vazam existência de conta.
+  const [byIp, byEmail] = await Promise.all([
+    countRecentRequestsByIp(context.env.DB, requestIp, since),
+    countRecentRequestsByEmail(context.env.DB, email, since),
+  ]);
+
+  if (byIp >= MAX_REQUESTS_PER_IP || byEmail >= MAX_REQUESTS_PER_EMAIL) {
+    // 429 não revela nada sobre contas: fala do pedido, não do destinatário.
+    return json(429, { error: "too_many_requests" });
+  }
+
+  await logResetRequest(context.env.DB, { email, requestIp, now });
+  await purgeExpiredChallenges(context.env.DB, now);
+
+  const admin = await getAdminByEmail(context.env.DB, email);
+
+  if (!admin) {
+    // E-mail desconhecido: devolve um id descartável, com a mesma cara de um
+    // real. Quem tentar validá-lo recebe exatamente o erro de código inválido.
+    return json(200, { challengeId: generateChallengeId() });
+  }
+
+  const challengeId = generateChallengeId();
+  const code = generateOtpCode();
+  const codeHash = await hmacHex(code, secret);
+
+  await createChallenge(context.env.DB, {
+    id: challengeId,
+    email,
+    codeHash,
+    requestIp,
+    now,
+  });
+
+  context.waitUntil(sendOtpEmail(context.env, email, code));
+
+  return json(200, { challengeId });
 };
+
+async function sendOtpEmail(env: Env, to: string, code: string): Promise<void> {
+  const minutes = Math.round(OTP_TTL_MS / 60000);
+  await sendEmail(env, {
+    to,
+    subject: `${code} é o seu código de acesso`,
+    bodyHtml: `
+      <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Olá,</p>
+      <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">
+        Recebemos um pedido para redefinir a senha do painel do Caminho do Perdão.
+        Use o código abaixo:
+      </p>
+      <p style="font-size:34px;letter-spacing:10px;font-weight:bold;text-align:center;margin:0 0 24px;color:#7a5c2e;">
+        ${code}
+      </p>
+      <p style="font-size:15px;line-height:1.6;margin:0 0 8px;">
+        O código vale por <strong>${minutes} minutos</strong> e só pode ser usado uma vez.
+      </p>
+      <p style="font-size:15px;line-height:1.6;margin:0;color:#6b6b6b;">
+        Se não foi você que pediu, ignore este e-mail — sua senha continua a mesma.
+      </p>`,
+    bodyText: [
+      "Olá,",
+      "",
+      "Recebemos um pedido para redefinir a senha do painel do Caminho do Perdão.",
+      `Seu código é: ${code}`,
+      "",
+      `O código vale por ${minutes} minutos e só pode ser usado uma vez.`,
+      "Se não foi você que pediu, ignore este e-mail — sua senha continua a mesma.",
+    ].join("\n"),
+  });
+}

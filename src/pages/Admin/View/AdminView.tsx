@@ -41,7 +41,10 @@ interface AdminViewProps {
   newPassword: string;
   confirmPassword: string;
   forgotEmail: string;
-  forgotDone: boolean;
+  forgotStep: "email" | "code" | "password" | "done";
+  forgotCode: string;
+  forgotNewPassword: string;
+  forgotConfirmPassword: string;
   createdAdmin: { email: string; tempPassword: string } | null;
   error: string | null;
   success: string | null;
@@ -55,10 +58,16 @@ interface AdminViewProps {
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onForgotEmailChange: (value: string) => void;
+  onForgotCodeChange: (value: string) => void;
+  onForgotNewPasswordChange: (value: string) => void;
+  onForgotConfirmPasswordChange: (value: string) => void;
   onSubmit: () => void;
   onOpenForgot: () => void;
   onCloseForgot: () => void;
+  onRestartForgot: () => void;
   onForgotPassword: () => void;
+  onVerifyOtp: () => void;
+  onResetPassword: () => void;
   onDismissCreatedAdmin: () => void;
   onChangePassword: () => void;
   onDownloadTotal: () => void;
@@ -86,7 +95,10 @@ const AdminView: React.FC<AdminViewProps> = ({
   newPassword,
   confirmPassword,
   forgotEmail,
-  forgotDone,
+  forgotStep,
+  forgotCode,
+  forgotNewPassword,
+  forgotConfirmPassword,
   createdAdmin,
   error,
   success,
@@ -100,10 +112,16 @@ const AdminView: React.FC<AdminViewProps> = ({
   onNewPasswordChange,
   onConfirmPasswordChange,
   onForgotEmailChange,
+  onForgotCodeChange,
+  onForgotNewPasswordChange,
+  onForgotConfirmPasswordChange,
   onSubmit,
   onOpenForgot,
   onCloseForgot,
+  onRestartForgot,
   onForgotPassword,
+  onVerifyOtp,
+  onResetPassword,
   onDismissCreatedAdmin,
   onChangePassword,
   onDownloadTotal,
@@ -198,28 +216,29 @@ const AdminView: React.FC<AdminViewProps> = ({
   // "Esqueci minha senha": registra o pedido. A confirmação é sempre a mesma,
   // exista o e-mail ou não — a tela nunca revela quem é admin.
   if (status === "forgot") {
+    // Cada passo tem o seu próprio submit; "done" não tem campo nenhum.
+    const stepAction =
+      forgotStep === "email"
+        ? onForgotPassword
+        : forgotStep === "code"
+          ? onVerifyOtp
+          : forgotStep === "password"
+            ? onResetPassword
+            : () => undefined;
+
     return (
       <AdminPage>
         <AdminContainer>
-          {/* Já concluído não tem campo: o submit só vale no passo do e-mail. */}
-          <AdminCard
-            as="form"
-            onSubmit={handleSubmit(() => {
-              if (!forgotDone) onForgotPassword();
-            })}
-          >
-            <AdminTitle>{t("forgot.title")}</AdminTitle>
-            {forgotDone ? (
-              <>
-                <InfoBox role="status">
-                  <strong>{t("forgot.doneTitle")}</strong>
-                  <p style={{ margin: "6px 0 0" }}>{t("forgot.doneBody")}</p>
-                </InfoBox>
-                <PrimaryButton type="button" onClick={onCloseForgot}>
-                  {t("forgot.backToLogin")}
-                </PrimaryButton>
-              </>
-            ) : (
+          <AdminCard as="form" onSubmit={handleSubmit(stepAction)}>
+            <AdminTitle>
+              {forgotStep === "code"
+                ? t("forgot.codeTitle")
+                : forgotStep === "password"
+                  ? t("forgot.newPasswordTitle")
+                  : t("forgot.title")}
+            </AdminTitle>
+
+            {forgotStep === "email" && (
               <>
                 <HelpText>{t("forgot.help")}</HelpText>
                 <FieldGroup>
@@ -239,6 +258,86 @@ const AdminView: React.FC<AdminViewProps> = ({
                 <SecondaryButton type="button" onClick={onCloseForgot} disabled={isSubmitting}>
                   {t("forgot.backToLogin")}
                 </SecondaryButton>
+              </>
+            )}
+
+            {forgotStep === "code" && (
+              <>
+                {/* Sem citar o e-mail digitado: a tela não confirma se ele existe. */}
+                <HelpText>{t("forgot.codeHelp")}</HelpText>
+                <FieldGroup>
+                  <Label htmlFor="forgot-code">{t("forgot.codeLabel")}</Label>
+                  <input
+                    id="forgot-code"
+                    // inputMode numérico abre o teclado de números no celular;
+                    // autoComplete one-time-code deixa o sistema oferecer o
+                    // código que acabou de chegar.
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={forgotCode}
+                    onChange={event =>
+                      onForgotCodeChange(event.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder={t("forgot.codePlaceholder")}
+                  />
+                </FieldGroup>
+                {error && <ErrorText>{error}</ErrorText>}
+                <PrimaryButton type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? t("forgot.codeSubmitting") : t("forgot.codeSubmit")}
+                </PrimaryButton>
+                <SecondaryButton type="button" onClick={onRestartForgot} disabled={isSubmitting}>
+                  {t("forgot.restart")}
+                </SecondaryButton>
+              </>
+            )}
+
+            {forgotStep === "password" && (
+              <>
+                <HelpText>{t("forgot.newPasswordHelp")}</HelpText>
+                <FieldGroup>
+                  <Label htmlFor="forgot-new-password">{t("changePassword.newLabel")}</Label>
+                  <input
+                    id="forgot-new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={forgotNewPassword}
+                    onChange={event => onForgotNewPasswordChange(event.target.value)}
+                    placeholder={t("changePassword.newPlaceholder")}
+                  />
+                </FieldGroup>
+                <FieldGroup>
+                  <Label htmlFor="forgot-confirm-password">
+                    {t("changePassword.confirmLabel")}
+                  </Label>
+                  <input
+                    id="forgot-confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={forgotConfirmPassword}
+                    onChange={event => onForgotConfirmPasswordChange(event.target.value)}
+                    placeholder={t("changePassword.confirmPlaceholder")}
+                  />
+                </FieldGroup>
+                {error && <ErrorText>{error}</ErrorText>}
+                <PrimaryButton type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? t("changePassword.submitting") : t("changePassword.submit")}
+                </PrimaryButton>
+                <SecondaryButton type="button" onClick={onRestartForgot} disabled={isSubmitting}>
+                  {t("forgot.restart")}
+                </SecondaryButton>
+              </>
+            )}
+
+            {forgotStep === "done" && (
+              <>
+                <InfoBox role="status">
+                  <strong>{t("forgot.doneTitle")}</strong>
+                  <p style={{ margin: "6px 0 0" }}>{t("forgot.doneBody")}</p>
+                </InfoBox>
+                <PrimaryButton type="button" onClick={onCloseForgot}>
+                  {t("forgot.backToLogin")}
+                </PrimaryButton>
               </>
             )}
           </AdminCard>

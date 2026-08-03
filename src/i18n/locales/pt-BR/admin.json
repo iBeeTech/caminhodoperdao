@@ -12,12 +12,21 @@
     },
     "forgot": {
         "title": "Esqueci minha senha",
-        "help": "Informe seu e-mail de admin. O administrador do site vai redefinir sua senha e te passar uma senha temporária.",
-        "submit": "Recuperar senha",
+        "help": "Informe seu e-mail de admin. Vamos enviar um código de 6 dígitos para ele.",
+        "submit": "Enviar código",
         "submitting": "Enviando...",
         "backToLogin": "Voltar ao login",
-        "doneTitle": "Pedido registrado.",
-        "doneBody": "Fale com o administrador do site para concluir a redefinição. Ele vai te passar uma senha temporária, e você define a sua nova senha ao entrar."
+        "codeTitle": "Digite o código",
+        "codeHelp": "Se este e-mail for de um admin, o código de 6 dígitos chega em instantes. Ele vale por 10 minutos. Não achou? Confira o lixo eletrônico.",
+        "codeLabel": "Código de 6 dígitos",
+        "codePlaceholder": "000000",
+        "codeSubmit": "Confirmar código",
+        "codeSubmitting": "Confirmando...",
+        "restart": "Começar de novo",
+        "newPasswordTitle": "Escolha sua nova senha",
+        "newPasswordHelp": "Código confirmado. Defina a senha que você vai usar a partir de agora.",
+        "doneTitle": "Senha alterada.",
+        "doneBody": "Pronto. Entre com seu e-mail e a senha nova."
     },
     "changePassword": {
         "title": "Defina sua senha",
@@ -72,6 +81,12 @@
         "downloadError": "Não foi possível gerar a planilha. Tente novamente.",
         "reconcileSuccess": "Reconciliação concluída: {{checked}} verificadas, {{paid}} confirmadas como PAGAS, {{canceled}} canceladas (expiradas), {{pending}} ainda pendentes, {{errors}} com erro.",
         "reconcileSuccessGeneric": "Reconciliação concluída com a Woovi.",
-        "reconcileError": "Não foi possível atualizar os status com a Woovi. Tente novamente."
+        "reconcileError": "Não foi possível atualizar os status com a Woovi. Tente novamente.",
+        "fillCode": "Digite o código de 6 dígitos.",
+        "invalidCode": "Código inválido ou expirado. Confira os números ou peça um novo.",
+        "tooManyAttempts": "Muitas tentativas erradas. Peça um código novo.",
+        "tooManyRequests": "Muitos pedidos seguidos. Espere alguns minutos e tente de novo.",
+        "resetTokenExpired": "O tempo para escolher a senha acabou. Comece de novo.",
+        "resetError": "Não foi possível concluir a redefinição. Tente de novo."
     }
 }

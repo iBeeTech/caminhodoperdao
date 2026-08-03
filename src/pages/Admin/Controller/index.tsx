@@ -7,15 +7,26 @@ import { clearAdminToken, getAdminToken, setAdminToken } from "../../../utils/au
 type AuthStatus =
   | "loading"
   | "unauthenticated"
-  /** Pediu "Esqueci minha senha": informa o e-mail para registrar o pedido. */
+  /** Pediu "Esqueci minha senha": percorre os passos de ForgotStep. */
   | "forgot"
   /** Entrou com senha temporária/primeiro acesso: só sai daqui trocando a senha. */
   | "must-change-password"
   | "authenticated";
 
+/**
+ * Passos do "esqueci minha senha": pede o e-mail, confirma o código de 6
+ * dígitos recebido por e-mail e escolhe a senha nova.
+ *
+ * O código não loga em nada: ele só é trocado por uma autorização de curta
+ * duração (resetToken) que serve unicamente para gravar a senha nova.
+ */
+type ForgotStep = "email" | "code" | "password" | "done";
+
 /** Tela inicial do admin depois de entrar. */
 const HOME_ROUTE = "/admin/inscritos";
 const MIN_PASSWORD_LENGTH = 8;
+/** Dígitos do código enviado por e-mail. Precisa casar com o backend (passwordOtp.ts). */
+const OTP_CODE_LENGTH = 6;
 /** Só o admin geral adiciona admins. Gate de UI; o servidor é quem decide. */
 const SUPER_ADMIN_EMAIL = "cassiotakarada7@gmail.com";
 
@@ -31,7 +42,14 @@ const AdminController: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [newAdminEmail, setNewAdminEmail] = React.useState("");
   const [forgotEmail, setForgotEmail] = React.useState("");
-  const [forgotDone, setForgotDone] = React.useState(false);
+  const [forgotStep, setForgotStep] = React.useState<ForgotStep>("email");
+  const [forgotCode, setForgotCode] = React.useState("");
+  const [forgotNewPassword, setForgotNewPassword] = React.useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = React.useState("");
+  // challengeId e resetToken ficam só em memória e morrem ao sair da tela: são
+  // credenciais de curta duração, não têm por que sobreviver a um refresh.
+  const [challengeId, setChallengeId] = React.useState<string | null>(null);
+  const [resetToken, setResetToken] = React.useState<string | null>(null);
   const [createdAdmin, setCreatedAdmin] = React.useState<{
     email: string;
     tempPassword: string;
@@ -204,10 +222,20 @@ const AdminController: React.FC = () => {
     }
   };
 
+  /** Limpa tudo do fluxo de recuperação. Usado ao abrir, fechar e recomeçar. */
+  const resetForgotFlow = React.useCallback(() => {
+    setForgotStep("email");
+    setForgotCode("");
+    setForgotNewPassword("");
+    setForgotConfirmPassword("");
+    setChallengeId(null);
+    setResetToken(null);
+  }, []);
+
   /**
-   * Registra o pedido de redefinição. Não redefine nada: quem redefine é o
-   * super admin, gerando uma senha temporária. A resposta é sempre a mesma,
-   * exista o e-mail ou não.
+   * Passo 1: pede o código. O servidor responde igual exista o e-mail ou não —
+   * inclusive devolvendo um challengeId de aparência idêntica —, então a tela
+   * também não pode diferenciar: avança sempre para o passo do código.
    */
   const handleForgotPassword = async () => {
     if (!forgotEmail) {
@@ -217,17 +245,122 @@ const AdminController: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      await fetch("/api/admin/forgot-password", {
+      const response = await fetch("/api/admin/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail }),
       });
+      if (response.status === 429) {
+        setError(t("messages.tooManyRequests"));
+        return;
+      }
+      if (!response.ok) {
+        setError(t("messages.resetError"));
+        return;
+      }
+      const data = (await response.json()) as { challengeId?: string };
+      if (!data.challengeId) {
+        setError(t("messages.resetError"));
+        return;
+      }
+      setChallengeId(data.challengeId);
+      setForgotCode("");
+      setForgotStep("code");
     } catch {
-      // Falha de rede não deve revelar nada nem travar o usuário: a orientação
-      // ("fale com o administrador") vale igual.
+      setError(t("messages.resetError"));
     } finally {
       setIsSubmitting(false);
-      setForgotDone(true);
+    }
+  };
+
+  /** Passo 2: troca o código de 6 dígitos pela autorização de redefinir. */
+  const handleVerifyOtp = async () => {
+    if (!challengeId) {
+      resetForgotFlow();
+      return;
+    }
+    const code = forgotCode.trim();
+    if (code.length !== OTP_CODE_LENGTH) {
+      setError(t("messages.fillCode"));
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId, code }),
+      });
+      if (response.status === 429) {
+        setError(t("messages.tooManyAttempts"));
+        return;
+      }
+      if (!response.ok) {
+        setError(t("messages.invalidCode"));
+        return;
+      }
+      const data = (await response.json()) as { resetToken?: string };
+      if (!data.resetToken) {
+        setError(t("messages.resetError"));
+        return;
+      }
+      setResetToken(data.resetToken);
+      setForgotStep("password");
+    } catch {
+      setError(t("messages.resetError"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /** Passo 3: grava a senha escolhida pela própria pessoa. */
+  const handleResetPassword = async () => {
+    if (!challengeId || !resetToken) {
+      setError(t("messages.resetTokenExpired"));
+      resetForgotFlow();
+      return;
+    }
+    if (!forgotNewPassword || !forgotConfirmPassword) {
+      setError(t("messages.fillChangePassword"));
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setError(t("messages.passwordsDoNotMatch"));
+      return;
+    }
+    if (forgotNewPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(t("messages.passwordTooShort", { min: MIN_PASSWORD_LENGTH }));
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId, resetToken, newPassword: forgotNewPassword }),
+      });
+      if (!response.ok) {
+        const apiError = await readApiError(response);
+        if (apiError === "password_too_short") {
+          setError(t("messages.passwordTooShort", { min: MIN_PASSWORD_LENGTH }));
+        } else {
+          setError(t("messages.resetTokenExpired"));
+        }
+        return;
+      }
+      // A senha nova já vale: some com os segredos de curta duração da memória.
+      setChallengeId(null);
+      setResetToken(null);
+      setForgotNewPassword("");
+      setForgotConfirmPassword("");
+      setForgotCode("");
+      setForgotStep("done");
+    } catch {
+      setError(t("messages.resetError"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -322,7 +455,10 @@ const AdminController: React.FC = () => {
       newPassword={newPassword}
       confirmPassword={confirmPassword}
       forgotEmail={forgotEmail}
-      forgotDone={forgotDone}
+      forgotStep={forgotStep}
+      forgotCode={forgotCode}
+      forgotNewPassword={forgotNewPassword}
+      forgotConfirmPassword={forgotConfirmPassword}
       createdAdmin={createdAdmin}
       error={error}
       success={success}
@@ -333,20 +469,29 @@ const AdminController: React.FC = () => {
       onNewPasswordChange={setNewPassword}
       onConfirmPasswordChange={setConfirmPassword}
       onForgotEmailChange={setForgotEmail}
+      onForgotCodeChange={setForgotCode}
+      onForgotNewPasswordChange={setForgotNewPassword}
+      onForgotConfirmPasswordChange={setForgotConfirmPassword}
       onSubmit={handleLogin}
       onOpenForgot={() => {
         setError(null);
         setSuccess(null);
-        setForgotDone(false);
+        resetForgotFlow();
         setForgotEmail(email);
         setStatus("forgot");
       }}
       onCloseForgot={() => {
         setError(null);
-        setForgotDone(false);
+        resetForgotFlow();
         setStatus("unauthenticated");
       }}
+      onRestartForgot={() => {
+        setError(null);
+        resetForgotFlow();
+      }}
       onForgotPassword={handleForgotPassword}
+      onVerifyOtp={handleVerifyOtp}
+      onResetPassword={handleResetPassword}
       onDismissCreatedAdmin={() => setCreatedAdmin(null)}
       onChangePassword={handleChangePassword}
       onDownloadTotal={() =>
