@@ -5,6 +5,9 @@ evento: mexer em login, credenciamento e pagamento com a inscrição aberta
 arrisca o que já está funcionando. Este documento existe para a decisão não se
 perder.
 
+O bloco 9 (galeria e venda de fotos) foi levantado em 03/08/2026, já com o
+evento encerrado.
+
 **Nada aqui está implementado.** Os blocos de SQL são esboços para discussão,
 não migrations prontas.
 
@@ -251,6 +254,249 @@ Hoje é **Woovi, só PIX**. Aceitar cartão muda mais coisa do que parece:
 
 ---
 
+## 8. Transferir a inscrição para outro peregrino
+
+*(Frente adicionada em 30/07/2026. **Depende da área logada** — blocos 1 e 2 —
+e do `event_year`, bloco 3.)*
+
+### O que é
+
+Quem pagou e não pode mais ir passa a vaga para outra pessoa, em vez de
+cancelar. Hoje o único caminho é cancelar (vaga volta para o balde, dinheiro
+vira linha em `refund_requests` e o admin devolve por fora, no PIX). A troca
+resolve os dois lados: o peregrino não fica no prejuízo e a vaga não fica
+vazia.
+
+### Como precisa funcionar
+
+- **Não pode passar pelo cancelamento.** Se a transferência cancelar a
+  inscrição, a vaga é liberada e pode ser tomada por outra pessoa no intervalo,
+  e ainda nasce uma linha de estorno indevida. A vaga tem que continuar `PAID`
+  o tempo todo.
+- **Mesma linha, dados novos.** Recomendação: manter a mesma linha em
+  `registrations` (preserva `payment_ref`, `registration_number` e a contagem
+  de vaga) e reescrever os campos pessoais, guardando o histórico numa tabela
+  de auditoria. A alternativa — criar linha nova e marcar a antiga como
+  `TRANSFERRED` — bate na unicidade `(cpf, ano)` e na ligação com o pagamento.
+- **Trocar o nome não basta.** CPF, nascimento, telefone, e-mail, endereço,
+  contato de emergência, alergia/medicação e restrição alimentar são da pessoa
+  nova. Quem recebe preenche o próprio formulário — o formulário de inscrição
+  inteiro, como no "Editar demais informações" do `/perfil`.
+- **Aceite de termos é individual.** `terms_accepted_at` do peregrino antigo
+  não vale para o novo. Zerar e pedir de novo.
+- **Quem recebe não pode já ter inscrição no mesmo ano** — checar antes de
+  abrir o convite, senão a troca quebra na unicidade `(cpf, ano)`.
+- **Precisa de aceite dos dois lados:** origem indica, destino aceita. Enquanto
+  o destino não aceita e não preenche, nada muda na inscrição.
+- **Avisos precisam ser reenviados:** `group_invited_at` e
+  `monastery_info_sent_at` referem-se ao peregrino antigo. Resetar, senão a
+  pessoa nova nunca recebe o convite do grupo nem as instruções do mosteiro.
+
+### Dinheiro
+
+- **Geral → geral e pernoite → pernoite:** nada a cobrar, nada a devolver.
+- **Muda o tipo:** reaproveitar a regra que já existe em `upgrade-monastery` —
+  upgrade cobra a diferença, downgrade devolve R$50. Não reimplementar.
+- ⚠️ **Se a inscrição transferida for cancelada depois, o dinheiro volta para
+  quem?** Quem pagou foi a pessoa de origem; o "PIX para estorno" no cadastro
+  vai ser o da pessoa nova. Decidir isso **antes** de codar — é o ponto onde a
+  troca vira briga. Sugestão: o acerto entre as duas pessoas é por fora, e o
+  sistema registra que a inscrição foi transferida para o admin não devolver
+  para o lado errado. A tela `/admin/estorno` precisa mostrar esse aviso.
+
+### Decisões a tomar
+
+- **Prazo:** até quando pode transferir? Sugestão: até o fechamento da lista de
+  credenciamento — depois disso a portaria já imprimiu/carregou os nomes.
+- **QR code (bloco 4):** transferência tem que **invalidar o `checkin_token`
+  antigo** e gerar um novo. Um código já compartilhado no WhatsApp não pode
+  continuar valendo.
+- **Limite de trocas:** uma por inscrição por edição, para não virar revenda de
+  vaga. Registrar quem pediu e quando.
+- **Admin pode desfazer?** Hoje tudo que dá errado é resolvido na mão. Vale uma
+  tela de admin que faça e desfaça a troca, com o histórico à vista.
+- **Fila de espera:** já existe a tabela `waitlist`. Quem cancela sem indicar
+  ninguém devia oferecer a vaga para a fila — é a mesma conversa, e talvez o
+  caminho mais justo que a indicação livre.
+- **LGPD:** os dados da pessoa de origem saem da inscrição. No histórico,
+  guardar só o mínimo para auditoria (nome e referência), não o cadastro
+  inteiro.
+
+### Esboço
+
+```sql
+CREATE TABLE registration_transfers (
+  id TEXT PRIMARY KEY,
+  registration_id TEXT NOT NULL,       -- a vaga, que não muda
+  event_year INTEGER NOT NULL,
+  from_name TEXT NOT NULL,
+  from_cpf_encrypted TEXT,
+  to_name TEXT,
+  to_cpf_encrypted TEXT,
+  invite_token TEXT,                   -- opaco; é o link que a origem envia
+  status TEXT NOT NULL DEFAULT 'PENDENTE'
+    CHECK (status IN ('PENDENTE', 'ACEITA', 'RECUSADA', 'EXPIRADA', 'DESFEITA')),
+  amount_diff_cents INTEGER NOT NULL DEFAULT 0,  -- >0 cobra, <0 estorna
+  requested_by TEXT,                   -- users.id de quem pediu
+  accepted_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX idx_transfers_invite_token
+  ON registration_transfers (invite_token);
+CREATE INDEX idx_transfers_registration
+  ON registration_transfers (registration_id, status);
+```
+
+Sem provedor de e-mail (ver Bloqueios), o convite sai como **link** para a
+origem repassar no WhatsApp — o mesmo remendo do resto do plano.
+
+---
+
+## 9. Galeria de fotos — hospedagem, marca d'água e venda
+
+Levantado em 03/08/2026, depois do evento de 2026: o fotógrafo tem **~2500
+fotos em alta resolução** para publicar. O pedido é mostrar prévia com marca
+d'água, deixar o peregrino escolher e comprar, e liberar o **download
+automático assim que o PIX for pago**.
+
+### Como é hoje
+
+As fotos vivem num **repositório do GitHub** (`iBeeTech/caminhodoperdao-gallery`,
+uma pasta por ano). `functions/api/gallery.ts` lista os arquivos pela **Contents
+API** do GitHub e devolve URLs do `raw.githubusercontent.com`.
+
+Escala medida em 03/08/2026 no álbum 2025: **41 fotos, 6,4 MB no total, média de
+161 KB** — ou seja, já são versões reduzidas, não os originais.
+
+### ⚠️ O modelo atual não suporta 2500 fotos — quatro limites duros
+
+1. **A Contents API devolve no máximo 1000 entradas por diretório.** As fotos
+   1001–2500 simplesmente não apareceriam. Não é lentidão, é teto.
+2. **Tamanho do repositório.** Original de câmera pesa 5–15 MB; 2500 × 8 MB ≈
+   **20 GB**. O GitHub recomenda < 1 GB e trava perto de 5 GB.
+3. **`raw.githubusercontent.com` não é CDN de imagem** — é limitado, sujeito a
+   throttle, e fora do propósito do serviço para um site com venda.
+4. **A tela baixa tudo em tamanho original.** `AlbumView.tsx` renderiza todas as
+   fotos com `loading="lazy"`, sem miniatura: a grade encolhe o arquivo cheio
+   por CSS, e o modal usa a mesma URL. Rolar 2500 fotos no celular = vários GB.
+   Além disso, `Album/index.tsx` baixa a lista de **todos** os anos para exibir
+   um só.
+
+Ponto já frágil hoje: a chamada ao GitHub é **sem token** — 60 requisições por
+hora, e cada visita à galeria gasta ~3.
+
+### Decisão de arquitetura
+
+Sair do GitHub e ir para **R2** (mesmo bucket/decisão do bloco 5 — vale
+resolver o R2 uma vez para foto de peregrino *e* galeria), com **dois prefixos
+de propósito diferente**:
+
+| Prefixo | Conteúdo | Acesso |
+|---|---|---|
+| `previews/` | ~1200px, marca d'água **queimada no arquivo** | público |
+| `originais/` | 3000px, qualidade alta (~2 MB) | **privado** — só link assinado pós-pagamento |
+
+⚠️ **A marca d'água precisa ser gravada na imagem** por script, nunca ser tarja
+de CSS: sobreposição de CSS é contornada abrindo a URL da imagem direto.
+
+**Entregar 3000px em vez do arquivo bruto** é decisão deliberada: imprime bem
+até A3, é indistinguível em tela, e derruba o armazenamento de ~20 GB para
+~5 GB. O índice das fotos vira **manifesto estático** gerado no processamento —
+mata de uma vez o teto de 1000 arquivos e o limite de 60 req/h.
+
+### Custo (levantado em 03/08/2026 — reconferir, preço muda)
+
+R2: **10 GB grátis/mês** e, o mais relevante, **saída de dados gratuita** (o S3
+cobra egress; é onde a conta de galeria explodiria). Acima disso, US$ 0,015 por
+GB/mês.
+
+- prévias (2500 × ~150 KB): **375 MB**
+- entrega em 3000px (2500 × ~2 MB): **~5 GB**
+- **total ~5,4 GB → dentro do nível gratuito**, com folga
+
+Se um dia guardar o bruto da câmera (~20 GB), fica em torno de US$ 0,15/mês.
+
+⚠️ **O R2 exige cartão cadastrado na conta Cloudflare mesmo no nível gratuito.**
+Este é o incômodo real, não o valor — foi exatamente por isso que o
+`TESTIMONY_AUDIO` ficou em KV ("plano gratuito, sem cartão", `wrangler.toml`).
+Mitigação: alerta de gasto na Cloudflare e ficar no perfil de 5 GB.
+
+### Upload do fotógrafo sem perder qualidade
+
+Página com **link secreto e prazo de validade** (ex.: `/upload/<token>`, 7
+dias), onde o navegador dele envia **direto para o R2** — byte a byte, sem
+passar pelo nosso backend e sem recompressão.
+
+Atalho para a primeira leva, enquanto a página não existe: receber por **Google
+Drive ou WeTransfer** e subir por script. **Nunca por WhatsApp ou Telegram** —
+os dois recomprimem e destroem a resolução.
+
+### Venda — reaproveitar o molde da camiseta
+
+A tubulação de cobrança **já existe** e o fluxo é o mesmo:
+
+- `functions/_utils/woovi.ts` — `createWooviCharge`, `getWooviChargeStatus`,
+  `deleteWooviCharge`
+- `functions/api/webhooks.ts` — casa o pagamento por `payment_ref` e marca pago;
+  ganha mais um "finder", como já tem para inscrição, upgrade e camiseta
+- `tshirt_purchase` — o molde de tabela e de máquina de estados
+  (`PENDING`/`PAID`/`CANCELED`)
+- `functions/api/pix/status.ts` — o polling que libera a tela sozinha
+
+```
+escolhe as fotos → carrinho → cria pedido + cobrança Woovi → QR Code
+   → webhook "pago" → tela libera → links assinados (validade curta)
+   → e-mail com os mesmos links (depende do provedor de e-mail, ver Bloqueios)
+```
+
+### Esboço
+
+```sql
+CREATE TABLE photo_order (
+  id TEXT PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  email TEXT NOT NULL,                      -- reenvio do link de download
+  amount_cents INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING',   -- PENDING | PAID | CANCELED
+  payment_provider TEXT NOT NULL,
+  payment_ref TEXT,
+  correlation_id TEXT,
+  download_token TEXT,                      -- opaco; troca por links assinados
+  download_expires_at INTEGER,              -- epoch ms
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  paid_at TEXT
+);
+CREATE TABLE photo_order_item (
+  order_id TEXT NOT NULL REFERENCES photo_order (id),
+  photo_key TEXT NOT NULL,                  -- chave no R2
+  unit_price_cents INTEGER NOT NULL,
+  PRIMARY KEY (order_id, photo_key)
+);
+CREATE UNIQUE INDEX idx_photo_order_download_token
+  ON photo_order (download_token);
+```
+
+### Decisões a tomar antes de codar
+
+- **Cartão na Cloudflare:** sem isso não há R2 e não há download automático.
+  É a decisão que trava todas as outras. Plano B: prévias continuam no GitHub
+  com manifesto estático, pedido cai no admin e **alguém envia à mão**.
+- **Preço:** por foto avulsa ou pacote (ex.: 10 por R$ X)? Pacote complica o
+  carrinho e o cálculo do pedido.
+- **Repasse ao fotógrafo:** planilha e transferência manual, ou **split** da
+  Woovi? O split exige cadastrar a conta dele na adquirência.
+- **Fotos de 2025 já publicadas:** continuam grátis e sem marca d'água, ou
+  entram na venda?
+- **Reembolso de produto digital:** entregue o arquivo, não tem devolução. A
+  política precisa estar escrita antes da primeira venda.
+- **Direito de imagem:** são fotos de pessoas identificáveis num evento
+  religioso. Definir autorização do fotógrafo e canal de pedido de remoção.
+- **Paginação:** a grade precisa carregar por partes (ex.: 60 por vez) — a tela
+  atual não tem isso e não aguenta 2500.
+
+---
+
 ## Bloqueios que atravessam tudo
 
 ### Não existe envio de e-mail
@@ -287,10 +533,20 @@ apareça para o usuário. **Destravar isto primeiro.**
    e mapa; e a mudança mais perigosa. Fazer cedo e fora de temporada.
 5. **Login unificado + `/perfil`** (sem foto).
 6. **QR code de credenciamento** — encaixa na inscrição do ano, no `/perfil`.
-7. **Foto (R2 + moderação)**.
-8. **`/peregrinos`** — só depois de resolvido o opt-in: o consentimento precisa
+7. **Transferir inscrição entre peregrinos** — só faz sentido com a área
+   logada de pé (5) e precisa invalidar o QR code (6), então vem depois dos
+   dois.
+8. **Foto (R2 + moderação)**.
+9. **`/peregrinos`** — só depois de resolvido o opt-in: o consentimento precisa
    estar no formulário **antes** de existir mapa para mostrar.
-9. **Adquirência com cartão** — frente própria, com risco próprio.
+10. **Adquirência com cartão** — frente própria, com risco próprio.
+
+**Fora da fila: galeria e venda de fotos (bloco 9).** É trilha independente —
+não depende de login, de `event_year` nem do provedor de e-mail (o e-mail só
+melhora o reenvio do link). Depende de **uma** decisão: cartão na Cloudflare
+para habilitar o R2. Tem urgência própria, porque foto de evento vende no calor
+do momento. Se o R2 for aprovado, dá para tocar em paralelo ao bloco 1, e
+resolve de quebra o storage do bloco 5 (foto do peregrino).
 
 ## Contexto que não está no código
 
