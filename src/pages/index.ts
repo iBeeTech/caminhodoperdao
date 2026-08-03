@@ -21,3 +21,5 @@ export { default as AdminTestemunhos } from "./Admin/Testemunhos";
 export { default as AdminPassarCpf } from "./Admin/PassarCpf";
 export { default as AdminPedidosSenha } from "./Admin/PedidosSenha";
 export { default as AdminInscricaoManual } from "./Admin/InscricaoManual";
+export { default as PeregrinoEntrar } from "./Peregrino/Entrar";
+export { default as PeregrinoPerfil } from "./Peregrino/Perfil";
