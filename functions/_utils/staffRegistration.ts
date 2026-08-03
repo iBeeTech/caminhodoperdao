@@ -10,8 +10,9 @@ import {
   isValidGender,
 } from "./registrations";
 import { getCapacityLimits, CapacityEnv } from "./capacity";
+import { getEventYear, EventYearEnv } from "./eventYear";
 
-export interface StaffRegistrationEnv extends CapacityEnv {
+export interface StaffRegistrationEnv extends CapacityEnv, EventYearEnv {
   DB: D1Database;
   CPF_ENCRYPTION_KEY?: string;
   CPF_ENCRYPTION_IV?: string;
@@ -299,9 +300,9 @@ export async function createStaffRegistration(
          cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name,
          emergency_contact_phone, has_allergy_medication, allergy_medication_details,
          has_dietary_restriction, dietary_restriction_details, gender, is_staff,
-         registration_number, created_at, paid_at
+         registration_number, event_year, created_at, paid_at
        ) VALUES (?1, ?2, ?3, 'PAID', 'cortesia', NULL, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11,
-         ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, 1, ?23, datetime('now'), ?24)`
+         ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, 1, ?23, ?25, datetime('now'), ?24)`
     )
       .bind(
         id,
@@ -327,7 +328,9 @@ export async function createStaffRegistration(
         v.dietaryDetails,
         input.gender ?? null,
         registrationNumber,
-        nowIso
+        nowIso,
+        // Explícito: o DEFAULT 2026 da coluna é só rede contra NULL.
+        getEventYear(env)
       )
       .run();
 

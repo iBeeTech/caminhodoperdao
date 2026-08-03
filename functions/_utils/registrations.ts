@@ -111,10 +111,12 @@ export async function insertRegistration(
     /** 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'. Nulo nas inscrições
         anteriores à existência do campo. Validado no endpoint. */
     gender?: string | null;
+    /** Ano da edição. Obrigatório: ver getEventYear em _utils/eventYear.ts. */
+    event_year: number;
   }
 ): Promise<void> {
   const stmt = DB.prepare(
-    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, gender, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, datetime('now'))"
+    "INSERT INTO registrations (id, email, name, status, payment_provider, payment_ref, sleep_at_monastery, companion_name, phone, cep, address, number, complement, city, state, cpf_encrypted, date_of_birth, terms_accepted_at, emergency_contact_name, emergency_contact_phone, has_allergy_medication, allergy_medication_details, has_dietary_restriction, dietary_restriction_details, gender, event_year, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, datetime('now'))"
   ).bind(
     input.id,
     input.email.toLowerCase(),
@@ -141,6 +143,7 @@ export async function insertRegistration(
     input.has_dietary_restriction,
     input.dietary_restriction_details,
     input.gender ?? null,
+    input.event_year,
   );
   await stmt.run();
 }

@@ -23,8 +23,10 @@ import {
   normalizeInviteCode,
 } from "../_utils/inviteCodes";
 import type { CapacityEnv } from "../_utils/capacity";
+import { getEventYear } from "../_utils/eventYear";
+import type { EventYearEnv } from "../_utils/eventYear";
 
-interface Env extends CapacityEnv {
+interface Env extends CapacityEnv, EventYearEnv {
   DB: D1Database;
   GATEWAY_API_KEY?: string;
   // Custos da inscrição em reais (ex: "100" para R$100,00). Configuráveis na Cloudflare.
@@ -353,6 +355,9 @@ export async function handleRegister(env: Env, body: unknown): Promise<Response>
         has_dietary_restriction: hasDietaryRestriction ? 1 : 0,
         dietary_restriction_details: hasDietaryRestriction ? dietaryDetails : null,
         gender,
+        // Explícito de propósito: o DEFAULT 2026 da coluna (migration 025) é só
+        // rede para não existir NULL, e marcaria 2027 como 2026 em silêncio.
+        event_year: getEventYear(env),
       });
     }
   } catch (error) {

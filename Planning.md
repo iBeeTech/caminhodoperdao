@@ -48,6 +48,24 @@ de papel no JWT**: só o token com papel de admin abre `/admin`.
 - Já existe e será reaproveitado sem alteração: `functions/_utils/email.ts`
   (envio via Resend) e `functions/_utils/passwordOtp.ts` (código, HMAC, limites,
   expiração).
+- **Os 747 inscritos em `registrations` NÃO ganham conta.** Nada de criar login
+  em massa: quem já se inscreveu é considerado **sem perfil**, e cria a própria
+  conta quando quiser. A inscrição existente é então **ligada pelo CPF**
+  (`cpf_encrypted`), que é o que amarra pessoa e histórico.
+
+  Consequências, para não descobrir depois:
+  - `registrations` continua funcionando sozinha. Inscrever-se **não** exige
+    conta, e o site não pode passar a exigir — isso quebraria a inscrição.
+  - `users.id` não pode virar coluna obrigatória em `registrations`: a maioria
+    das inscrições nunca terá dono.
+  - Perfil só mostra histórico de quem tem CPF gravado. Inscrição antiga sem
+    CPF (ver `admin/set-cpf.ts`) fica órfã e não aparece para ninguém.
+  - Duas pessoas não podem reivindicar o mesmo CPF. O vínculo precisa de prova
+    de posse — o código por e-mail já resolve, desde que o e-mail confira com o
+    da inscrição.
+- **PBKDF2 só na tabela nova.** `users` nasce com PBKDF2; `admin_users` fica com
+  o SHA-256 atual, intocada. Evita re-hash dos 11 admins e mexer no que acabou
+  de ser estabilizado, e o hash forte entra onde o volume justifica.
 
 ### Decisões a tomar antes de codar
 - **Migração dos 11 admins:** se virar tabela única, os hashes atuais precisam

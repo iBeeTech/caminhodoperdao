@@ -19,13 +19,20 @@ pages_build_output_dir = "build"
 ## endereço @caminhodoperdao.com.br, e o valor só viaja no campo "from" do envio.
 ## É público de propósito: quem recebe o e-mail lê esse endereço. A credencial
 ## do Resend (RESEND_API_KEY) é secret do Pages e NUNCA entra aqui.
+## EVENT_YEAR: ano da edição em andamento, gravado em registrations.event_year.
+## TROCAR ANTES DE ABRIR A INSCRIÇÃO DO ANO SEGUINTE. A coluna tem DEFAULT 2026
+## (migration 025) só para não existir NULL — num índice único de várias colunas
+## o SQLite não aplica a unicidade na linha em que alguma coluna é NULL, e o CPF
+## escaparia da regra "1 inscrição por edição". Se esta env ficar desatualizada,
+## a inscrição de 2027 nasce marcada como 2026 sem erro nenhum.
+##
 ## Decidido em 03/08/2026: o destinatário NÃO deve conseguir responder. Não
 ## existe reply-to em nenhum e-mail, e o "Enable Receiving" fica desligado no
 ## Resend — resposta a este endereço volta com erro, de propósito. Como o botão
 ## "Responder" existe em qualquer app de e-mail, todo corpo de mensagem precisa
 ## dizer que não se responde e oferecer o WhatsApp como canal de contato.
 [env.production]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhodoperdao.com.br", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhodoperdao.com.br", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026" }
 
 
 
@@ -46,7 +53,7 @@ binding = "AI"
 
 
 [env.preview]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_JWT_SECRET = "CHANGE_ME_STRONG_SECRET", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_JWT_SECRET = "CHANGE_ME_STRONG_SECRET", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
