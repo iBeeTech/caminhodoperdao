@@ -34,12 +34,22 @@ de papel no JWT**: só o token com papel de admin abre `/admin`.
   dos 23 endpoints de admin e já sabe recusar token marcado (`mustChange`). É
   nele que a checagem de papel entra.
 
-### Decisões a tomar antes de codar
+### Decidido em 03/08/2026
 
-- **Tabela única ou duas?** O pedido é "o mesmo login". Mais simples: uma tabela
-  `users` com `role`, e `admin_users` migra para dentro dela. Alternativa:
-  manter `admin_users` e criar `users`, com o login tentando as duas — mais
-  fácil de começar, pior de manter.
+- **O admin fica como está.** O login e o "esqueci minha senha" do admin não
+  mudam mais. O fluxo de OTP por e-mail entrou em produção nesta data
+  (migration 024) e é o estado final dele. O login novo é **só do peregrino**.
+- **Peregrino entra com e-mail + senha.** OTP serve apenas para recuperar
+  senha, não como forma de entrar.
+- Como o admin não muda, `admin_users` **permanece separada**. A tabela `users`
+  nasce só para peregrinos. O "login unificado" original foi abandonado: unificar
+  obrigaria a migrar os 11 admins e mexer no que acabou de ser estabilizado, sem
+  ganho para o peregrino.
+- Já existe e será reaproveitado sem alteração: `functions/_utils/email.ts`
+  (envio via Resend) e `functions/_utils/passwordOtp.ts` (código, HMAC, limites,
+  expiração).
+
+### Decisões a tomar antes de codar
 - **Migração dos 11 admins:** se virar tabela única, os hashes atuais precisam
   vir junto (ou todos trocam a senha). Como a troca obrigatória já está ligada
   para 9 deles, dá para aproveitar a mesma onda.
@@ -101,6 +111,40 @@ e esse texto **vira um link para o formulário de inscrição na home (`/`)**.
 
 Ou seja, o mesmo espaço tem dois estados: **"ainda não inscrito neste ano"**
 (chamada + link) e **"inscrito"** (dados da inscrição + QR code, bloco 4).
+
+### Medalhas e selos (decidido em 03/08/2026)
+
+O perfil ganha reconhecimento da jornada. Separados pelo que **já dá para
+calcular com o dado que existe** e pelo que exige coisa nova.
+
+Sai de graça do banco atual, bastando `event_year` (bloco 3):
+
+| Selo | De onde sai |
+|---|---|
+| Medalha do ano ("Peregrino 2026") | uma por `event_year` com inscrição paga |
+| Contador de caminhadas ("sua 3ª") | contagem de anos distintos |
+| Fundador | participou da primeira edição |
+| Servo | `is_staff = 1` em algum ano |
+| Mosteiro | dormiu no mosteiro (`sleep_at_monastery`) |
+| Semeador | convidou alguém que se inscreveu (`invite_codes`, `group_invited`) |
+| Testemunha | gravou testemunho (tabela `testemunhos`) |
+
+⚠️ Regra: medalha só para inscrição **paga e não cancelada**. Contar pendente
+faria a medalha aparecer e sumir, o que é pior do que não existir.
+
+Exige trabalho novo, em ordem de custo:
+
+- **Linha do tempo** da jornada, ano a ano — só apresentação do histórico.
+- **Card compartilhável** (imagem para story: "Eu caminhei o Caminho do Perdão
+  2026"). Barato e é divulgação orgânica para o ano seguinte.
+- **Certificado em PDF** para baixar e imprimir.
+- **Intenção da caminhada** — por quem/pelo que a pessoa caminha. Casa com o
+  espírito do evento; decidir se é privado ou vai para um mural público.
+- **Contagem regressiva** para a próxima edição.
+- **Fotos do ano** que a pessoa participou — liga no bloco 9.
+
+Não fazer: ranking ou competição entre peregrinos. O evento é religioso, e
+comparar quem caminhou mais trai o sentido dele.
 
 ### Decisões a tomar
 
@@ -526,20 +570,38 @@ apareça para o usuário. **Destravar isto primeiro.**
 
 ## Ordem sugerida
 
-1. **`tsconfig` + Cypress** — a rede. Barato, e destrava a confiança em tudo.
-2. **Provedor de e-mail** — sem ele, login e QR code viram suporte manual.
-3. **Hash de senha (PBKDF2/Argon2)** — antes de existir conta de público.
-4. **`event_year` + unicidade (cpf, ano)** — pré-requisito de perfil, histórico
-   e mapa; e a mudança mais perigosa. Fazer cedo e fora de temporada.
-5. **Login unificado + `/perfil`** (sem foto).
-6. **QR code de credenciamento** — encaixa na inscrição do ano, no `/perfil`.
-7. **Transferir inscrição entre peregrinos** — só faz sentido com a área
-   logada de pé (5) e precisa invalidar o QR code (6), então vem depois dos
-   dois.
-8. **Foto (R2 + moderação)**.
-9. **`/peregrinos`** — só depois de resolvido o opt-in: o consentimento precisa
-   estar no formulário **antes** de existir mapa para mostrar.
-10. **Adquirência com cartão** — frente própria, com risco próprio.
+Revisada em 03/08/2026, depois de o e-mail entrar e de o escopo do peregrino
+ser fechado (perfil, medalhas, troca, cancelamento, credenciamento).
+
+0. ~~**Provedor de e-mail**~~ — ✅ feito em 03/08/2026 (Resend, domínio
+   verificado, `RESEND_API_KEY` como secret do Pages).
+1. **`tsconfig` + Cypress** — a rede. Segue pendente: `tsc --noEmit` ainda não
+   roda pela config, e a checagem manual com TypeScript 5.6 acusa **27 erros**
+   no projeto — inclusive `savePayment` inexistente em `api/pix/create.ts`
+   (código morto hoje, mas é exatamente o tipo de coisa que passa batido).
+2. **Hash de senha (PBKDF2/Argon2)** — deixou de ser recomendação e virou
+   requisito: `hashPassword` é SHA-256 **sem sal**, com pepper vazio em
+   produção. Aguenta 11 admins; com centenas de contas de peregrino é
+   rainbow-table direto. Tem de entrar **antes** da primeira conta pública.
+3. **`event_year` + unicidade (cpf, ano)** — a mudança mais perigosa do plano, e
+   pré-requisito de histórico, medalhas, credenciamento por edição e troca.
+   Fazer cedo, com calma e fora de temporada.
+4. **Login do peregrino** — tabela `users`, e-mail + senha, recuperação pelo OTP
+   que já existe.
+5. **`/perfil`** base: dados, edição e histórico por ano.
+6. **Medalhas e selos** — em cima do histórico do passo 5.
+7. **QR code de credenciamento** — encaixa na inscrição do ano, no `/perfil`.
+8. **Cancelamento pelo perfil** — o endpoint já existe
+   (`api/registration/cancel.ts`); aqui é passar a exigir sessão em vez de CPF.
+9. **Transferir inscrição entre peregrinos** — precisa da área logada (4) e de
+   invalidar o QR code (7), então vem depois dos dois.
+10. **Foto do peregrino (R2 + moderação)** — o R2 é o mesmo do bloco 9.
+11. **`/peregrinos`** — só depois de resolvido o opt-in: o consentimento precisa
+    estar no formulário **antes** de existir mapa para mostrar.
+12. **Adquirência com cartão** — frente própria, com risco próprio.
+
+Fora da fila, sem dependência das anteriores: **galeria e venda de fotos**
+(bloco 9), presa só à decisão do cartão na Cloudflare.
 
 **Fora da fila: galeria e venda de fotos (bloco 9).** É trilha independente —
 não depende de login, de `event_year` nem do provedor de e-mail (o e-mail só
