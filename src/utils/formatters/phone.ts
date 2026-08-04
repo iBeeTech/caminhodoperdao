@@ -10,6 +10,8 @@
  * `stripCountryCode`.
  */
 
+import { applyMaskedInput } from "./mask";
+
 /** DDD + 9 dígitos. Não existe telefone brasileiro maior que isso. */
 export const MAX_PHONE_DIGITS = 11;
 
@@ -70,13 +72,13 @@ export function applyPhoneInput(
   rawInput: string,
   currentDigits: string
 ): { digits: string; hadCountryCode: boolean } {
-  const { digits, hadCountryCode } = stripCountryCode(rawInput);
+  const { hadCountryCode } = stripCountryCode(rawInput);
 
-  const deletedOnlyMaskChar =
-    rawInput.length < formatPhoneBR(currentDigits).length && digits === currentDigits;
-
+  // O +55 é tratado antes; daqui para a frente vale a mesma regra de digitação
+  // de CPF e CEP, que mora em `mask.ts`.
+  const base = hadCountryCode ? stripCountryCode(rawInput).digits : rawInput;
   return {
-    digits: deletedOnlyMaskChar ? currentDigits.slice(0, -1) : digits,
+    digits: applyMaskedInput(base, currentDigits, formatPhoneBR, MAX_PHONE_DIGITS),
     hadCountryCode,
   };
 }

@@ -2,6 +2,8 @@ import React from "react";
 import { theme } from "../../../styles/theme";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
 import { applyPhoneInput, formatPhoneBR, stripCountryCode } from "../../../utils/formatters/phone";
+import { applyCpfInput, formatCpfBR } from "../../../utils/formatters/cpf";
+import { applyCepInput, formatCepBR } from "../../../utils/formatters/cep";
 import { PilgrimProfile } from "../api";
 
 /**
@@ -84,6 +86,10 @@ const GENDERS = [
 const CEP_LENGTH = 8;
 
 const PHONE_PLACEHOLDER = "(16) 9XXXX-XXXX";
+// Exemplos inventados de propósito: número real de gente de verdade não entra
+// como placeholder nem para ilustrar.
+const CPF_PLACEHOLDER = "123.456.789-00";
+const CEP_PLACEHOLDER = "12.345-678";
 const COUNTRY_CODE_WARNING = "Código de área do Brasil +55 não é necessário.";
 
 const PIX_TYPES = [
@@ -132,7 +138,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     value.phone.length > 0 && value.phone === value.emergencyContactPhone;
 
   const handleCepChange = async (raw: string) => {
-    const digits = raw.replace(/\D/g, "").slice(0, CEP_LENGTH);
+    const digits = applyCepInput(raw, value.cep);
     onChange({ ...value, cep: digits });
 
     if (digits.length !== CEP_LENGTH) {
@@ -179,11 +185,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <input
           id="pf-cpf"
           style={{ ...styles.input, ...(hasCpf ? styles.inputLocked : {}) }}
-          value={hasCpf ? cpfMasked ?? "cadastrado" : cpfInput}
-          onChange={e => onCpfInputChange(e.target.value.replace(/\D/g, "").slice(0, 11))}
+          value={hasCpf ? cpfMasked ?? "cadastrado" : formatCpfBR(cpfInput)}
+          onChange={e => onCpfInputChange(applyCpfInput(e.target.value, cpfInput))}
           readOnly={hasCpf}
           inputMode="numeric"
-          placeholder={hasCpf ? "" : "somente números"}
+          placeholder={hasCpf ? "" : CPF_PLACEHOLDER}
         />
         <p style={styles.hint}>
           {hasCpf
@@ -263,11 +269,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <input
           id="pf-cep"
           style={styles.input}
-          value={value.cep}
+          value={formatCepBR(value.cep)}
           onChange={e => handleCepChange(e.target.value)}
           inputMode="numeric"
           autoComplete="postal-code"
-          placeholder="somente números"
+          placeholder={CEP_PLACEHOLDER}
         />
         {isLookingUpCep && <p style={styles.cepStatus}>Buscando endereço...</p>}
         {!isLookingUpCep && cepError && <p style={styles.cepError}>{cepError}</p>}

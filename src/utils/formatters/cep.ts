@@ -1,8 +1,12 @@
+import { applyMaskedInput } from "./mask";
+
 /**
  * Formatação de CEP brasileiro
  * 
  * Converte "12345678" para "12.345-678"
  */
+
+export const CEP_DIGITS = 8;
 
 export function formatCepBR(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 8);
@@ -19,6 +23,11 @@ export function formatCepBR(value: string): string {
   if (p3) out += `-${p3}`;
   
   return out;
+}
+
+/** O que gravar quando a pessoa digita ou apaga no campo de CEP. */
+export function applyCepInput(rawInput: string, currentDigits: string): string {
+  return applyMaskedInput(rawInput, currentDigits, formatCepBR, CEP_DIGITS);
 }
 
 export default formatCepBR;
