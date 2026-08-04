@@ -921,6 +921,46 @@ Sexta leva do mesmo dia (só código):
   ao começo da outra; o número de pedras por linha se ajusta à largura por
   `ResizeObserver`.
 
+### Auditoria: admin e peregrino com o mesmo e-mail (04/08/2026)
+
+Levantado pelo organizador: **a mesma pessoa pode ter o e-mail em `admin_users`
+e em `users`.** O que foi conferido no código, e o que foi corrigido:
+
+Já estava separado, e continua:
+
+- **Tabelas distintas.** `admin_users` (11 contas) e `users` (peregrino) não se
+  cruzam. O mesmo e-mail nas duas cria duas contas independentes, com senhas
+  independentes — e isso é o comportamento correto, não um bug.
+- **Papel no token.** `verifyJwt` (admin) recusa qualquer token cujo papel não
+  seja `"admin"`; `verifyUserJwt` recusa qualquer um que não seja
+  `"peregrino"`. Um token de peregrino **não abre** `/admin`, e vice-versa.
+- **Sessões separadas no navegador:** `admin_jwt` e `peregrino_jwt`, chaves
+  diferentes no localStorage. Entrar como peregrino não derruba a sessão de
+  admin — o caso do próprio organizador.
+- **Nenhuma tela de admin usa o cabeçalho do site**, então o avatar do peregrino
+  nunca aparece dentro do painel.
+
+⚠️ O que **não** estava separado, e foi corrigido em 04/08/2026:
+
+- **A chave que assina os dois tokens era a mesma.** `getUserJwtSecret` caía no
+  `ADMIN_JWT_SECRET` quando `USER_JWT_SECRET` não existia. O papel no token
+  impedia a troca de um pelo outro, mas quem obtivesse aquela chave poderia
+  forjar QUALQUER um dos dois. Agora existe `USER_JWT_SECRET` como secret
+  próprio do Pages, e os dois mundos são criptograficamente independentes.
+  Efeito colateral esperado: as sessões de peregrino abertas antes da troca
+  deixam de valer e a pessoa entra de novo.
+
+Sobra como decisão consciente:
+
+- **`admin_users` continua com SHA-256 sem sal**, enquanto `users` usa PBKDF2.
+  Quem usar a MESMA senha nos dois lados fica tão protegido quanto o elo mais
+  fraco — o do admin. Trocar o hash do admin é a frente do bloco 1 e segue
+  adiada de propósito.
+- **A tela de entrar não diz "este e-mail é de admin".** Quem tentar entrar em
+  `/entrar` com a senha de admin vê "e-mail ou senha incorretos". É pior de
+  entender e melhor de segurança: a mensagem contrária transformaria o
+  formulário em detector de quem é admin.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial
