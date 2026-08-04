@@ -28,8 +28,13 @@ import { useUserSession } from "../../../utils/auth/useUserSession";
  * - **Home** — as seções da página inicial (âncoras).
  * - **Memórias** — o que ficou registrado das caminhadas: depoimentos,
  *   testemunhos e fotos.
- * - **Conquistas** — o catálogo de medalhas, aberto a quem não tem conta.
  * - **Meu Caminho** — só para quem está logado.
+ *
+ * Cada item do menu traz uma LINHA DE EXPLICAÇÃO embaixo. "Conquistas" sozinho
+ * não dizia nada: a pessoa tinha de clicar para descobrir o que era. Rótulo de
+ * uma palavra só funciona quando todo mundo já sabe o que ele significa — e
+ * aqui não sabia. Por isso o item virou "Medalhas e temas", dentro de Memórias,
+ * com a explicação embaixo.
  *
  * O grupo abre no PASSAR DO MOUSE e só FIXA no clique. Quem está de passagem vê
  * o conteúdo sem clicar; quem quer ler com calma clica e o menu para de sumir
@@ -49,6 +54,8 @@ interface HeaderProps {
 interface NavLeaf {
   label: string;
   href: string;
+  /** Uma linha dizendo o que a pessoa vai encontrar. */
+  hint?: string;
 }
 
 interface NavGroup {
@@ -81,6 +88,16 @@ const menuItemStyle: React.CSSProperties = {
   fontWeight: 600,
   fontSize: "0.9rem",
   whiteSpace: "nowrap",
+};
+
+const menuHintStyle: React.CSSProperties = {
+  display: "block",
+  fontWeight: 400,
+  fontSize: "0.76rem",
+  color: "#6b7280",
+  marginTop: 2,
+  whiteSpace: "normal",
+  maxWidth: 230,
 };
 
 const triggerStyle: React.CSSProperties = {
@@ -120,21 +137,55 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
     {
       label: "Home",
       items: [
-        { label: t("nav.home") as string, href: isHomePage ? "#home" : "/" },
-        { label: t("nav.schedule") as string, href: `${anchorBase}#schedule` },
-        { label: t("nav.about") as string, href: `${anchorBase}#about` },
-        { label: t("nav.contact") as string, href: `${anchorBase}#contact` },
+        {
+          label: t("nav.home") as string,
+          href: isHomePage ? "#home" : "/",
+          hint: "O começo da página",
+        },
+        {
+          label: t("nav.schedule") as string,
+          href: `${anchorBase}#schedule`,
+          hint: "Horários e paradas do dia da caminhada",
+        },
+        {
+          label: t("nav.about") as string,
+          href: `${anchorBase}#about`,
+          hint: "O que é o Caminho do Perdão",
+        },
+        {
+          label: t("nav.contact") as string,
+          href: `${anchorBase}#contact`,
+          hint: "Como falar com a organização",
+        },
       ],
     },
     {
       label: "Memórias",
       items: [
-        { label: t("nav.testimonials") as string, href: "/depoimentos" },
-        { label: t("nav.testimonies") as string, href: "/testemunhos" },
-        { label: t("nav.gallery") as string, href: "/gallery" },
+        {
+          label: t("nav.testimonials") as string,
+          href: "/depoimentos",
+          hint: "O que os peregrinos escreveram sobre a caminhada",
+        },
+        {
+          label: t("nav.testimonies") as string,
+          href: "/testemunhos",
+          hint: "Graças e milagres contados em áudio",
+        },
+        {
+          label: t("nav.gallery") as string,
+          href: "/gallery",
+          hint: "As fotos de cada edição",
+        },
+        {
+          // Estava solto no topo como "Conquistas", que ninguém entendia sem
+          // clicar. Aqui o nome diz o conteúdo e o grupo dá o contexto.
+          label: "Medalhas e temas",
+          href: "/medalhas",
+          hint: "As medalhas que existem e o tema de cada ano",
+        },
       ],
     },
-    { label: "Conquistas", href: "/medalhas" },
     // "Meu Caminho" no lugar de "Dashboard": a palavra descreve o que a pessoa
     // vai encontrar (a caminhada dela, ano a ano) em vez do tipo de tela.
     ...(isLoggedIn ? [{ label: "Meu Caminho", href: "/dashboard" }] : []),
@@ -239,6 +290,7 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
                                 onClick={event => handleNavClick(event, item.href, item.label)}
                               >
                                 {item.label}
+                                {item.hint && <span style={menuHintStyle}>{item.hint}</span>}
                               </a>
                             </li>
                           ))}

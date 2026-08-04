@@ -66,6 +66,13 @@ const styles: Record<string, React.CSSProperties> = {
     wordBreak: "break-all",
     lineHeight: 1.4,
   },
+  itemHint: {
+    display: "block",
+    fontWeight: 400,
+    fontSize: "0.76rem",
+    color: c.muted,
+    marginTop: 2,
+  },
   item: {
     display: "block",
     width: "100%",
@@ -221,8 +228,20 @@ const AccountMenu: React.FC = () => {
           <div style={styles.menuHeader}>
             <p style={styles.menuEmail}>{email}</p>
           </div>
-          <a href="/perfil" role="menuitem" style={styles.item}>
+          {/* "Meu Caminho" também aqui, e não só na barra: a foto é o lugar
+              que a pessoa procura quando quer alguma coisa "da conta dela", e
+              a caminhada é justamente isso. */}
+          <a href="/dashboard" role="menuitem" style={styles.item}>
+            Meu Caminho
+            <span style={styles.itemHint}>Sua estrada e suas medalhas</span>
+          </a>
+          <a
+            href="/perfil"
+            role="menuitem"
+            style={{ ...styles.item, borderTop: `1px solid ${c.border}` }}
+          >
             Perfil
+            <span style={styles.itemHint}>Seus dados, sua foto e seus anos</span>
           </a>
           <button
             type="button"
