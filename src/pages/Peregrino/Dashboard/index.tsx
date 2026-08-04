@@ -6,6 +6,7 @@ import RoadOfEditions from "../components/RoadOfEditions";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
 import YearMedalsGroup from "../components/YearMedalsGroup";
+import InscricaoCard from "../components/InscricaoCard";
 import { dashboardStyles as s } from "./dashboard.styles";
 import { EDITION_THEMES, NEXT_EDITION } from "../../../data/editions";
 import {
@@ -315,6 +316,19 @@ const PeregrinoDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* A inscrição vem primeiro entre os cartões: é a única coisa da tela
+              com prazo, e prazo perdido não volta. */}
+          <InscricaoCard
+            me={me}
+            whatsappUrl={whatsappUrl}
+            onProfileSaved={(profile, hasCpf, cpfMasked) =>
+              setMe(current =>
+                current ? { ...current, profile, hasCpf, cpfMasked: cpfMasked ?? current.cpfMasked } : current
+              )
+            }
+            onSessionExpired={() => navigate("/entrar", { replace: true })}
+          />
 
           {EDITION_THEMES[me.currentYear] && (
             <div style={s.themeCallout}>

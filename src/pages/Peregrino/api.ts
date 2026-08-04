@@ -195,6 +195,41 @@ export async function fetchPhoto(): Promise<string | null> {
   }
 }
 
+export interface MyRegistration {
+  eventYear: number;
+  /** Epoch ms da abertura das inscrições. */
+  opensAt: number;
+  isOpen: boolean;
+  /** true = aberta antes da data por chave de teste. */
+  isForced: boolean;
+  capacity: { taken: number; limit: number };
+  needsInviteCode: boolean;
+  /** Campos do cadastro que faltam para a inscrição existir. */
+  missingProfileFields: string[];
+  registration: {
+    id: string;
+    status: "PENDING" | "PAID" | "CANCELED";
+    sleepAtMonastery: boolean;
+    companionName: string | null;
+    usedInviteCode: boolean;
+    createdAt: string;
+    paidAt: string | null;
+  } | null;
+}
+
+export function fetchMyRegistration(): Promise<MyRegistration> {
+  return request<MyRegistration>("/api/me/registration");
+}
+
+export function createRegistration(input: {
+  sleepAtMonastery: boolean;
+  companionName: string;
+  acceptsTerms: boolean;
+  inviteCode?: string;
+}): Promise<{ id: string; status: string; paymentPending: boolean }> {
+  return request("/api/me/registration", { method: "POST", body: JSON.stringify(input) });
+}
+
 /**
  * Link de WhatsApp da organização, com rodízio entre os voluntários
  * (`/api/whatsapp/next`). Buscado ANTES do clique de propósito: resolver a URL
@@ -228,6 +263,15 @@ export function messageForError(error: unknown): string {
     invalid_pix_phone: "A chave PIX de celular está inválida. Use DDD + número.",
     invalid_pix_email: "A chave PIX de e-mail está inválida.",
     cpf_already_used: "Este CPF já está em outra conta. Fale com a organização.",
+    registration_not_open: "As inscrições ainda não abriram.",
+    already_registered: "Você já tem inscrição nesta edição.",
+    cpf_already_registered: "Já existe inscrição com este CPF nesta edição.",
+    incomplete_profile: "Complete seu cadastro antes de se inscrever.",
+    terms_not_accepted: "É preciso aceitar o termo de responsabilidade.",
+    sold_out: "As vagas acabaram. Só com código de convite.",
+    invite_not_found: "Código de convite não encontrado.",
+    invite_revoked: "Este código de convite foi cancelado.",
+    invite_used: "Este código de convite já foi usado.",
     cpf_encryption_not_configured: "Não foi possível salvar o CPF agora. Fale com a organização.",
   };
   return map[error.message] || "Não foi possível salvar. Tente de novo.";
