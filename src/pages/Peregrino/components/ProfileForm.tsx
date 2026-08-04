@@ -1,7 +1,7 @@
 import React from "react";
 import { theme } from "../../../styles/theme";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
-import { formatPhoneBR, stripCountryCode } from "../../../utils/formatters/phone";
+import { applyPhoneInput, formatPhoneBR, stripCountryCode } from "../../../utils/formatters/phone";
 import { PilgrimProfile } from "../api";
 
 /**
@@ -214,7 +214,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           style={styles.input}
           value={formatPhoneBR(value.phone)}
           onChange={e => {
-            const { digits, hadCountryCode } = stripCountryCode(e.target.value);
+            const { digits, hadCountryCode } = applyPhoneInput(e.target.value, value.phone);
             setCountryCodeWarning(current => ({ ...current, phone: hadCountryCode }));
             set("phone", digits);
           }}
@@ -361,7 +361,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           }}
           value={formatPhoneBR(value.emergencyContactPhone)}
           onChange={e => {
-            const { digits, hadCountryCode } = stripCountryCode(e.target.value);
+            const { digits, hadCountryCode } = applyPhoneInput(
+              e.target.value,
+              value.emergencyContactPhone
+            );
             setCountryCodeWarning(current => ({ ...current, emergency: hadCountryCode }));
             set("emergencyContactPhone", digits);
           }}

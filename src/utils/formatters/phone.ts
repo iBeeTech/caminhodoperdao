@@ -54,4 +54,31 @@ export function stripCountryCode(rawDigits: string): { digits: string; hadCountr
   return { digits: digits.slice(0, MAX_PHONE_DIGITS), hadCountryCode: false };
 }
 
+/**
+ * O que gravar quando a pessoa digita ou APAGA no campo com máscara.
+ *
+ * ⚠️ Sem isto o backspace trava. Com dois dígitos a máscara mostra `(16)`, e o
+ * cursor fica depois do parêntese: apagar remove o `)`, o campo vira `(16`, a
+ * máscara reconstrói `(16)` e a tela não muda. A pessoa aperta backspace várias
+ * vezes achando que o campo travou.
+ *
+ * A saída é reconhecer esse caso: se o texto encolheu mas os DÍGITOS continuam
+ * os mesmos, o que foi apagado era enfeite da máscara — então quem sai é o
+ * último dígito, que é o que a pessoa queria apagar.
+ */
+export function applyPhoneInput(
+  rawInput: string,
+  currentDigits: string
+): { digits: string; hadCountryCode: boolean } {
+  const { digits, hadCountryCode } = stripCountryCode(rawInput);
+
+  const deletedOnlyMaskChar =
+    rawInput.length < formatPhoneBR(currentDigits).length && digits === currentDigits;
+
+  return {
+    digits: deletedOnlyMaskChar ? currentDigits.slice(0, -1) : digits,
+    hadCountryCode,
+  };
+}
+
 export default formatPhoneBR;
