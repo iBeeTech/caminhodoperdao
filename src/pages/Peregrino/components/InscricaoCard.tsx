@@ -290,10 +290,22 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
       onProfileSaved(saved.profile, saved.hasCpf, saved.cpfMasked);
       setForm(saved.profile);
       setCpfInput("");
-      setIsEditing(false);
+
       // Recarrega o que falta: o servidor é quem sabe se o cadastro ficou
       // completo, e repetir essa regra na tela faria as duas divergirem.
-      setData(await fetchMyRegistration());
+      const refreshed = await fetchMyRegistration();
+      setData(refreshed);
+
+      // Só avança se realmente completou. Antes seguia direto para a conferência
+      // mesmo com campo faltando, e a pessoa só descobria no "Confirmar
+      // inscrição", com um erro seco — longe do campo que faltava preencher.
+      if (refreshed.missingProfileFields.length > 0) {
+        setError(
+          `Ainda falta preencher: ${refreshed.missingProfileFields.join(", ")}.`
+        );
+        return;
+      }
+      setIsEditing(false);
     } catch (saveError) {
       if (saveError instanceof SessionExpiredError) {
         onSessionExpired();
@@ -438,6 +450,8 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                 <p style={styles.help}>
                   Falta preencher: {data.missingProfileFields.join(", ")}. É o mesmo
                   cadastro do seu perfil — preenchendo aqui, fica salvo para sempre.
+                  Depois de salvar vem o último passo, com o pernoite e o aceite do
+                  termo de responsabilidade.
                 </p>
                 <div style={{ marginTop: 14 }}>
                   <ProfileForm
@@ -456,7 +470,7 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                   onClick={handleSaveProfile}
                   disabled={isBusy}
                 >
-                  {isBusy ? "Salvando..." : "Salvar e continuar"}
+                  {isBusy ? "Salvando..." : "Salvar e ir para o último passo"}
                 </button>
               </>
             ) : (
