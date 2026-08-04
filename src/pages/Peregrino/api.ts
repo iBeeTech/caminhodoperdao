@@ -42,6 +42,8 @@ export interface PilgrimProfile {
   allergyMedicationDetails: string;
   hasDietaryRestriction: boolean;
   dietaryRestrictionDetails: string;
+  refundPixKey: string;
+  refundPixType: string;
 }
 
 export interface Me {
@@ -79,6 +81,8 @@ export const EMPTY_PROFILE: PilgrimProfile = {
   allergyMedicationDetails: "",
   hasDietaryRestriction: false,
   dietaryRestrictionDetails: "",
+  refundPixKey: "",
+  refundPixType: "",
 };
 
 /** Sessão expirada. Quem pegar isto deve mandar a pessoa para `/entrar`. */
@@ -207,6 +211,12 @@ export function messageForError(error: unknown): string {
     invalid_state: "Estado inválido. Use a sigla, como MG.",
     invalid_gender: "Selecione uma opção de sexo.",
     invalid_cpf: "CPF inválido. Confira os números.",
+    invalid_pix_type: "Escolha um tipo de chave PIX válido.",
+    missing_pix_type: "Diga qual é o tipo da sua chave PIX.",
+    missing_pix_key: "Preencha a chave PIX ou deixe o tipo em branco.",
+    invalid_pix_cpf: "A chave PIX de CPF está inválida.",
+    invalid_pix_phone: "A chave PIX de celular está inválida. Use DDD + número.",
+    invalid_pix_email: "A chave PIX de e-mail está inválida.",
     cpf_already_used: "Este CPF já está em outra conta. Fale com a organização.",
     cpf_encryption_not_configured: "Não foi possível salvar o CPF agora. Fale com a organização.",
   };

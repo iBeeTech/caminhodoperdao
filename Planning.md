@@ -864,6 +864,24 @@ Terceira leva do mesmo dia (migration 032):
   1090), com fonte e espaçamento menores e "Tutoriais de Cancelamento" reduzido
   a "Tutoriais". Com Dashboard e avatar, os itens não cabiam mais.
 
+Quarta leva do mesmo dia (migration 033):
+
+- ✅ **Chave PIX no cadastro** — `users.refund_pix_key` e `refund_pix_type`.
+  Já existia `refund_requests.pix_key` (migration 022), mas ela só é preenchida
+  NA HORA do cancelamento, e isso é tarde para dois casos: (1) quem cancela às
+  pressas erra a digitação e o admin descobre na hora de devolver; (2) na troca
+  de inscrição (bloco 8), quem pagou foi a pessoa de origem, e o "PIX para
+  estorno" da inscrição passaria a ser o da pessoa nova. Com a chave na CONTA de
+  cada um, o admin sabe para quem devolver sem depender de memória de conversa.
+  ⚠️ `refund_requests.pix_key` **continua mandando** na hora do estorno — a
+  chave do cadastro é o padrão que preenche aquela, não a substitui.
+- ✅ **Cabeçalho agrupado** — "Home" (Início, Cronograma, Sobre, Contato,
+  Depoimentos), "Memórias" (Testemunhos, Galeria de Fotos), "Medalhas",
+  "Tutoriais" e "Dashboard". Dez itens soltos não cabiam em tela nenhuma.
+- ✅ **"Entrar | Cadastrar-se"** — um botão com dois destinos, não dois botões:
+  quem chega não sabe se já tem conta, e duas caixas separadas fazem a dúvida
+  virar hesitação. `/entrar?cadastro=1` abre já no passo de criar conta.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial

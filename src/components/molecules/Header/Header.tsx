@@ -10,91 +10,155 @@ import {
   Navigation,
   NavList,
   NavItem,
-  MobileNavItem,
   NavLink,
-  NavLinkCta,
   HeaderActions,
-  DesktopOnlyAction,
   MenuToggle,
 } from "./Header.styles";
 import AccountMenu from "./AccountMenu";
 import { useUserSession } from "../../../utils/auth/useUserSession";
+
+/**
+ * Cabeçalho do site.
+ *
+ * Os itens são AGRUPADOS por assunto, não listados um a um. Com Início,
+ * Cronograma, Sobre, Contato, Depoimentos, Testemunhos, Galeria, Medalhas,
+ * Tutoriais e Dashboard soltos lado a lado, a barra virava uma parede de texto
+ * que não cabia em tela nenhuma:
+ *
+ * - **Home** — as seções da página inicial (âncoras) mais os depoimentos.
+ * - **Memórias** — o que ficou registrado das caminhadas: testemunhos e fotos.
+ * - **Medalhas** — o catálogo, aberto a quem não tem conta.
+ * - **Tutoriais** — os passo a passo de cancelamento.
+ * - **Dashboard** — só para quem está logado.
+ *
+ * "Inscrição" saiu junto com a seção de inscrição da home: inscrever-se passa a
+ * acontecer dentro da conta.
+ */
 
 interface HeaderProps {
   title?: string;
   showNavigation?: boolean;
 }
 
-const tutMenuStyle: React.CSSProperties = {
+interface NavLeaf {
+  label: string;
+  href: string;
+}
+
+interface NavGroup {
+  label: string;
+  href?: string;
+  items?: NavLeaf[];
+}
+
+const menuStyle: React.CSSProperties = {
   position: "absolute",
   top: "100%",
   left: 0,
   background: "#fff",
   border: "1px solid #e5e7eb",
-  borderRadius: 8,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-  zIndex: 50,
-  minWidth: 180,
+  borderRadius: 10,
+  boxShadow: "0 10px 24px rgba(0,0,0,0.14)",
+  zIndex: 1050,
+  minWidth: 200,
   overflow: "hidden",
+  padding: 0,
+  margin: 0,
+  listStyle: "none",
 };
 
-const tutItemStyle: React.CSSProperties = {
+const menuItemStyle: React.CSSProperties = {
   display: "block",
   padding: "0.6rem 1rem",
   color: "#374151",
   textDecoration: "none",
   fontWeight: 600,
   fontSize: "0.9rem",
+  whiteSpace: "nowrap",
 };
 
-const Header: React.FC<HeaderProps> = ({
-  title,
-  showNavigation = true,
-}) => {
+const triggerStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
+
+const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
   const { t } = useTranslation("common");
   const { navigationLinkClicked, navigationMenuToggled } = useAnalytics();
   const { isLoggedIn } = useUserSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [tutOpen, setTutOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+
   const navigationId = "primary-navigation";
-  const navigationLabel = t("header.navigationLabel", { defaultValue: "Navegação principal" }) as string;
-  const path = typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
-  // Na home as âncoras são locais (#secao); em qualquer outra página (galeria,
-  // depoimentos, etc.) elas precisam apontar para a home (/#secao).
+  const navigationLabel = t("header.navigationLabel", {
+    defaultValue: "Navegação principal",
+  }) as string;
+  const path =
+    typeof window !== "undefined" ? window.location.pathname.replace(/\/+$/, "") || "/" : "/";
+  // Na home as âncoras são locais (#secao); em qualquer outra página elas
+  // precisam apontar para a home (/#secao).
   const isHomePage = path === "/";
   const anchorBase = isHomePage ? "" : "/";
   const appTitle = title ?? (t("app.title") as string);
-  // "Inscrição" saiu da lista junto com a seção de inscrição da home: a
-  // inscrição passa a acontecer dentro da conta, e um item de menu apontando
-  // para uma âncora que não existe mais é um clique que não faz nada.
-  const navigationItems = [
-    { label: t("nav.home"), href: isHomePage ? "#home" : "/" },
-    // Só para quem está logado — é o atalho de volta para a caminhada dele.
-    ...(isLoggedIn ? [{ label: "Dashboard", href: "/dashboard" }] : []),
-    { label: t("nav.schedule"), href: `${anchorBase}#schedule` },
-    { label: t("nav.about"), href: `${anchorBase}#about` },
-    { label: t("nav.contact"), href: `${anchorBase}#contact` },
+
+  const groups: NavGroup[] = [
+    {
+      label: "Home",
+      items: [
+        { label: t("nav.home") as string, href: isHomePage ? "#home" : "/" },
+        { label: t("nav.schedule") as string, href: `${anchorBase}#schedule` },
+        { label: t("nav.about") as string, href: `${anchorBase}#about` },
+        { label: t("nav.contact") as string, href: `${anchorBase}#contact` },
+        { label: t("nav.testimonials") as string, href: "/depoimentos" },
+      ],
+    },
+    {
+      label: "Memórias",
+      items: [
+        { label: t("nav.testimonies") as string, href: "/testemunhos" },
+        { label: t("nav.gallery") as string, href: "/gallery" },
+      ],
+    },
     { label: "Medalhas", href: "/medalhas" },
-    { label: t("nav.testimonials"), href: "/depoimentos" },
-    { label: t("nav.testimonies"), href: "/testemunhos" },
-    { label: t("nav.gallery"), href: "/gallery", isCta: true },
+    {
+      label: "Tutoriais",
+      items: [
+        { label: "Camisetas", href: "/tutoriais?tipo=camiseta" },
+        { label: "Inscrição", href: "/tutoriais?tipo=inscricao" },
+      ],
+    },
+    ...(isLoggedIn ? [{ label: "Dashboard", href: "/dashboard" }] : []),
   ];
 
-  const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string, label: string) => {
-    const currentPage = typeof window !== "undefined" ? (window.location.pathname === "/gallery" ? "gallery" : "landing") : "landing";
+  const handleNavClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+    label: string
+  ) => {
+    const currentPage =
+      typeof window !== "undefined"
+        ? window.location.pathname === "/gallery"
+          ? "gallery"
+          : "landing"
+        : "landing";
     navigationLinkClicked(currentPage, label, href, "header");
     if (href.startsWith("#")) {
       event.preventDefault();
-      const target = document.querySelector(href);
-      target?.scrollIntoView({ behavior: "smooth" });
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
     }
     setIsMenuOpen(false);
+    setOpenGroup(null);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key === "Escape" && isMenuOpen) {
-      setIsMenuOpen(false);
-    }
+    if (event.key !== "Escape") return;
+    if (openGroup) setOpenGroup(null);
+    else if (isMenuOpen) setIsMenuOpen(false);
   };
 
   return (
@@ -110,90 +174,64 @@ const Header: React.FC<HeaderProps> = ({
           <>
             <Navigation $open={isMenuOpen} aria-label={navigationLabel} id={navigationId}>
               <NavList>
-                {navigationItems
-                  .filter((item) => !item.isCta)
-                  .map((item, index) => (
-                    <NavItem key={`n-${index}`}>
-                      <NavLink href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
-                        {item.label}
+                {groups.map(group =>
+                  group.items ? (
+                    <NavItem
+                      key={group.label}
+                      style={{ position: "relative" }}
+                      onMouseLeave={() =>
+                        setOpenGroup(current => (current === group.label ? null : current))
+                      }
+                    >
+                      <NavLink
+                        as="button"
+                        type="button"
+                        aria-haspopup="true"
+                        aria-expanded={openGroup === group.label}
+                        onClick={() =>
+                          setOpenGroup(current => (current === group.label ? null : group.label))
+                        }
+                        style={triggerStyle}
+                      >
+                        {group.label} <span style={{ fontSize: "0.7rem" }}>▾</span>
+                      </NavLink>
+
+                      {openGroup === group.label && (
+                        <ul style={menuStyle} role="menu">
+                          {group.items.map((item, index) => (
+                            <li key={item.href} role="none">
+                              <a
+                                href={item.href}
+                                role="menuitem"
+                                style={
+                                  index === 0
+                                    ? menuItemStyle
+                                    : { ...menuItemStyle, borderTop: "1px solid #f3f4f6" }
+                                }
+                                onClick={event => handleNavClick(event, item.href, item.label)}
+                              >
+                                {item.label}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </NavItem>
+                  ) : (
+                    <NavItem key={group.label}>
+                      <NavLink
+                        href={group.href}
+                        onClick={event => handleNavClick(event, group.href as string, group.label)}
+                      >
+                        {group.label}
                       </NavLink>
                     </NavItem>
-                  ))}
-
-                <NavItem style={{ position: "relative" }} onMouseLeave={() => setTutOpen(false)}>
-                  <NavLink
-                    as="button"
-                    type="button"
-                    aria-haspopup="true"
-                    aria-expanded={tutOpen}
-                    onClick={() => setTutOpen((o) => !o)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    Tutoriais <span style={{ fontSize: "0.7rem" }}>▾</span>
-                  </NavLink>
-                  {tutOpen && (
-                    <div style={tutMenuStyle} role="menu">
-                      <a
-                        href="/tutoriais?tipo=camiseta"
-                        role="menuitem"
-                        style={tutItemStyle}
-                        onClick={() => {
-                          navigationLinkClicked("landing", "Tutoriais - Camisetas", "/tutoriais?tipo=camiseta", "header");
-                          setTutOpen(false);
-                          setIsMenuOpen(false);
-                        }}
-                      >
-                        Camisetas
-                      </a>
-                      <a
-                        href="/tutoriais?tipo=inscricao"
-                        role="menuitem"
-                        style={{ ...tutItemStyle, borderTop: "1px solid #f0f0f0" }}
-                        onClick={() => {
-                          navigationLinkClicked("landing", "Tutoriais - Inscrição", "/tutoriais?tipo=inscricao", "header");
-                          setTutOpen(false);
-                          setIsMenuOpen(false);
-                        }}
-                      >
-                        Inscrição
-                      </a>
-                    </div>
-                  )}
-                </NavItem>
-
-                {navigationItems
-                  .filter((item) => item.isCta)
-                  .map((item, index) => (
-                    <MobileNavItem key={`c-${index}`}>
-                      <NavLinkCta href={item.href} onClick={(event) => handleNavClick(event, item.href, item.label)}>
-                        {item.label}
-                      </NavLinkCta>
-                    </MobileNavItem>
-                  ))}
+                  )
+                )}
               </NavList>
             </Navigation>
+
             <HeaderActions>
-              <DesktopOnlyAction>
-                {navigationItems
-                  .filter((item) => item.isCta)
-                  .map((item, index) => (
-                    <NavLinkCta
-                      key={`cta-${index}`}
-                      href={item.href}
-                      onClick={(event) => handleNavClick(event, item.href, item.label)}
-                    >
-                      {item.label}
-                    </NavLinkCta>
-                  ))}
-              </DesktopOnlyAction>
               <AccountMenu />
             </HeaderActions>
 
@@ -205,9 +243,10 @@ const Header: React.FC<HeaderProps> = ({
               aria-expanded={isMenuOpen}
               aria-controls={navigationId}
               onClick={() => {
-                const newState = !isMenuOpen;
-                setIsMenuOpen(newState);
-                navigationMenuToggled(newState ? "open" : "close", "mobile_menu");
+                const nextState = !isMenuOpen;
+                setIsMenuOpen(nextState);
+                setOpenGroup(null);
+                navigationMenuToggled(nextState ? "open" : "close", "mobile_menu");
               }}
             >
               <span />

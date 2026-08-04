@@ -42,6 +42,33 @@ const styles: Record<string, React.CSSProperties> = {
   hint: { color: c.muted, fontSize: 12, lineHeight: 1.5, margin: "2px 0 0" },
   hintLink: { color: c.secondary, fontWeight: 700 },
   cepStatus: { color: c.secondary, fontSize: 12, margin: "2px 0 0" },
+  // O PIX ganha moldura própria: não é dado de identificação como os de cima,
+  // é para onde o dinheiro volta. Misturado com "cidade" e "número", ninguém
+  // entende por que o site está pedindo isso.
+  pixBox: {
+    gridColumn: "1 / -1",
+    border: `1px solid ${c.border}`,
+    borderRadius: theme.radius.md,
+    padding: "14px 16px",
+    background: theme.colors.background,
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 14,
+  },
+  pixTitle: {
+    gridColumn: "1 / -1",
+    fontWeight: 800,
+    fontSize: 14,
+    color: c.primary,
+    margin: 0,
+  },
+  pixHelp: {
+    gridColumn: "1 / -1",
+    color: c.muted,
+    fontSize: 12,
+    lineHeight: 1.6,
+    margin: "-6px 0 0",
+  },
   cepError: { color: "#b91c1c", fontSize: 12, margin: "2px 0 0" },
   checkRow: { display: "flex", alignItems: "center", gap: 8 },
 };
@@ -54,6 +81,14 @@ const GENDERS = [
 ];
 
 const CEP_LENGTH = 8;
+
+const PIX_TYPES = [
+  { value: "", label: "Não quero informar agora" },
+  { value: "cpf", label: "CPF" },
+  { value: "celular", label: "Celular" },
+  { value: "email", label: "E-mail" },
+  { value: "aleatoria", label: "Chave aleatória" },
+];
 
 interface ProfileFormProps {
   value: PilgrimProfile;
@@ -309,6 +344,73 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           }
           inputMode="numeric"
         />
+      </div>
+
+      <div style={styles.pixBox}>
+        <p style={styles.pixTitle}>Chave PIX para devolução</p>
+        <p style={styles.pixHelp}>
+          Guardamos para dois casos: se você cancelar e tivermos de devolver o valor, e
+          se você passar sua inscrição para outra pessoa. Sem a chave no cadastro, a
+          devolução vira conversa no WhatsApp na hora em que ninguém quer conversar.
+        </p>
+
+        <div style={styles.field}>
+          <label style={styles.label} htmlFor="pf-pix-type">
+            Tipo da chave
+          </label>
+          <select
+            id="pf-pix-type"
+            style={styles.input}
+            value={value.refundPixType}
+            onChange={e =>
+              // Trocar o tipo limpa a chave: um CPF sobrando no campo depois de
+              // mudar para "e-mail" seria salvo como e-mail e reprovado.
+              onChange({ ...value, refundPixType: e.target.value, refundPixKey: "" })
+            }
+          >
+            {PIX_TYPES.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={styles.field}>
+          <label style={styles.label} htmlFor="pf-pix-key">
+            Chave PIX
+          </label>
+          <input
+            id="pf-pix-key"
+            style={{ ...styles.input, ...(value.refundPixType ? {} : styles.inputLocked) }}
+            value={value.refundPixKey}
+            disabled={!value.refundPixType}
+            inputMode={
+              value.refundPixType === "cpf" || value.refundPixType === "celular"
+                ? "numeric"
+                : "text"
+            }
+            placeholder={
+              value.refundPixType === "cpf"
+                ? "somente números"
+                : value.refundPixType === "celular"
+                  ? "DDD + número"
+                  : value.refundPixType === "email"
+                    ? "seu@email.com"
+                    : value.refundPixType === "aleatoria"
+                      ? "cole a chave aleatória"
+                      : "escolha o tipo ao lado"
+            }
+            onChange={e =>
+              set(
+                "refundPixKey",
+                value.refundPixType === "cpf" || value.refundPixType === "celular"
+                  ? e.target.value.replace(/\D/g, "").slice(0, 11)
+                  : e.target.value
+              )
+            }
+          />
+        </div>
       </div>
 
       <div style={{ ...styles.field, ...styles.wide }}>

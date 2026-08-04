@@ -22,7 +22,15 @@ const s = peregrinoStyles;
 
 const PeregrinoEntrar: React.FC = () => {
   const navigate = useNavigate();
-  const [step, setStep] = React.useState<Step>("login");
+  // Quem chegou pelo botão "Cadastrar-se" do cabeçalho já entra no passo de
+  // criar conta: mostrar o formulário de login a quem disse que não tem conta é
+  // fazer a pessoa procurar o link certo na tela.
+  const [step, setStep] = React.useState<Step>(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("cadastro") === "1"
+      ? "signup"
+      : "login"
+  );
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");

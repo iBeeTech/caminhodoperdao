@@ -160,9 +160,10 @@ export const onRequestPut: PagesFunction<Env> = async context => {
              emergency_contact_name = ?11, emergency_contact_phone = ?12,
              has_allergy_medication = ?13, allergy_medication_details = ?14,
              has_dietary_restriction = ?15, dietary_restriction_details = ?16,
-             cpf_encrypted = ?17, updated_at = ?18,
-             profile_prompted_at = COALESCE(profile_prompted_at, ?18)
-           WHERE id = ?19`
+             refund_pix_key = ?17, refund_pix_type = ?18,
+             cpf_encrypted = ?19, updated_at = ?20,
+             profile_prompted_at = COALESCE(profile_prompted_at, ?20)
+           WHERE id = ?21`
         )
           .bind(...bindings, cpfEncrypted, now, auth.sub)
           .run();
@@ -180,9 +181,10 @@ export const onRequestPut: PagesFunction<Env> = async context => {
            emergency_contact_name = ?11, emergency_contact_phone = ?12,
            has_allergy_medication = ?13, allergy_medication_details = ?14,
            has_dietary_restriction = ?15, dietary_restriction_details = ?16,
-           updated_at = ?17,
-           profile_prompted_at = COALESCE(profile_prompted_at, ?17)
-         WHERE id = ?18`
+           refund_pix_key = ?17, refund_pix_type = ?18,
+           updated_at = ?19,
+           profile_prompted_at = COALESCE(profile_prompted_at, ?19)
+         WHERE id = ?20`
       )
         .bind(...bindings, now, auth.sub)
         .run();

@@ -81,17 +81,32 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
   },
   itemDanger: { color: "#b91c1c", borderTop: `1px solid ${c.border}` },
-  enterLink: {
+  // "Entrar | Cadastrar-se" é UM botão com dois destinos, não dois botões: a
+  // pessoa que chega não sabe se já tem conta, e duas caixas separadas fazem
+  // essa dúvida virar hesitação. O divisor deixa o par visualmente junto.
+  authBox: {
     display: "inline-flex",
     alignItems: "center",
-    padding: "0.45rem 0.95rem",
     borderRadius: 999,
     border: `1px solid ${c.border}`,
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+  },
+  authEnter: {
+    padding: "0.45rem 0.85rem",
     color: c.text,
     textDecoration: "none",
     fontWeight: 700,
-    fontSize: "0.92rem",
-    whiteSpace: "nowrap",
+    fontSize: "0.9rem",
+  },
+  authDivider: { width: 1, alignSelf: "stretch", background: c.border },
+  authSignup: {
+    padding: "0.45rem 0.9rem",
+    background: `linear-gradient(150deg, ${c.gold} 0%, ${c.goldDark} 100%)`,
+    color: "#4a3105",
+    textDecoration: "none",
+    fontWeight: 800,
+    fontSize: "0.9rem",
   },
 };
 
@@ -167,9 +182,17 @@ const AccountMenu: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <a href="/entrar" style={styles.enterLink}>
-        Entrar
-      </a>
+      <span style={styles.authBox}>
+        <a href="/entrar" style={styles.authEnter}>
+          Entrar
+        </a>
+        <span style={styles.authDivider} aria-hidden="true" />
+        {/* `?cadastro=1` abre a mesma tela já no passo de criar conta — quem
+            clicou em "Cadastrar-se" não deve cair num formulário de login. */}
+        <a href="/entrar?cadastro=1" style={styles.authSignup}>
+          Cadastrar-se
+        </a>
+      </span>
     );
   }
 

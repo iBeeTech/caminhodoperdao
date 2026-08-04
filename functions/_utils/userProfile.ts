@@ -1,5 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
-import { isValidPhone, normalizePhone } from "./validation";
+import { isValidEmail, isValidPhone, normalizePhone } from "./validation";
+import { isValidCpf } from "./cpfValidation";
 
 /**
  * Os dados pessoais que moram na CONTA do peregrino (migration 030).
@@ -27,6 +28,8 @@ export interface UserProfileRow {
   allergy_medication_details: string | null;
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
+  refund_pix_key: string | null;
+  refund_pix_type: string | null;
   years_declared_at: number | null;
   profile_prompted_at: number | null;
   is_staff: number;
@@ -52,19 +55,25 @@ export interface UserProfileView {
   allergyMedicationDetails: string;
   hasDietaryRestriction: boolean;
   dietaryRestrictionDetails: string;
+  refundPixKey: string;
+  refundPixType: string;
 }
 
 export const USER_PROFILE_COLUMNS = `
   name, phone, cpf_encrypted, gender, date_of_birth, cep, address, number,
   complement, city, state, emergency_contact_name, emergency_contact_phone,
   has_allergy_medication, allergy_medication_details,
-  has_dietary_restriction, dietary_restriction_details, years_declared_at,
+  has_dietary_restriction, dietary_restriction_details,
+  refund_pix_key, refund_pix_type, years_declared_at,
   profile_prompted_at, is_staff, is_admin, photo_updated_at
 `;
 
 /** Tamanho máximo de campo de texto livre. Corta payload absurdo na entrada. */
 const MAX_TEXT = 200;
 const MAX_DETAILS = 500;
+
+/** Os tipos de chave PIX que o banco entende. */
+const PIX_TYPES = ["cpf", "celular", "email", "aleatoria"];
 
 export function toProfileView(row: UserProfileRow): UserProfileView {
   return {
@@ -84,6 +93,8 @@ export function toProfileView(row: UserProfileRow): UserProfileView {
     allergyMedicationDetails: row.allergy_medication_details ?? "",
     hasDietaryRestriction: row.has_dietary_restriction === 1,
     dietaryRestrictionDetails: row.dietary_restriction_details ?? "",
+    refundPixKey: row.refund_pix_key ?? "",
+    refundPixType: row.refund_pix_type ?? "",
   };
 }
 
@@ -134,6 +145,34 @@ export function validateProfile(input: unknown): ProfileValidation {
   const hasAllergyMedication = flag("hasAllergyMedication");
   const hasDietaryRestriction = flag("hasDietaryRestriction");
 
+  const refundPixType = text("refundPixType", 20);
+  if (refundPixType && !PIX_TYPES.includes(refundPixType)) {
+    return { ok: false, error: "invalid_pix_type" };
+  }
+
+  // CPF e celular vão só com números, como o banco espera. E-mail e aleatória
+  // ficam como vieram — a chave aleatória é um UUID e o e-mail tem ponto.
+  const rawPixKey = text("refundPixKey", 100);
+  const refundPixKey =
+    refundPixType === "cpf" || refundPixType === "celular"
+      ? rawPixKey.replace(/\D/g, "")
+      : rawPixKey;
+
+  // Chave sem tipo, ou tipo sem chave, é meio caminho — e meio caminho aqui
+  // significa dinheiro parado esperando alguém adivinhar o resto.
+  if (refundPixKey && !refundPixType) return { ok: false, error: "missing_pix_type" };
+  if (refundPixType && !refundPixKey) return { ok: false, error: "missing_pix_key" };
+
+  if (refundPixType === "cpf" && !isValidCpf(refundPixKey)) {
+    return { ok: false, error: "invalid_pix_cpf" };
+  }
+  if (refundPixType === "celular" && !isValidPhone(refundPixKey)) {
+    return { ok: false, error: "invalid_pix_phone" };
+  }
+  if (refundPixType === "email" && refundPixKey && !isValidEmail(refundPixKey)) {
+    return { ok: false, error: "invalid_pix_email" };
+  }
+
   return {
     ok: true,
     value: {
@@ -159,6 +198,8 @@ export function validateProfile(input: unknown): ProfileValidation {
       dietaryRestrictionDetails: hasDietaryRestriction
         ? text("dietaryRestrictionDetails", MAX_DETAILS)
         : "",
+      refundPixKey,
+      refundPixType,
     },
   };
 }
@@ -187,5 +228,7 @@ export function profileBindings(profile: UserProfileView): (string | number | nu
     nullify(profile.allergyMedicationDetails),
     profile.hasDietaryRestriction ? 1 : 0,
     nullify(profile.dietaryRestrictionDetails),
+    nullify(profile.refundPixKey),
+    nullify(profile.refundPixType),
   ];
 }
