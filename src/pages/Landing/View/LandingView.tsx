@@ -11,21 +11,23 @@ import {
   HeroSection,
   HistorySection,
   ScheduleSection,
-  SignupSection,
-  TshirtPurchaseSection,
   TestimonialsSection,
 } from "./components";
 import { LandingPage, MainContent } from "./LandingView.styles";
 
-const toCamelCase = (value: string): string =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+(.)/g, (_, chr: string) => chr.toUpperCase())
-    .replace(/[^a-z0-9]/g, "")
-    .replace(/^[A-Z]/, (first) => first.toLowerCase());
-
+/**
+ * \u26a0\ufe0f A home N\u00c3O tem mais inscri\u00e7\u00e3o nem venda de camiseta (04/08/2026).
+ *
+ * A inscri\u00e7\u00e3o passa a acontecer dentro da conta (ver Planning.md, bloco 1): o
+ * e-mail do login \u00c9 o e-mail da inscri\u00e7\u00e3o, e some o buraco de "digite um CPF e
+ * veja os dados daquela pessoa". A camiseta sai porque a venda encerrou e vira
+ * a Loja (bloco 10) quando existir.
+ *
+ * `SignupSection` e `TshirtPurchaseSection` continuam no reposit\u00f3rio, e o
+ * Controller continua alimentando as props delas: o formul\u00e1rio custou caro e a
+ * inscri\u00e7\u00e3o da \u00e1rea logada vai reaproveit\u00e1-lo. Por isso a interface de props
+ * segue inteira \u2014 o que mudou foi s\u00f3 o que a home RENDERIZA.
+ */
 interface LandingViewProps {
   content: LandingContent;
   availability: AvailabilityState;
@@ -94,50 +96,16 @@ interface LandingViewProps {
   onEmergencyContactPhoneChange?: () => void;
 }
 
+// Só o que a home ainda usa. As demais props seguem na interface porque o
+// Controller continua enviando — e vão voltar a ser lidas quando a inscrição
+// existir dentro da área logada.
 const LandingView: React.FC<LandingViewProps> = ({
   content,
-  availability,
-  phase,
-  errors,
-  statusMessage,
-  statusTone,
-  currentStatus,
-  qrCodeText,
-  qrCodeImageUrl,
-  capacityCallout,
-  isCheckingStatus,
-  isSubmittingRegistration,
-  isSleepLocked,
-  refs,
-  onCheckStatus,
-  onSubmitRegistration,
-  onPhoneChange,
-  onCepChange,
-  onEmailBlur,
-  onEmailChange,
-  onClearFieldError,
   onPrimaryAction,
   onSecondaryAction,
   onCallToAction,
-  onReopenRegistration,
-  onNewRegistration,
-  onChooseRegister,
-  onChooseCheck,
-  onBackToIntent,
-  registerIntent,
-  registeredAsStaff,
-  onViewMyRegistration,
-  onCancelRegistration,
-  registrationCpf,
-  sleepAtMonastery,
   getNextWhatsappUrl,
-  onCpfChange,
-  onPhoneChangeError,
-  onTermsChange,
-  onEmergencyContactNameChange,
-  onEmergencyContactPhoneChange,
 }) => {
-  const formSectionProps = statusMessage ? { message_camel_case: toCamelCase(statusMessage) } : undefined;
   return (
     <LandingPage>
       <Header />
@@ -154,65 +122,6 @@ const LandingView: React.FC<LandingViewProps> = ({
             heroImage={logo}
             onPrimaryAction={onPrimaryAction}
             onSecondaryAction={onSecondaryAction}
-          />
-        </TrackSection>
-
-        <TrackSection
-          pageName="landing"
-          sectionId={LANDING_SECTIONS.TSHIRT_PURCHASE.id}
-          sectionName={LANDING_SECTIONS.TSHIRT_PURCHASE.name}
-          position={LANDING_SECTIONS.TSHIRT_PURCHASE.position}
-          eventType="form_section"
-        >
-          <TshirtPurchaseSection />
-        </TrackSection>
-
-        <TrackSection
-          pageName="landing"
-          sectionId={LANDING_SECTIONS.REGISTRATION_FORM.id}
-          sectionName={LANDING_SECTIONS.REGISTRATION_FORM.name}
-          position={LANDING_SECTIONS.REGISTRATION_FORM.position}
-          eventType="form_section"
-          additionalProps={formSectionProps}
-        >
-          <SignupSection
-            availability={availability}
-            phase={phase}
-            errors={errors}
-            statusMessage={statusMessage}
-            statusTone={statusTone}
-            currentStatus={currentStatus}
-            qrCodeText={qrCodeText}
-            qrCodeImageUrl={qrCodeImageUrl}
-            capacityCallout={capacityCallout}
-            isCheckingStatus={isCheckingStatus}
-            isSubmittingRegistration={isSubmittingRegistration}
-            isSleepLocked={isSleepLocked}
-            refs={refs}
-            onCheckStatus={onCheckStatus}
-            onSubmitRegistration={onSubmitRegistration}
-            onPhoneChange={onPhoneChange}
-            onCepChange={onCepChange}
-            onEmailBlur={onEmailBlur}
-            onEmailChange={onEmailChange}
-            onClearFieldError={onClearFieldError}
-            onReopenRegistration={onReopenRegistration}
-            onNewRegistration={onNewRegistration}
-            onChooseRegister={onChooseRegister}
-            onChooseCheck={onChooseCheck}
-            onBackToIntent={onBackToIntent}
-            registerIntent={registerIntent}
-            registeredAsStaff={registeredAsStaff}
-            onViewMyRegistration={onViewMyRegistration}
-            onCancelRegistration={onCancelRegistration}
-            registrationCpf={registrationCpf}
-            sleepAtMonastery={sleepAtMonastery}
-            getNextWhatsappUrl={getNextWhatsappUrl}
-            onCpfChange={onCpfChange}
-            onPhoneChangeError={onPhoneChangeError}
-            onTermsChange={onTermsChange}
-            onEmergencyContactNameChange={onEmergencyContactNameChange}
-            onEmergencyContactPhoneChange={onEmergencyContactPhoneChange}
           />
         </TrackSection>
 

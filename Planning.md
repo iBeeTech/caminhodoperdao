@@ -584,6 +584,150 @@ CREATE UNIQUE INDEX idx_photo_order_download_token
 
 ---
 
+## 10. Loja do Caminho do Perdão
+
+*(Frente adicionada em 04/08/2026. **Nada implementado.**)*
+
+### O que é
+
+Uma loja de produtos do evento — camiseta, caneca, terço, chaveiro, livro,
+o que a organização quiser vender. Substitui a seção de camiseta que saía da
+home (bloco 11) e deixa de ser "uma venda avulsa por ano" para virar catálogo.
+
+### O que já existe e vira alicerce
+
+A venda da camiseta de 2026 é a loja em miniatura, e funcionou: 62 pedidos
+pagos, 4 pendentes, 25 cancelados. O que dá para reaproveitar sem reescrever:
+
+| Peça | Onde está | O que faz |
+|---|---|---|
+| Cobrança PIX | `functions/_utils/woovi.ts` | cria, consulta e apaga cobrança |
+| Casamento do pagamento | `functions/api/webhooks.ts` | acha o pedido por `payment_ref` e marca pago |
+| Máquina de estados | `tshirt_purchase` | `PENDING` / `PAID` / `CANCELED` |
+| Liberação da tela | `functions/api/pix/status.ts` | polling que destrava sozinho |
+| Cancelamento e estorno | `api/tshirt/cancel.ts`, `/admin/estorno` | o caminho de volta, já rodado |
+
+Ou seja: a tubulação de dinheiro **não precisa ser inventada**. O que falta é
+catálogo, carrinho e estoque.
+
+### O que é novo de verdade
+
+- **Catálogo com variação.** Camiseta tem tamanho; caneca não tem nada; terço
+  pode ter cor. `tshirt_purchase` resolve isso com uma coluna por tamanho
+  (`size_p_qty`, `size_m_qty`...), o que **não escala** para um segundo produto.
+  Precisa de produto + variação + item de pedido, de verdade.
+- **Estoque.** A camiseta foi vendida sob encomenda, sem controle de saldo. Uma
+  loja que vende o que não tem gera estorno e desgaste — e estorno aqui é
+  manual, no PIX, feito por uma pessoa.
+- **Entrega: só retirada no evento.** ✅ Decidido em 04/08/2026. **Não há envio
+  pelo correio.** Isso corta fora frete, endereço de entrega, prazo, rastreio e
+  extravio — uma frente inteira que some do escopo. Em troca, o pedido só serve
+  para quem vai ao evento, e a tela precisa dizer isso **antes** do pagamento,
+  não depois: quem compra achando que recebe em casa vira pedido de estorno, que
+  aqui é devolução manual no PIX, feita por uma pessoa.
+- **Fotos dos produtos.** Cai no mesmo R2 dos blocos 5 e 9. Mais uma razão para
+  resolver o cartão na Cloudflare de uma vez.
+
+### Decisões a tomar antes de codar
+
+- ~~Só retirada no evento, ou envio também?~~ — ✅ **só retirada**, decidido em
+  04/08/2026.
+- **Quem não for ao evento retira como?** Com só-retirada, o produto não
+  entregue vira problema de guarda e de estorno. Definir prazo ("retire até tal
+  data") e o que acontece depois dele.
+- **Exige conta?** A camiseta era vendida sem login. Dentro da conta, o pedido
+  fica no perfil e o reenvio de comprovante deixa de ser suporte no WhatsApp.
+- **Estoque de verdade ou pré-venda?** Pré-venda (fecha o lote, produz depois) é
+  muito mais barato e foi o que já rodou.
+- **Reserva da vaga do produto.** O PIX vence em 24h. Enquanto pendente, o item
+  fica reservado ou volta para a prateleira? A inscrição já teve exatamente essa
+  dor, e a resposta lá foi devolver a vaga no vencimento.
+- **Nota fiscal.** Venda de produto físico não é doação. Quem emite, e como?
+
+### Esboço
+
+```sql
+CREATE TABLE shop_product (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,             -- URL da loja
+  name TEXT NOT NULL,
+  description TEXT,
+  image_key TEXT,                        -- chave no R2 (blocos 5 e 9)
+  price_cents INTEGER NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Variação (tamanho, cor). Produto sem variação tem UMA linha, com label ''.
+-- Assim a consulta é sempre a mesma, com ou sem variação.
+CREATE TABLE shop_variant (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL REFERENCES shop_product (id),
+  label TEXT NOT NULL,                   -- 'P', 'M', 'Azul'...
+  stock_qty INTEGER,                     -- NULL = sem controle (pré-venda)
+  UNIQUE (product_id, label)
+);
+
+CREATE TABLE shop_order (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,                          -- nulo se a loja aceitar sem conta
+  customer_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING','PAID','CANCELED')),
+  payment_provider TEXT,
+  payment_ref TEXT,
+  correlation_id TEXT,
+  -- Sem coluna de forma de entrega: é sempre retirada no evento (decidido em
+  -- 04/08/2026). Coluna com um valor só é convite para alguém achar que existe
+  -- envio e começar a codar frete.
+  picked_up_at TEXT,                     -- quando a pessoa retirou, na hora
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  paid_at TEXT
+);
+
+CREATE TABLE shop_order_item (
+  order_id TEXT NOT NULL REFERENCES shop_order (id),
+  variant_id TEXT NOT NULL REFERENCES shop_variant (id),
+  qty INTEGER NOT NULL CHECK (qty > 0),
+  -- Preço COPIADO no momento da compra: se o produto subir de preço depois, o
+  -- pedido antigo não pode mudar de valor sozinho.
+  unit_price_cents INTEGER NOT NULL,
+  PRIMARY KEY (order_id, variant_id)
+);
+```
+
+---
+
+## 11. Tirar inscrição e camiseta da home
+
+*(Decidido e **feito** em 04/08/2026.)*
+
+A home deixou de mostrar duas seções:
+
+- **Inscrição** (`SignupSection`) — a inscrição passa a exigir conta e acontece
+  dentro da área logada (bloco 1). Enquanto ela não existe lá, a home não pode
+  continuar oferecendo um formulário que grava inscrição sem dono.
+- **Venda de camiseta** (`TshirtPurchaseSection`) — a venda encerrou, e o lugar
+  dela passa a ser a Loja (bloco 10).
+
+Como foi feito, e por quê:
+
+- Os componentes **continuam no repositório** e o `Controller` continua
+  alimentando as props deles. O formulário de inscrição custou caro e é
+  exatamente o que a inscrição da área logada vai reaproveitar. O que mudou foi
+  só o que a home **renderiza**.
+- O item "Inscrição" saiu do menu: apontava para `#registration-form`, âncora
+  que não existe mais.
+- Os botões "Fazer Inscrição" (hero e CTA) apontam agora para `/entrar`.
+
+⚠️ Ponto em aberto: as seções `TSHIRT_PURCHASE` e `REGISTRATION_FORM` seguem no
+catálogo de analytics (`utils/analytics/catalog/sections`) sem serem
+renderizadas. Não quebra nada — só para de gerar evento.
+
+---
+
 ## Bloqueios que atravessam tudo
 
 ### Não existe envio de e-mail
@@ -632,6 +776,56 @@ Feito e no ar:
   `/api/auth/signup`, `/confirm-email`, `/login`, e as telas `/entrar` e
   `/perfil` (este último ainda esqueleto).
 
+## Estado em 04/08/2026 (fim da sessão)
+
+Feito nesta data (ainda **não aplicado em produção** — ver migration abaixo):
+
+- ✅ **19 edições viraram fonte única** (`functions/_utils/editions.ts`).
+  Confirmado pelo organizador: **de 2008 a 2026, sem pular ano**. Antes o
+  servidor limitava a declaração a 2015, sem razão registrada — quem caminhou
+  antes disso ficava sem a medalha e sem saber por quê.
+- ✅ **Dados pessoais na conta** (migration 030) — `users` ganhou nome,
+  telefone, CPF, endereço, contato de emergência, alergia/medicação e restrição
+  alimentar, mais `years_declared_at`. O contrato passa a ser: a **conta** guarda
+  quem a pessoa é; a **inscrição** guarda o que é daquela edição. Quando a
+  inscrição na área logada existir, ela nasce preenchida a partir daqui.
+- ✅ **CPF set-once** — entra uma vez pela API e depois só o admin muda
+  (`/admin/passar-cpf`). Índice único parcial impede duas contas com o mesmo CPF.
+  A tela mostra o CPF **mascarado** e o aviso de WhatsApp.
+- ✅ **`PUT /api/me`** — edição dos dados do formulário, com validação de
+  telefone, CEP, UF, data e sexo.
+- ✅ **`/dashboard`** — a tela principal de quem entra. Primeiro acesso pergunta
+  os anos (uma vez só, `years_declared_at`); depois disso mostra a **estrada** das
+  19 edições, com as caminhadas acesas em dourado e o futuro tracejado.
+- ✅ **Medalhas em formato de jogo** — medalhão redondo com fita e metal
+  (bronze/prata/ouro), mais a **próxima medalha apagada, com cadeado**, para
+  haver o que perseguir. Entraram os selos "Fundador" (primeira edição) e
+  "Guardião do caminho" (10 edições).
+- ✅ **Cabeçalho com conta** — avatar sempre visível (inclusive no celular) com
+  "Perfil" e "Sair"; item **Dashboard** no menu só para quem está logado; botão
+  "Entrar" para quem não está.
+- ✅ **`/perfil` de verdade** — nome, telefone e e-mail de leitura; "Editar anos
+  que participei"; "Atualizar dados do formulário" com tudo editável menos o CPF.
+- ✅ **Home sem inscrição e sem camiseta** (bloco 11).
+- ✅ **Loja registrada como frente própria** (bloco 10) — planejada, não iniciada.
+
+⚠️ **Aplicar a migration 030 à mão antes do deploy** — o deploy não roda
+migrations:
+`wrangler d1 execute caminhodoperdao-db --env production --remote --file migrations/030_user_profile.sql`.
+Sem ela, `/api/me` quebra em toda leitura, e a área logada inteira para.
+
+Pendências abertas nesta sessão:
+
+1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial
+   sobre o dourado, porque não há storage de imagem no projeto. Vira foto de
+   verdade quando o R2 entrar (blocos 5, 9 e 10 dependem do mesmo bucket).
+2. **A conta não tem nome no cadastro.** Quem cria conta informa só e-mail e
+   senha; o nome só aparece depois, se a pessoa abrir o perfil e preencher. Até
+   lá o dashboard cumprimenta sem nome. Resolve junto com o fluxo fundido de
+   criar-conta-e-inscrever.
+3. **Nada impede duas contas declararem o mesmo histórico.** É a consequência
+   assumida do auto-declarado (migration 029), não um bug.
+
 Pendências conhecidas, em ordem de risco:
 
 1. **`schema.sql` está divergente da produção.** Declara `cpf_encrypted TEXT
@@ -675,8 +869,11 @@ ser fechado (perfil, medalhas, troca, cancelamento, credenciamento).
    Fazer cedo, com calma e fora de temporada.
 4. **Login do peregrino** — tabela `users`, e-mail + senha, recuperação pelo OTP
    que já existe.
-5. **`/perfil`** base: dados, edição e histórico por ano.
-6. **Medalhas e selos** — em cima do histórico do passo 5.
+5. ~~**`/perfil`** base: dados, edição e histórico por ano.~~ — ✅ feito em
+   04/08/2026, junto com o `/dashboard`.
+6. ~~**Medalhas e selos**~~ — ✅ feito em 04/08/2026, em cima dos anos
+   auto-declarados. Voltam a crescer (Servo, Mosteiro, Semeador, Testemunha)
+   quando houver inscrição com lastro no ano.
 7. **QR code de credenciamento** — encaixa na inscrição do ano, no `/perfil`.
 8. **Cancelamento pelo perfil** — o endpoint já existe
    (`api/registration/cancel.ts`); aqui é passar a exigir sessão em vez de CPF.
@@ -686,6 +883,10 @@ ser fechado (perfil, medalhas, troca, cancelamento, credenciamento).
 11. **`/peregrinos`** — só depois de resolvido o opt-in: o consentimento precisa
     estar no formulário **antes** de existir mapa para mostrar.
 12. **Adquirência com cartão** — frente própria, com risco próprio.
+
+13. **Loja do Caminho do Perdão** (bloco 10) — depende do R2 para as fotos dos
+    produtos e da decisão "só retirada ou também envio". A tubulação de PIX já
+    existe, herdada da camiseta.
 
 Fora da fila, sem dependência das anteriores: **galeria e venda de fotos**
 (bloco 9), presa só à decisão do cartão na Cloudflare.

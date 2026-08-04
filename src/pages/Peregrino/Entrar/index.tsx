@@ -29,9 +29,11 @@ const PeregrinoEntrar: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [isBusy, setIsBusy] = React.useState(false);
 
-  const goToProfile = (token: string) => {
+  // Quem entra cai na caminhada, não no cadastro: o dashboard é o que a pessoa
+  // vem ver. O perfil fica a um clique, no menu da conta.
+  const goToDashboard = (token: string) => {
     setUserToken(token);
-    navigate("/perfil");
+    navigate("/dashboard");
   };
 
   const handleLogin = async () => {
@@ -49,7 +51,7 @@ const PeregrinoEntrar: React.FC = () => {
       };
 
       if (response.ok && data.token) {
-        goToProfile(data.token);
+        goToDashboard(data.token);
         return;
       }
       // Conta criada e nunca confirmada: leva para a confirmação em vez de
@@ -117,7 +119,7 @@ const PeregrinoEntrar: React.FC = () => {
       };
 
       if (response.ok && data.token) {
-        goToProfile(data.token);
+        goToDashboard(data.token);
         return;
       }
       setError(

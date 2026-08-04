@@ -979,14 +979,17 @@ const LandingController: React.FC = () => {
       onEmailBlur={onEmailBlur}
       onEmailChange={onEmailChange}
       onClearFieldError={(field) => clearFieldErrors(field)}
+      // A seção de inscrição saiu da home (04/08/2026), então rolar até ela
+      // deixaria o botão principal sem fazer nada. O destino agora é a conta,
+      // que é por onde a inscrição vai passar.
       onPrimaryAction={() => {
-        document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
+        window.location.assign("/entrar");
       }}
       onSecondaryAction={() => {
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
       onCallToAction={() => {
-        document.getElementById("registration-form")?.scrollIntoView({ behavior: "smooth" });
+        window.location.assign("/entrar");
       }}
       onReopenRegistration={handleReopenRegistration}
       onNewRegistration={handleStartNewRegistration}

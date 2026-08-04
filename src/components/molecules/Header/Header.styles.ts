@@ -121,10 +121,24 @@ export const MobileNavItem = styled(NavItem)`
   }
 `;
 
-/* Slot à direita da header no desktop (galeria de fotos). Escondido no
-   tablet/mobile, onde a galeria volta para dentro do menu hambúrguer. */
+/* Slot à direita da header. Diferente do resto do menu, ele NÃO some no
+   celular: é onde mora a conta, e um avatar escondido dentro do hambúrguer
+   deixa de responder à pergunta "estou logado?" só de bater o olho. */
 export const HeaderActions = styled.div`
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (max-width: 1090px) {
+    margin-left: auto;
+    margin-right: 0.6rem;
+  }
+`;
+
+/* O que dentro do slot da direita é só de desktop (a galeria, que no
+   tablet/mobile volta para dentro do menu hambúrguer). */
+export const DesktopOnlyAction = styled.div`
   display: flex;
   align-items: center;
 

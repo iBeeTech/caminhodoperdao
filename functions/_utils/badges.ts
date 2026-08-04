@@ -1,4 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
+import { FIRST_EDITION_YEAR } from "./editions";
 
 /**
  * Medalhas do peregrino, derivadas dos anos de caminhada.
@@ -16,17 +17,46 @@
  * Voltam quando houver inscrição de verdade no ano, com lastro.
  */
 
+/** Metal da medalha. É só apresentação, mas mora aqui para não divergir. */
+export type BadgeTier = "bronze" | "prata" | "ouro";
+
 export interface Badge {
   id: string;
   label: string;
   description: string;
+  tier: BadgeTier;
   /** Ano da medalha; ausente nos selos que não são de um ano específico. */
   year?: number;
 }
 
-/** A partir de quantos anos cada selo de constância aparece. */
-const VETERAN_YEARS = 3;
-const DEVOTED_YEARS = 5;
+/**
+ * Os degraus de constância, do menor para o maior.
+ *
+ * Lista em vez de `if` encadeado porque a tela também precisa deles: é com esta
+ * lista que ela mostra a PRÓXIMA medalha, ainda apagada. Um `if` no servidor
+ * obrigaria a tela a repetir os números — e a repetição sempre desanda.
+ */
+export const MILESTONES: { years: number; label: string; description: string; tier: BadgeTier }[] =
+  [
+    {
+      years: 3,
+      label: "Veterano",
+      description: "3 edições ou mais.",
+      tier: "prata",
+    },
+    {
+      years: 5,
+      label: "Peregrino de coração",
+      description: "5 edições ou mais. O caminho já é parte de você.",
+      tier: "ouro",
+    },
+    {
+      years: 10,
+      label: "Guardião do caminho",
+      description: "10 edições. Poucos chegam até aqui.",
+      tier: "ouro",
+    },
+  ];
 
 export function buildBadges(years: readonly number[]): Badge[] {
   // Sem anos, sem medalha. Devolver uma medalha "vazia" faria a tela mostrar
@@ -38,6 +68,7 @@ export function buildBadges(years: readonly number[]): Badge[] {
     id: `ano-${year}`,
     label: `Peregrino ${year}`,
     description: `Você caminhou na edição de ${year}.`,
+    tier: "bronze",
     year,
   }));
 
@@ -48,21 +79,36 @@ export function buildBadges(years: readonly number[]): Badge[] {
       unique.length === 1
         ? "Toda caminhada começa com um primeiro passo."
         : `Você já caminhou ${unique.length} vezes.`,
+    tier: "prata",
   });
 
-  if (unique.length >= DEVOTED_YEARS) {
+  // Fundador é o único selo aqui que não depende de quantidade: ou a pessoa
+  // esteve na primeira edição, ou não esteve.
+  if (unique.includes(FIRST_EDITION_YEAR)) {
     badges.push({
-      id: "devoto",
-      label: "Peregrino de coração",
-      description: `${DEVOTED_YEARS} edições ou mais. O caminho já é parte de você.`,
+      id: "fundador",
+      label: "Fundador",
+      description: `Você caminhou na primeira edição, em ${FIRST_EDITION_YEAR}.`,
+      tier: "ouro",
     });
-  } else if (unique.length >= VETERAN_YEARS) {
+  }
+
+  // Só o degrau mais alto alcançado. Mostrar "Veterano" ao lado de "Peregrino
+  // de coração" faria a conquista maior parecer menos.
+  const reached = MILESTONES.filter(m => unique.length >= m.years).pop();
+  if (reached) {
     badges.push({
-      id: "veterano",
-      label: "Veterano",
-      description: `${VETERAN_YEARS} edições ou mais.`,
+      id: `constancia-${reached.years}`,
+      label: reached.label,
+      description: reached.description,
+      tier: reached.tier,
     });
   }
 
   return badges;
+}
+
+/** A próxima medalha de constância, para a tela mostrar apagada. */
+export function nextMilestone(walkedCount: number): (typeof MILESTONES)[number] | null {
+  return MILESTONES.find(m => walkedCount < m.years) ?? null;
 }

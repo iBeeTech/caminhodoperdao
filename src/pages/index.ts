@@ -23,3 +23,4 @@ export { default as AdminPedidosSenha } from "./Admin/PedidosSenha";
 export { default as AdminInscricaoManual } from "./Admin/InscricaoManual";
 export { default as PeregrinoEntrar } from "./Peregrino/Entrar";
 export { default as PeregrinoPerfil } from "./Peregrino/Perfil";
+export { default as PeregrinoDashboard } from "./Peregrino/Dashboard";

@@ -2,16 +2,10 @@
 import { badRequest, json, serverError } from "../../_utils/responses";
 import { UserAuthEnv, authorizeUserRequest } from "../../_utils/userAuth";
 import { EventYearEnv, getEventYear } from "../../_utils/eventYear";
-import { buildBadges } from "../../_utils/badges";
+import { buildBadges, nextMilestone } from "../../_utils/badges";
+import { FIRST_EDITION_YEAR, listEditionYears } from "../../_utils/editions";
 
 type Env = UserAuthEnv & EventYearEnv;
-
-/**
- * Primeira edição do evento. ⚠️ CONFERIR: usado só para limitar a lista de anos
- * que a pessoa pode declarar. Se estiver errado, quem caminhou antes disso não
- * consegue registrar — e ninguém vai reclamar, vai só ficar sem a medalha.
- */
-const FIRST_EDITION_YEAR = 2015;
 
 /** Teto de anos declarados de uma vez. Evita payload absurdo. */
 const MAX_YEARS = 30;
@@ -68,6 +62,13 @@ export const onRequestPost: PagesFunction<Env> = async context => {
            ON CONFLICT (user_id, year) DO NOTHING`
         ).bind(auth.sub, year, now)
       ),
+      // Marca que a pessoa já respondeu à pergunta. Fica no MESMO batch de
+      // propósito: se gravasse depois, uma falha entre as duas coisas faria o
+      // primeiro acesso reaparecer com os anos já salvos — a tela pedindo de
+      // novo algo que ela acabou de responder.
+      context.env.DB.prepare(
+        "UPDATE users SET years_declared_at = ?2, updated_at = ?2 WHERE id = ?1"
+      ).bind(auth.sub, now),
     ];
 
     // batch é atômico no D1: sem ele, uma falha depois do DELETE deixaria a
@@ -81,7 +82,12 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       .all<{ year: number }>();
 
     const saved = (results ?? []).map(row => row.year);
-    return json(200, { years: saved, badges: buildBadges(saved) });
+    return json(200, {
+      years: saved,
+      badges: buildBadges(saved),
+      nextBadge: nextMilestone(saved.length),
+      hasDeclaredYears: true,
+    });
   } catch (error) {
     console.error("POST /api/me/years falhou:", error);
     return serverError();
@@ -93,10 +99,5 @@ export const onRequestGet: PagesFunction<Env> = async context => {
   const auth = await authorizeUserRequest(context.request, context.env);
   if (auth instanceof Response) return auth;
 
-  const currentYear = getEventYear(context.env);
-  const available: number[] = [];
-  for (let year = currentYear; year >= FIRST_EDITION_YEAR; year -= 1) {
-    available.push(year);
-  }
-  return json(200, { available });
+  return json(200, { available: listEditionYears(getEventYear(context.env)) });
 };

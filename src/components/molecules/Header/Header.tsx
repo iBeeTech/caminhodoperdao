@@ -14,8 +14,11 @@ import {
   NavLink,
   NavLinkCta,
   HeaderActions,
+  DesktopOnlyAction,
   MenuToggle,
 } from "./Header.styles";
+import AccountMenu from "./AccountMenu";
+import { useUserSession } from "../../../utils/auth/useUserSession";
 
 interface HeaderProps {
   title?: string;
@@ -50,6 +53,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { t } = useTranslation("common");
   const { navigationLinkClicked, navigationMenuToggled } = useAnalytics();
+  const { isLoggedIn } = useUserSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tutOpen, setTutOpen] = useState(false);
   const navigationId = "primary-navigation";
@@ -60,9 +64,13 @@ const Header: React.FC<HeaderProps> = ({
   const isHomePage = path === "/";
   const anchorBase = isHomePage ? "" : "/";
   const appTitle = title ?? (t("app.title") as string);
+  // "Inscrição" saiu da lista junto com a seção de inscrição da home: a
+  // inscrição passa a acontecer dentro da conta, e um item de menu apontando
+  // para uma âncora que não existe mais é um clique que não faz nada.
   const navigationItems = [
     { label: t("nav.home"), href: isHomePage ? "#home" : "/" },
-    { label: t("nav.registration"), href: `${anchorBase}#registration-form` },
+    // Só para quem está logado — é o atalho de volta para a caminhada dele.
+    ...(isLoggedIn ? [{ label: "Dashboard", href: "/dashboard" }] : []),
     { label: t("nav.schedule"), href: `${anchorBase}#schedule` },
     { label: t("nav.about"), href: `${anchorBase}#about` },
     { label: t("nav.contact"), href: `${anchorBase}#contact` },
@@ -99,21 +107,6 @@ const Header: React.FC<HeaderProps> = ({
 
         {showNavigation && (
           <>
-            <MenuToggle
-              $open={isMenuOpen}
-              aria-label={t("header.menuToggle") as string}
-              aria-expanded={isMenuOpen}
-              aria-controls={navigationId}
-              onClick={() => {
-                const newState = !isMenuOpen;
-                setIsMenuOpen(newState);
-                navigationMenuToggled(newState ? "open" : "close", "mobile_menu");
-              }}
-            >
-              <span />
-              <span />
-              <span />
-            </MenuToggle>
             <Navigation $open={isMenuOpen} aria-label={navigationLabel} id={navigationId}>
               <NavList>
                 {navigationItems
@@ -187,18 +180,39 @@ const Header: React.FC<HeaderProps> = ({
               </NavList>
             </Navigation>
             <HeaderActions>
-              {navigationItems
-                .filter((item) => item.isCta)
-                .map((item, index) => (
-                  <NavLinkCta
-                    key={`cta-${index}`}
-                    href={item.href}
-                    onClick={(event) => handleNavClick(event, item.href, item.label)}
-                  >
-                    {item.label}
-                  </NavLinkCta>
-                ))}
+              <DesktopOnlyAction>
+                {navigationItems
+                  .filter((item) => item.isCta)
+                  .map((item, index) => (
+                    <NavLinkCta
+                      key={`cta-${index}`}
+                      href={item.href}
+                      onClick={(event) => handleNavClick(event, item.href, item.label)}
+                    >
+                      {item.label}
+                    </NavLinkCta>
+                  ))}
+              </DesktopOnlyAction>
+              <AccountMenu />
             </HeaderActions>
+
+            {/* Depois do avatar no DOM de propósito: no celular a ordem é
+                logo → conta → hambúrguer, que é onde o polegar espera cada um. */}
+            <MenuToggle
+              $open={isMenuOpen}
+              aria-label={t("header.menuToggle") as string}
+              aria-expanded={isMenuOpen}
+              aria-controls={navigationId}
+              onClick={() => {
+                const newState = !isMenuOpen;
+                setIsMenuOpen(newState);
+                navigationMenuToggled(newState ? "open" : "close", "mobile_menu");
+              }}
+            >
+              <span />
+              <span />
+              <span />
+            </MenuToggle>
           </>
         )}
       </HeaderContainer>
