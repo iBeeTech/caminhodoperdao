@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
+import PhotoUploader from "../components/PhotoUploader";
 import { perfilStyles as s } from "./perfil.styles";
 import {
   EMPTY_PROFILE,
@@ -174,6 +175,17 @@ const PeregrinoPerfil: React.FC = () => {
               É assim que a organização fala com você. Para mudar, use "Atualizar dados do
               formulário" abaixo.
             </p>
+            <PhotoUploader
+              photoUpdatedAt={me.photoUpdatedAt}
+              fallbackInitial={(me.profile.name.trim()[0] || me.email[0] || "P").toUpperCase()}
+              onChanged={photoUpdatedAt =>
+                setMe(current => (current ? { ...current, photoUpdatedAt } : current))
+              }
+              onSessionExpired={() => navigate("/entrar", { replace: true })}
+            />
+
+            <div style={{ height: 18 }} />
+
             <ReadRow label="Nome" value={me.profile.name} />
             <ReadRow label="Telefone" value={formatPhone(me.profile.phone)} />
             <ReadRow label="E-mail" value={me.email} />

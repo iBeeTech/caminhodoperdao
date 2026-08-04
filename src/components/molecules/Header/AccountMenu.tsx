@@ -1,6 +1,6 @@
 import React from "react";
 import { theme } from "../../../styles/theme";
-import { clearUserToken } from "../../../utils/auth/userSession";
+import { clearUserToken, getUserToken } from "../../../utils/auth/userSession";
 import { useUserSession } from "../../../utils/auth/useUserSession";
 
 /**
@@ -9,15 +9,23 @@ import { useUserSession } from "../../../utils/auth/useUserSession";
  * Deslogado: um botão "Entrar". Logado: a foto do peregrino, que abre
  * "Perfil" e "Sair".
  *
- * ⚠️ A FOTO ainda não existe — não há storage de imagem no projeto (o plano
- * prevê R2, bloco 5). Até lá o avatar é a inicial sobre o dourado da logo, que
- * já cumpre o papel de "esta conta é a minha" sem prometer o que não temos.
+ * A foto vem de `/api/me/photo`, que exige token — então não dá para jogá-la
+ * num `<img src>` direto. É buscada com `fetch`, virada em blob e guardada em
+ * `sessionStorage`: sem isso, toda página do site faria um pedido de imagem só
+ * para desenhar um círculo de 40px. Quem não subiu foto continua com a inicial.
  */
 
 const c = theme.colors;
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: { position: "relative", display: "flex", alignItems: "center" },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+    borderRadius: "50%",
+  },
   avatarButton: {
     width: 40,
     height: 40,
@@ -87,10 +95,59 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
+/** Chave do cache da foto na sessão. Exportada para o perfil poder limpá-la
+ * assim que a pessoa troca a imagem — senão o avatar do topo só mudaria na
+ * próxima aba aberta. */
+export const PHOTO_CACHE_KEY = "peregrino_photo";
+
+async function fetchPhotoDataUrl(): Promise<string | null> {
+  const token = getUserToken();
+  if (!token) return null;
+  try {
+    const response = await fetch("/api/me/photo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise<string | null>(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 const AccountMenu: React.FC = () => {
   const { isLoggedIn, email } = useUserSession();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
   const wrapRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      setPhotoUrl(null);
+      return;
+    }
+    const cached = sessionStorage.getItem(PHOTO_CACHE_KEY);
+    if (cached) {
+      // "none" é cache de ausência: sem ele, quem não tem foto refaria o pedido
+      // a cada página só para receber 404 de novo.
+      setPhotoUrl(cached === "none" ? null : cached);
+      return;
+    }
+    let isActive = true;
+    fetchPhotoDataUrl().then(url => {
+      if (!isActive) return;
+      sessionStorage.setItem(PHOTO_CACHE_KEY, url ?? "none");
+      setPhotoUrl(url);
+    });
+    return () => {
+      isActive = false;
+    };
+  }, [isLoggedIn]);
 
   React.useEffect(() => {
     if (!isOpen) return undefined;
@@ -129,7 +186,11 @@ const AccountMenu: React.FC = () => {
         aria-label="Minha conta"
         title={email ?? "Minha conta"}
       >
-        {initial}
+        {photoUrl ? (
+          <img src={photoUrl} alt="" style={styles.avatarImage} />
+        ) : (
+          initial
+        )}
       </button>
 
       {isOpen && (
@@ -146,6 +207,7 @@ const AccountMenu: React.FC = () => {
             style={{ ...styles.item, ...styles.itemDanger }}
             onClick={() => {
               clearUserToken();
+              sessionStorage.removeItem(PHOTO_CACHE_KEY);
               window.location.assign("/");
             }}
           >

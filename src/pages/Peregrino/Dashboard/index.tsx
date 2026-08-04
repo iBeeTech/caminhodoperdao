@@ -6,6 +6,7 @@ import RoadOfEditions from "../components/RoadOfEditions";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
 import { dashboardStyles as s } from "./dashboard.styles";
+import { EDITION_THEMES, NEXT_EDITION } from "../../../data/editions";
 import {
   EMPTY_PROFILE,
   Me,
@@ -305,11 +306,20 @@ const PeregrinoDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div style={s.panel}>
-            <h2 style={s.panelTitle}>A estrada</h2>
-            <p style={s.panelHelp}>
-              Uma pedra por edição, de {me.firstEditionYear} até {me.currentYear}. As
-              douradas são as suas. Arraste para o lado para ver os anos anteriores.
+          {EDITION_THEMES[me.currentYear] && (
+            <div style={s.themeCallout}>
+              <p style={s.themeLabel}>Tema de {me.currentYear}</p>
+              <p style={s.themeText}>{EDITION_THEMES[me.currentYear]}</p>
+            </div>
+          )}
+
+          <div style={s.panelDark}>
+            <h2 style={s.panelTitleOnDark}>A estrada</h2>
+            <p style={s.panelHelpOnDark}>
+              Uma pedra por edição, da 1ª ({me.firstEditionYear}) até a{" "}
+              {me.currentYear - me.firstEditionYear + 1}ª ({me.currentYear}). As douradas
+              são as suas, e a última, apagada, é a próxima: {NEXT_EDITION.date}. Arraste
+              para o lado para ver as edições anteriores.
             </p>
             <RoadOfEditions
               editions={editions}
@@ -318,9 +328,9 @@ const PeregrinoDashboard: React.FC = () => {
             />
           </div>
 
-          <div style={s.panel}>
-            <h2 style={s.panelTitle}>Suas medalhas</h2>
-            <p style={s.panelHelp}>
+          <div style={s.panelDark}>
+            <h2 style={s.panelTitleOnDark}>Suas medalhas</h2>
+            <p style={s.panelHelpOnDark}>
               Saem dos anos que você declarou. Para mudar os anos, vá em Perfil.
             </p>
 
@@ -352,6 +362,10 @@ const PeregrinoDashboard: React.FC = () => {
                 )}
               </div>
             )}
+
+            <a href="/medalhas" style={s.panelLink}>
+              Ver todas as medalhas e os temas de cada ano
+            </a>
           </div>
         </div>
       </div>

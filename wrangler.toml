@@ -47,6 +47,16 @@ database_id = "784a0aec-8695-48d4-8ede-df680660735e"
 binding = "TESTIMONY_AUDIO"
 id = "c1cd94516ced4c65b0addd643bff355e"
 
+## Foto de perfil do peregrino.
+## KV, e não R2, por um motivo prático: o R2 exige cartão cadastrado na conta
+## Cloudflare mesmo no nível gratuito (ver Planning.md, bloco 9), e o cartão
+## ainda não foi resolvido. A foto aqui é UM avatar de 256px (~25 KB), não a
+## galeria de 2500 fotos — para esse tamanho o KV serve bem. Quando o R2 entrar,
+## a galeria vai para lá e isto pode acompanhar ou ficar como está.
+[[env.production.kv_namespaces]]
+binding = "PROFILE_PHOTO"
+id = "a3c0e434dcd94cdfb5ba4a96b5ea7789"
+
 ## Workers AI: transcrição dos áudios de testemunho (Whisper).
 [env.production.ai]
 binding = "AI"
@@ -70,6 +80,12 @@ database_id = "1057fea7-b6b8-4939-9cbc-49c8a9e32cf8"
 [[env.preview.kv_namespaces]]
 binding = "TESTIMONY_AUDIO"
 id = "03bb19062a464b9e9398f91657730a82"
+
+## Mesmo motivo do D1 e do KV de áudio: foto de teste não vai para o namespace
+## de produção.
+[[env.preview.kv_namespaces]]
+binding = "PROFILE_PHOTO"
+id = "783ee73839a0477ca855a783b97cce6a"
 
 [env.preview.ai]
 binding = "AI"

@@ -55,6 +55,8 @@ export interface Me {
   hasSeenProfilePrompt: boolean;
   isStaff: boolean;
   isAdmin: boolean;
+  /** Carimbo da última troca de foto. Nulo = sem foto. */
+  photoUpdatedAt: number | null;
   profile: PilgrimProfile;
   hasCpf: boolean;
   cpfMasked: string | null;
@@ -145,6 +147,38 @@ export function saveProfile(
     method: "PUT",
     body: JSON.stringify({ profile, ...(cpf ? { cpf } : {}) }),
   });
+}
+
+export function uploadPhoto(dataUrl: string): Promise<{ photoUpdatedAt: number }> {
+  return request("/api/me/photo", { method: "POST", body: JSON.stringify({ dataUrl }) });
+}
+
+export function deletePhoto(): Promise<{ hasPhoto: boolean }> {
+  return request("/api/me/photo", { method: "DELETE" });
+}
+
+/**
+ * A foto exige token, então não dá para usá-la num `<img src>` direto: é
+ * buscada com fetch e convertida em data URL.
+ */
+export async function fetchPhoto(): Promise<string | null> {
+  const token = getUserToken();
+  if (!token) return null;
+  try {
+    const response = await fetch("/api/me/photo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise<string | null>(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**

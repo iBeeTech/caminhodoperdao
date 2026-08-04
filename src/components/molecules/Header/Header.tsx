@@ -74,6 +74,7 @@ const Header: React.FC<HeaderProps> = ({
     { label: t("nav.schedule"), href: `${anchorBase}#schedule` },
     { label: t("nav.about"), href: `${anchorBase}#about` },
     { label: t("nav.contact"), href: `${anchorBase}#contact` },
+    { label: "Medalhas", href: "/medalhas" },
     { label: t("nav.testimonials"), href: "/depoimentos" },
     { label: t("nav.testimonies"), href: "/testemunhos" },
     { label: t("nav.gallery"), href: "/gallery", isCta: true },
@@ -136,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({
                       gap: 4,
                     }}
                   >
-                    Tutoriais de Cancelamento <span style={{ fontSize: "0.7rem" }}>▾</span>
+                    Tutoriais <span style={{ fontSize: "0.7rem" }}>▾</span>
                   </NavLink>
                   {tutOpen && (
                     <div style={tutMenuStyle} role="menu">

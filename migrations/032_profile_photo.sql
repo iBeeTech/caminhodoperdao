@@ -1,0 +1,13 @@
+-- Foto de perfil do peregrino.
+--
+-- O BINÁRIO NÃO ENTRA AQUI. A imagem mora no KV (binding `PROFILE_PHOTO`), com
+-- a chave `photo:<user_id>`; o D1 guarda só o carimbo de quando ela mudou.
+--
+-- KV e não R2 por um motivo prático: o R2 exige cartão cadastrado na conta
+-- Cloudflare mesmo no nível gratuito (Planning.md, bloco 9), e o cartão ainda
+-- não foi resolvido. Foi exatamente por isso que o áudio dos testemunhos também
+-- ficou em KV. Um avatar de 256px pesa ~25 KB — para esse tamanho o KV serve.
+--
+-- Guardar o carimbo, e não um caminho, é o que permite furar o cache do
+-- navegador quando a pessoa troca a foto: a URL leva `?v=<carimbo>`.
+ALTER TABLE users ADD COLUMN photo_updated_at INTEGER;

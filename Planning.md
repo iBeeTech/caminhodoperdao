@@ -836,6 +836,34 @@ Segunda leva do mesmo dia (migration 031):
   de inscrições. Os anos do filtro vêm dos dados, então a edição nova aparece
   sozinha.
 
+Terceira leva do mesmo dia (migration 032):
+
+- ✅ **Foto de perfil** — upload no `/perfil` e avatar no cabeçalho. A imagem é
+  recortada em quadrado e reduzida para 256px **no navegador** antes de subir
+  (~25 KB); o binário mora no **KV** (`PROFILE_PHOTO`), o D1 guarda só o carimbo.
+  KV e não R2 porque o R2 exige cartão na conta Cloudflare (bloco 9) e o cartão
+  segue sem decisão — o mesmo motivo que pôs o áudio dos testemunhos em KV.
+- ✅ **A estrada mostra o NÚMERO da edição** (2008 = 1ª, 2026 = 19ª), com o ano
+  embaixo. Antes mostrava o ano abreviado ("23, 24, 25"), que parecia idade.
+- ✅ **A próxima edição no fim da estrada** — 20ª, 2027, apagada e pontilhada,
+  com a data **01/08/2027**. O tracejado sozinho dizia "tem mais", não dizia
+  quando.
+- ✅ **Temas por edição** (`src/data/editions.ts`) — começaram em 2025. 2026:
+  "Maria, caminho seguro que leva a Jesus". ⚠️ **O tema de 2025 está pendente:**
+  o organizador começou a informar e a frase ficou incompleta. Fica `null` e a
+  tela diz "tema ainda não registrado" — tema de evento religioso não se chuta.
+- ✅ **`/medalhas`** — página aberta, sem login, com o catálogo de todas as
+  medalhas e a tabela de temas por edição. Medalha que só quem ganhou consegue
+  ver não convida ninguém a voltar.
+  ⚠️ O catálogo é um **espelho** de `functions/_utils/badges.ts` (o servidor não
+  é importável pelo front). Mudou lá, tem de mudar aqui.
+- ✅ **Dashboard mais leve** — a página virou clara, com **duas faixas escuras**
+  só onde o dourado precisa brilhar (a estrada e a vitrine de medalhas). Azul da
+  borda ao rodapé cansava e fazia o texto comum brigar com o fundo.
+- ✅ **Cabeçalho menos espremido** — o menu passa a colapsar em 1200px (era
+  1090), com fonte e espaçamento menores e "Tutoriais de Cancelamento" reduzido
+  a "Tutoriais". Com Dashboard e avatar, os itens não cabiam mais.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial

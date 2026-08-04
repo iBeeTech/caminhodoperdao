@@ -17,10 +17,10 @@ export const HeaderContainer = styled.div`
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   height: 70px;
-  gap: 1rem;
+  gap: 1.5rem;
 
   /* Tablet/mobile mantém o comportamento atual: logo à esquerda e menu hambúrguer à direita. */
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     display: flex;
     justify-content: space-between;
   }
@@ -35,7 +35,7 @@ export const HeaderLogo = styled.div`
   flex-shrink: 0;
   justify-self: start;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     margin-right: auto;
   }
 `;
@@ -47,7 +47,7 @@ export const HeaderHomeLink = styled.a`
 `;
 
 export const HeaderTitle = styled.p`
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text};
   margin: 0;
@@ -70,7 +70,7 @@ export const Navigation = styled.nav<{ $open: boolean }>`
   display: flex;
   justify-content: center;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     position: absolute;
     top: 60px;
     right: 15px;
@@ -95,10 +95,10 @@ export const NavList = styled.ul`
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 1.5rem;
+  gap: 1.1rem;
   white-space: nowrap;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
@@ -116,7 +116,7 @@ export const NavItem = styled.li`
 export const MobileNavItem = styled(NavItem)`
   display: none;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     display: flex;
   }
 `;
@@ -130,7 +130,7 @@ export const HeaderActions = styled.div`
   align-items: center;
   gap: 0.75rem;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     margin-left: auto;
     margin-right: 0.6rem;
   }
@@ -142,7 +142,7 @@ export const DesktopOnlyAction = styled.div`
   display: flex;
   align-items: center;
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     display: none;
   }
 `;
@@ -151,7 +151,7 @@ export const NavLink = styled.a`
   text-decoration: none;
   color: ${({ theme }) => theme.colors.text};
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.94rem;
   padding: 0.5rem 0;
   transition: color 0.3s ease;
   position: relative;
@@ -239,7 +239,7 @@ export const MenuToggle = styled.button<{ $open: boolean }>`
       }
     `}
 
-  @media (max-width: 1090px) {
+  @media (max-width: 1200px) {
     display: inline-flex;
   }
 `;

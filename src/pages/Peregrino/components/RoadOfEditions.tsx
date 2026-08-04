@@ -1,12 +1,19 @@
 import React from "react";
 import { theme } from "../../../styles/theme";
+import { NEXT_EDITION, editionNumber } from "../../../data/editions";
 
 /**
  * A estrada das edições.
  *
  * Cada edição já realizada é uma pedra do caminho; as que a pessoa caminhou
  * ficam acesas em dourado, e o trecho entre duas acesas vira estrada percorrida.
- * Depois da edição atual a linha segue TRACEJADA, sem número: é o que ainda vem.
+ *
+ * A pedra mostra o NÚMERO da edição (2008 = 1ª, 2026 = 19ª), com o ano embaixo.
+ * Antes mostrava o ano abreviado — "23, 24, 25" — que parecia idade ou dia do
+ * mês e não respondia a pergunta que a estrada faz: quantas já houve.
+ *
+ * Depois da edição atual vem a pedra da PRÓXIMA, apagada e com a data: o
+ * tracejado sozinho dizia "tem mais", mas não dizia quando.
  *
  * Rola na horizontal de propósito. Uma estrada que quebra em várias linhas
  * deixa de parecer estrada — e são 19 edições, que não cabem numa tela de
@@ -71,22 +78,21 @@ const styles: Record<string, React.CSSProperties> = {
   linkOn: { background: `linear-gradient(90deg, ${c.goldDark}, ${c.gold})` },
   linkOff: { background: "rgba(255,255,255,0.16)" },
   tail: {
-    width: 96,
+    width: 60,
     height: 0,
     borderTop: "3px dashed rgba(255,255,255,0.35)",
     flexShrink: 0,
     marginBottom: 20,
   },
-  tailFlag: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 6,
-    flexShrink: 0,
-    marginLeft: 4,
+  // A pedra do ano que vem: mesma forma das outras, mas apagada e pontilhada —
+  // está no mapa, ainda não no histórico de ninguém.
+  stoneNext: {
+    background: "rgba(255,255,255,0.04)",
+    border: "2px dashed rgba(242,184,36,0.55)",
+    color: "rgba(253,233,176,0.85)",
   },
-  tailIcon: { fontSize: 22, opacity: 0.75 },
-  tailText: { fontSize: 11, color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" },
+  nextCaption: { fontSize: 11, color: "rgba(253,233,176,0.8)", fontWeight: 700 },
+  nextDate: { fontSize: 10, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap" },
 };
 
 interface RoadOfEditionsProps {
@@ -134,10 +140,12 @@ const RoadOfEditions: React.FC<RoadOfEditionsProps> = ({
                     ...(year === currentYear ? styles.stoneCurrent : {}),
                   }}
                   title={
-                    isOn ? `Você caminhou em ${year}` : `Edição de ${year}`
+                    isOn
+                      ? `Você caminhou na ${editionNumber(year)}ª edição, em ${year}`
+                      : `${editionNumber(year)}ª edição, em ${year}`
                   }
                 >
-                  {String(year).slice(2)}
+                  {editionNumber(year)}ª
                 </div>
                 <span style={{ ...styles.caption, ...(isOn ? styles.captionOn : {}) }}>
                   {year}
@@ -148,11 +156,15 @@ const RoadOfEditions: React.FC<RoadOfEditionsProps> = ({
         })}
 
         <li aria-hidden="true" style={styles.tail} />
-        <li style={styles.tailFlag}>
-          <span style={styles.tailIcon} aria-hidden="true">
-            ⛰️
-          </span>
-          <span style={styles.tailText}>o caminho continua</span>
+        <li style={styles.stoneWrap}>
+          <div
+            style={{ ...styles.stone, ...styles.stoneNext }}
+            title={`${NEXT_EDITION.number}ª edição, em ${NEXT_EDITION.date}`}
+          >
+            {NEXT_EDITION.number}ª
+          </div>
+          <span style={styles.nextCaption}>{NEXT_EDITION.year}</span>
+          <span style={styles.nextDate}>{NEXT_EDITION.date}</span>
         </li>
       </ul>
     </div>

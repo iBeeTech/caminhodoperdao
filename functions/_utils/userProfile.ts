@@ -31,6 +31,7 @@ export interface UserProfileRow {
   profile_prompted_at: number | null;
   is_staff: number;
   is_admin: number;
+  photo_updated_at: number | null;
 }
 
 /** O que a tela recebe. Sem `cpf_encrypted`: cifra não vai para o navegador. */
@@ -58,7 +59,7 @@ export const USER_PROFILE_COLUMNS = `
   complement, city, state, emergency_contact_name, emergency_contact_phone,
   has_allergy_medication, allergy_medication_details,
   has_dietary_restriction, dietary_restriction_details, years_declared_at,
-  profile_prompted_at, is_staff, is_admin
+  profile_prompted_at, is_staff, is_admin, photo_updated_at
 `;
 
 /** Tamanho máximo de campo de texto livre. Corta payload absurdo na entrada. */

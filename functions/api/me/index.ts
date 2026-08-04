@@ -91,6 +91,9 @@ export const onRequestGet: PagesFunction<Env> = async context => {
       hasSeenProfilePrompt: row.profile_prompted_at !== null,
       isStaff: row.is_staff === 1,
       isAdmin: row.is_admin === 1,
+      // Só o carimbo, não a imagem: a foto vem por `/api/me/photo`, e embutir
+      // 25 KB de base64 aqui engordaria toda abertura do perfil.
+      photoUpdatedAt: row.photo_updated_at,
       profile: toProfileView(row),
       // O CPF só sai daqui MASCARADO. A tela precisa que a pessoa se reconheça
       // ("é o meu mesmo"), não precisa do número inteiro — e um CPF completo
