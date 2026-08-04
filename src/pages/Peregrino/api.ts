@@ -255,6 +255,13 @@ export function transferAction(input: {
   });
 }
 
+/** Diz se o código que a pessoa tem é de convite ou de transferência. */
+export function checkCode(
+  code: string
+): Promise<{ kind: "transfer" | "invite" | "unusable"; fromName?: string; reason?: string }> {
+  return request(`/api/me/registration/code?code=${encodeURIComponent(code)}`);
+}
+
 export function cancelRegistration(): Promise<{ canceled: boolean; refundRequested: boolean }> {
   return request("/api/me/registration/cancel", { method: "POST", body: "{}" });
 }

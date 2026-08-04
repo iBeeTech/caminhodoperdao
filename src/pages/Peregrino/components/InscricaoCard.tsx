@@ -8,6 +8,7 @@ import {
   SessionExpiredError,
   MyTransfer,
   cancelRegistration,
+  checkCode,
   createRegistration,
   fetchMyRegistration,
   fetchMyTransfer,
@@ -315,6 +316,10 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
   const [toName, setToName] = React.useState("");
   const [isDonation, setIsDonation] = React.useState(false);
   const [receiveCode, setReceiveCode] = React.useState("");
+  // Preenchido quando o código digitado é de TRANSFERÊNCIA: a mesma janela de
+  // conferência serve para os dois casos, mudando só o botão do fim.
+  const [transferCode, setTransferCode] = React.useState<string | null>(null);
+  const [transferFrom, setTransferFrom] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isActive = true;
@@ -356,6 +361,55 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
         return;
       }
       setError(messageForError(transferError));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  /**
+   * Um campo só para os dois códigos. Quem recebe um código não sabe se ele é
+   * de convite ou de transferência — recebeu um texto pelo WhatsApp. Dois
+   * campos separados jogavam esse problema para a pessoa errada: ela erraria o
+   * campo, veria "inválido" e concluiria que o código não presta.
+   */
+  const handleCode = async () => {
+    const code = receiveCode.trim().toUpperCase();
+    if (!code) return;
+    setIsBusy(true);
+    setError(null);
+    try {
+      const result = await checkCode(code);
+
+      if (result.kind === "transfer") {
+        setTransferCode(code);
+        setTransferFrom(result.fromName ?? null);
+        setInviteCode("");
+      } else if (result.kind === "invite") {
+        setTransferCode(null);
+        setTransferFrom(null);
+        setInviteCode(code);
+      } else {
+        setError(
+          result.reason === "used"
+            ? "Este código já foi usado."
+            : result.reason === "revoked"
+              ? "Este código foi cancelado pela organização."
+              : "Código não encontrado. Confira as letras com quem enviou."
+        );
+        return;
+      }
+
+      // Os dois caminhos terminam na mesma janela de conferência — o que muda
+      // é o botão do fim.
+      setForm(me.profile);
+      setIsEditing(data.missingProfileFields.length > 0);
+      setIsModalOpen(true);
+    } catch (codeError) {
+      if (codeError instanceof SessionExpiredError) {
+        onSessionExpired();
+        return;
+      }
+      setError(messageForError(codeError));
     } finally {
       setIsBusy(false);
     }
@@ -591,7 +645,7 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
           <div style={styles.actionsRow}>
             <div style={{ ...styles.field, marginTop: 0, flex: "1 1 220px" }}>
               <label style={styles.label} htmlFor="ins-receive">
-                Recebeu uma inscrição de alguém? Digite o código
+                Tem um código? Convite da organização ou inscrição cedida por alguém
               </label>
               <input
                 id="ins-receive"
@@ -609,12 +663,10 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                 alignSelf: "flex-end",
                 ...(receiveCode.trim() && !isBusy ? {} : styles.buttonOff),
               }}
-              onClick={() =>
-                runTransfer({ action: "accept", code: receiveCode.trim(), acceptsTerms: true })
-              }
+              onClick={handleCode}
               disabled={!receiveCode.trim() || isBusy}
             >
-              Finalizar inscrição
+              {isBusy ? "Conferindo..." : "Usar código"}
             </button>
           </div>
 
@@ -818,6 +870,16 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                   Algum dado está errado? Editar
                 </button>
 
+                {transferCode && (
+                  <div style={styles.warn}>
+                    Você está recebendo a inscrição
+                    {transferFrom ? ` de ${transferFrom}` : ""}. Confira seus dados e aceite
+                    o termo — o aceite de quem cedeu não vale para você.
+                  </div>
+                )}
+
+                {!transferCode && (
+                  <>
                 <div style={styles.choiceRow}>
                   <input
                     id="ins-sleep"
@@ -842,7 +904,10 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                     placeholder="Nome de quem vai com você"
                   />
                 </div>
+                  </>
+                )}
 
+                {!transferCode && (
                 <div style={styles.field}>
                   <label style={styles.label} htmlFor="ins-invite">
                     Código de convite {data.needsInviteCode ? "(obrigatório)" : "(se você tiver)"}
@@ -855,6 +920,7 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                     placeholder="O código que a organização enviou"
                   />
                 </div>
+                )}
 
                 <div style={styles.choiceRow}>
                   <input
@@ -878,10 +944,23 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                     ...styles.primaryButton,
                     ...(acceptsTerms && !isBusy ? {} : styles.buttonOff),
                   }}
-                  onClick={handleSubmit}
+                  onClick={
+                    transferCode
+                      ? () =>
+                          runTransfer({
+                            action: "accept",
+                            code: transferCode,
+                            acceptsTerms: true,
+                          })
+                      : handleSubmit
+                  }
                   disabled={!acceptsTerms || isBusy}
                 >
-                  {isBusy ? "Inscrevendo..." : "Confirmar inscrição"}
+                  {isBusy
+                    ? "Enviando..."
+                    : transferCode
+                      ? "Finalizar inscrição"
+                      : "Confirmar inscrição"}
                 </button>
               </>
             )}
