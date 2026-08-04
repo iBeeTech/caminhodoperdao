@@ -28,6 +28,18 @@ type Env = UserAuthEnv & EventYearEnv & RegistrationWindowEnv & CapacityEnv & Cp
  * refazer o fluxo inteiro na troca, e criar cobrança de verdade num fluxo que
  * ainda está sendo testado é pior ainda.
  *
+ * ## Um CPF, uma inscrição por edição
+ *
+ * A garantia de verdade é do BANCO: `idx_registrations_cpf_encrypted` é UNIQUE
+ * em `(cpf_encrypted, event_year)`. Nenhuma checagem em código substitui isso —
+ * duas requisições ao mesmo tempo passariam pelas duas checagens e só o índice
+ * barra a segunda.
+ *
+ * ⚠️ O índice vale para QUALQUER status, inclusive `CANCELED`. Por isso quem
+ * cancelou e quer voltar não pode ganhar uma linha nova: a inscrição antiga é
+ * REATIVADA. Sem isso, o INSERT esbarraria no índice e a pessoa veria um erro
+ * genérico sem entender que o problema era a própria inscrição cancelada.
+ *
  * ## Vaga e convite
  *
  * Passando do teto (`MAX_REGISTRATIONS`), a inscrição só sai com **código de
@@ -189,15 +201,25 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       return badRequest("incomplete_profile");
     }
 
-    // Duas contas não podem reivindicar o mesmo CPF na mesma edição. O índice
-    // único de (cpf, ano) já barraria, mas aqui a mensagem é entendível.
+    // Qualquer inscrição com este CPF nesta edição — inclusive cancelada, que é
+    // o que o índice único enxerga.
     const sameCpf = await context.env.DB.prepare(
-      `SELECT id FROM registrations
-        WHERE cpf_encrypted = ?1 AND event_year = ?2 AND status IN ('PAID','PENDING')`
+      `SELECT id, status, user_id FROM registrations
+        WHERE cpf_encrypted = ?1 AND event_year = ?2`
     )
       .bind(profile.cpf_encrypted, eventYear)
-      .first<{ id: string }>();
-    if (sameCpf) return conflict("cpf_already_registered");
+      .first<{ id: string; status: string; user_id: string | null }>();
+
+    if (sameCpf && sameCpf.status !== "CANCELED") {
+      return conflict("cpf_already_registered");
+    }
+
+    // CPF cancelado que pertence a OUTRA conta não pode ser reaproveitado por
+    // aqui: seria uma pessoa assumindo a linha da outra. Caso raro (só acontece
+    // se o CPF trocou de dono), e que precisa de gente olhando.
+    if (sameCpf && sameCpf.user_id && sameCpf.user_id !== auth.sub) {
+      return conflict("cpf_belongs_to_another_account");
+    }
 
     const limits = getCapacityLimits(context.env);
     const taken = await countTaken(context.env, eventYear);
@@ -214,6 +236,35 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       // convite sem necessidade. Só valida se é real, e amarra depois.
       const invite = await evaluateInvite(context.env.DB, code);
       if (!invite.openable) return conflict(`invite_${invite.reason}`);
+    }
+
+    // Voltar de um cancelamento reaproveita a MESMA linha. Linha nova bateria no
+    // índice único de (CPF, ano), que não distingue status.
+    if (sameCpf) {
+      await context.env.DB.prepare(
+        `UPDATE registrations SET
+           status = 'PENDING', user_id = ?2, email = ?3, name = ?4,
+           sleep_at_monastery = ?5, companion_name = ?6,
+           terms_accepted_at = ?7, invite_code = COALESCE(?8, invite_code),
+           paid_at = NULL
+         WHERE id = ?1`
+      )
+        .bind(
+          sameCpf.id,
+          auth.sub,
+          auth.email,
+          profile.name,
+          body.sleepAtMonastery === true ? 1 : 0,
+          typeof body.companionName === "string" && body.companionName.trim()
+            ? body.companionName.trim().slice(0, 120)
+            : null,
+          new Date().toISOString(),
+          code || null
+        )
+        .run();
+
+      if (code) await bindInviteCode(context.env.DB, code, sameCpf.id);
+      return json(200, { id: sameCpf.id, status: "PENDING", paymentPending: true, reactivated: true });
     }
 
     const id = crypto.randomUUID();
@@ -275,6 +326,10 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       paymentPending: true,
     });
   } catch (error) {
+    // Última barreira: duas requisições simultâneas passam pelas checagens
+    // acima e só o índice único as separa. Sem isto, a segunda veria um erro
+    // genérico de servidor.
+    if (String(error).includes("UNIQUE")) return conflict("cpf_already_registered");
     console.error("POST /api/me/registration falhou:", error);
     return serverError();
   }

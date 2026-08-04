@@ -303,6 +303,10 @@ export function messageForError(error: unknown): string {
     registration_not_open: "As inscrições ainda não abriram.",
     already_registered: "Você já tem inscrição nesta edição.",
     cpf_already_registered: "Já existe inscrição com este CPF nesta edição.",
+    cpf_belongs_to_another_account:
+      "Existe uma inscrição cancelada com este CPF em outra conta. Fale com a organização.",
+    own_canceled_registration:
+      "Você tem uma inscrição cancelada nesta edição. Fale com a organização para receber a vaga transferida.",
     incomplete_profile: "Complete seu cadastro antes de se inscrever.",
     terms_not_accepted: "É preciso aceitar o termo de responsabilidade.",
     sold_out: "As vagas acabaram. Só com código de convite.",

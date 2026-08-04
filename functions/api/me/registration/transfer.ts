@@ -233,14 +233,24 @@ export const onRequestPost: PagesFunction<Env> = async context => {
 
       // Quem recebe não pode já ter inscrição no mesmo ano: a unicidade
       // (CPF, ano) quebraria na reescrita, e a pessoa ficaria com duas vagas.
+      // Inclui CANCELED de propósito: o índice único de (CPF, ano) não olha
+      // status, então uma inscrição cancelada da própria pessoa faria a
+      // reescrita estourar no banco com erro incompreensível.
       const alreadyRegistered = await context.env.DB.prepare(
-        `SELECT id FROM registrations
-          WHERE event_year = ?1 AND status IN ('PAID','PENDING')
+        `SELECT id, status FROM registrations
+          WHERE event_year = ?1 AND id != ?4
             AND (user_id = ?2 OR cpf_encrypted = ?3)`
       )
-        .bind(eventYear, auth.sub, profile.cpf_encrypted)
-        .first<{ id: string }>();
-      if (alreadyRegistered) return conflict("already_registered");
+        .bind(eventYear, auth.sub, profile.cpf_encrypted, transfer.registration_id)
+        .first<{ id: string; status: string }>();
+
+      if (alreadyRegistered) {
+        return conflict(
+          alreadyRegistered.status === "CANCELED"
+            ? "own_canceled_registration"
+            : "already_registered"
+        );
+      }
 
       const now = Date.now();
       await context.env.DB.batch([
@@ -294,6 +304,7 @@ export const onRequestPost: PagesFunction<Env> = async context => {
 
     return badRequest("invalid_action");
   } catch (error) {
+    if (String(error).includes("UNIQUE")) return conflict("already_registered");
     console.error("POST /api/me/registration/transfer falhou:", error);
     return serverError();
   }
