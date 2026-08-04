@@ -118,6 +118,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   const set = <K extends keyof PilgrimProfile>(key: K, fieldValue: PilgrimProfile[K]) =>
     onChange({ ...value, [key]: fieldValue });
 
+  const isEmergencyPhoneOwn =
+    value.phone.length > 0 && value.phone === value.emergencyContactPhone;
+
   const handleCepChange = async (raw: string) => {
     const digits = raw.replace(/\D/g, "").slice(0, CEP_LENGTH);
     onChange({ ...value, cep: digits });
@@ -337,13 +340,23 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         </label>
         <input
           id="pf-emergency-phone"
-          style={styles.input}
+          style={{
+            ...styles.input,
+            ...(isEmergencyPhoneOwn ? { borderColor: "#b91c1c" } : {}),
+          }}
           value={value.emergencyContactPhone}
           onChange={e =>
             set("emergencyContactPhone", e.target.value.replace(/\D/g, "").slice(0, 11))
           }
           inputMode="numeric"
         />
+        {/* Avisa na digitação, e não só ao salvar: descobrir o erro depois de
+            preencher a tela inteira é o tipo de coisa que faz desistir. */}
+        {isEmergencyPhoneOwn && (
+          <p style={styles.cepError}>
+            É o seu próprio telefone. Use o número de outra pessoa.
+          </p>
+        )}
       </div>
 
       <div style={styles.pixBox}>

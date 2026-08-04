@@ -126,6 +126,13 @@ export function validateProfile(input: unknown): ProfileValidation {
     return { ok: false, error: "invalid_emergency_phone" };
   }
 
+  // Contato de emergência com o próprio número é um contato que não atende: se
+  // a pessoa passou mal no meio do caminho, quem liga cai no telefone dela
+  // mesma. Só faz sentido barrar quando os dois estão preenchidos.
+  if (phone && emergencyPhone && phone === emergencyPhone) {
+    return { ok: false, error: "emergency_phone_is_own" };
+  }
+
   const dateOfBirth = text("dateOfBirth", 10);
   if (dateOfBirth && !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
     return { ok: false, error: "invalid_date_of_birth" };

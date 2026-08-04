@@ -287,6 +287,8 @@ export function messageForError(error: unknown): string {
   const map: Record<string, string> = {
     invalid_phone: "Telefone inválido. Use DDD + número.",
     invalid_emergency_phone: "Telefone do contato de emergência inválido.",
+    emergency_phone_is_own:
+      "O contato de emergência não pode ser o seu próprio telefone. Use o número de outra pessoa.",
     invalid_date_of_birth: "Data de nascimento inválida.",
     invalid_cep: "CEP inválido. Precisa ter 8 números.",
     invalid_state: "Estado inválido. Use a sigla, como MG.",
