@@ -3,6 +3,9 @@ import {
   AdminAuthEnv,
   authorizeAdminRequest,
   authorizeSuperAdminRequest,
+  generateTempPassword,
+  getAdminByEmail,
+  hashPassword,
 } from "../../_utils/adminAuth";
 import { badRequest, json, notFound, serverError } from "../../_utils/responses";
 
@@ -95,7 +98,55 @@ export const onRequestPost: PagesFunction<Env> = async context => {
 
     if (!result.meta.changes) return notFound("account_not_found");
 
-    return json(200, { userId, isStaff, isAdmin, roleUpdatedAt: now, roleUpdatedBy: auth.sub });
+    // Marcar "admin" aqui passa a CRIAR a conta do painel, se ela ainda não
+    // existir. Antes eram dois passos em telas diferentes — marcar o papel e
+    // depois digitar o mesmo e-mail no "criar admin" —, e esquecer o segundo
+    // deixava a pessoa marcada como admin sem conseguir entrar em lugar nenhum.
+    let panelAccount: { created: boolean; tempPassword?: string; reason?: string } | null = null;
+
+    if (isAdmin) {
+      const account = await context.env.DB.prepare(
+        "SELECT email FROM users WHERE id = ?1"
+      )
+        .bind(userId)
+        .first<{ email: string }>();
+
+      if (account) {
+        const email = account.email.trim().toLowerCase();
+        const existing = await getAdminByEmail(context.env.DB, email);
+
+        if (existing) {
+          panelAccount = { created: false, reason: "already_exists" };
+        } else {
+          // ⚠️ SEM SENHA PADRÃO. Cada conta nasce com senha aleatória, mostrada
+          // uma vez só, e com troca obrigatória no primeiro acesso. Já houve
+          // senha fixa neste projeto: ela vazou no histórico do git e 9 dos 11
+          // admins continuavam usando — e, como o hash do admin é SHA-256 sem
+          // sal, deu para descobrir quem era só comparando hashes.
+          const tempPassword = generateTempPassword();
+          const passwordHash = await hashPassword(
+            tempPassword,
+            context.env.ADMIN_PASSWORD_PEPPER
+          );
+          await context.env.DB.prepare(
+            `INSERT INTO admin_users (email, password_hash, created_at, updated_at, must_change_password)
+             VALUES (?1, ?2, ?3, ?3, 1)`
+          )
+            .bind(email, passwordHash, now)
+            .run();
+          panelAccount = { created: true, tempPassword };
+        }
+      }
+    }
+
+    return json(200, {
+      userId,
+      isStaff,
+      isAdmin,
+      roleUpdatedAt: now,
+      roleUpdatedBy: auth.sub,
+      panelAccount,
+    });
   } catch (error) {
     console.error("POST /api/admin/accounts falhou:", error);
     return serverError();

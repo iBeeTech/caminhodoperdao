@@ -237,6 +237,10 @@ const ContasPage: React.FC = () => {
   const [search, setSearch] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [panelCreated, setPanelCreated] = React.useState<{
+    email: string;
+    tempPassword: string;
+  } | null>(null);
 
   React.useEffect(() => {
     if (!token) {
@@ -286,7 +290,17 @@ const ContasPage: React.FC = () => {
         isAdmin: boolean;
         roleUpdatedAt: number;
         roleUpdatedBy: string;
+        panelAccount: { created: boolean; tempPassword?: string; reason?: string } | null;
       };
+
+      // Marcar admin cria a conta do painel na hora. A senha temporária aparece
+      // uma vez só — se sumir da tela, o caminho é "Pedidos de senha".
+      if (saved.panelAccount?.created && saved.panelAccount.tempPassword) {
+        setPanelCreated({
+          email: account.email,
+          tempPassword: saved.panelAccount.tempPassword,
+        });
+      }
       setAccounts(current =>
         current.map(item =>
           item.id === account.id
@@ -322,12 +336,14 @@ const ContasPage: React.FC = () => {
       <p style={s.help}>
         Todo mundo que criou login no site. Aqui você marca quem é servo (staff) e quem é
         admin do evento. Todo admin é servo — marcar admin marca servo junto.
+        <strong> Marcar "Admin" também cria a conta de acesso ao painel</strong>, com uma
+        senha temporária mostrada na hora.
       </p>
 
       <div style={s.warn}>
-        <strong>Marcar aqui não dá acesso ao painel.</strong> O papel identifica a pessoa e
-        libera o selo de Servo na área dela. Para alguém entrar em <code>/admin</code>, a
-        conta de admin continua sendo criada à parte.
+        <strong>Servo</strong> só identifica a pessoa e libera o selo na área dela.
+        <strong> Admin</strong> vai além: cria a conta de acesso ao painel, se ainda não
+        existir, e mostra a senha temporária uma única vez.
       </div>
 
       {!superAdmin && (
@@ -336,6 +352,20 @@ const ContasPage: React.FC = () => {
         </div>
       )}
       {error && <div style={s.error}>{error}</div>}
+
+      {panelCreated && (
+        <div style={s.created}>
+          <p style={{ margin: 0 }}>
+            Conta do painel criada para <strong>{panelCreated.email}</strong>. Senha
+            temporária:
+          </p>
+          <p style={s.tempPassword}>{panelCreated.tempPassword}</p>
+          <p style={{ margin: 0, fontSize: "0.8rem" }}>
+            Anote agora — ela <strong>não aparece de novo</strong>. A pessoa entra em
+            /admin com o e-mail e esta senha, e é obrigada a trocá-la na hora.
+          </p>
+        </div>
+      )}
 
       <NewAdminSection token={token} superAdmin={superAdmin} />
 
