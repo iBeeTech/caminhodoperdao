@@ -1,6 +1,7 @@
 import React from "react";
 import { theme } from "../../../styles/theme";
 import { useAddressByCep } from "../../../hooks/useAddressByCep";
+import { formatPhoneBR, stripCountryCode } from "../../../utils/formatters/phone";
 import { PilgrimProfile } from "../api";
 
 /**
@@ -82,6 +83,9 @@ const GENDERS = [
 
 const CEP_LENGTH = 8;
 
+const PHONE_PLACEHOLDER = "(16) 9XXXX-XXXX";
+const COUNTRY_CODE_WARNING = "Código de área do Brasil +55 não é necessário.";
+
 const PIX_TYPES = [
   { value: "", label: "Não quero informar agora" },
   { value: "cpf", label: "CPF" },
@@ -117,6 +121,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const set = <K extends keyof PilgrimProfile>(key: K, fieldValue: PilgrimProfile[K]) =>
     onChange({ ...value, [key]: fieldValue });
+
+  // Um aviso por campo: o 55 pode ter sido colado só num deles.
+  const [countryCodeWarning, setCountryCodeWarning] = React.useState<{
+    phone: boolean;
+    emergency: boolean;
+  }>({ phone: false, emergency: false });
 
   const isEmergencyPhoneOwn =
     value.phone.length > 0 && value.phone === value.emergencyContactPhone;
@@ -202,12 +212,17 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <input
           id="pf-phone"
           style={styles.input}
-          value={value.phone}
-          onChange={e => set("phone", e.target.value.replace(/\D/g, "").slice(0, 11))}
+          value={formatPhoneBR(value.phone)}
+          onChange={e => {
+            const { digits, hadCountryCode } = stripCountryCode(e.target.value);
+            setCountryCodeWarning(current => ({ ...current, phone: hadCountryCode }));
+            set("phone", digits);
+          }}
           inputMode="numeric"
-          placeholder="DDD + número"
+          placeholder={PHONE_PLACEHOLDER}
           autoComplete="tel"
         />
+        {countryCodeWarning.phone && <p style={styles.cepStatus}>{COUNTRY_CODE_WARNING}</p>}
       </div>
 
       <div style={styles.field}>
@@ -344,12 +359,18 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             ...styles.input,
             ...(isEmergencyPhoneOwn ? { borderColor: "#b91c1c" } : {}),
           }}
-          value={value.emergencyContactPhone}
-          onChange={e =>
-            set("emergencyContactPhone", e.target.value.replace(/\D/g, "").slice(0, 11))
-          }
+          value={formatPhoneBR(value.emergencyContactPhone)}
+          onChange={e => {
+            const { digits, hadCountryCode } = stripCountryCode(e.target.value);
+            setCountryCodeWarning(current => ({ ...current, emergency: hadCountryCode }));
+            set("emergencyContactPhone", digits);
+          }}
           inputMode="numeric"
+          placeholder={PHONE_PLACEHOLDER}
         />
+        {countryCodeWarning.emergency && (
+          <p style={styles.cepStatus}>{COUNTRY_CODE_WARNING}</p>
+        )}
         {/* Avisa na digitação, e não só ao salvar: descobrir o erro depois de
             preencher a tela inteira é o tipo de coisa que faz desistir. */}
         {isEmergencyPhoneOwn && (
@@ -418,7 +439,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               set(
                 "refundPixKey",
                 value.refundPixType === "cpf" || value.refundPixType === "celular"
-                  ? e.target.value.replace(/\D/g, "").slice(0, 11)
+                  ? stripCountryCode(e.target.value).digits
                   : e.target.value
               )
             }

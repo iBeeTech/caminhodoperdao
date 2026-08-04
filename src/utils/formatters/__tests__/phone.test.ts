@@ -18,7 +18,7 @@ describe("formatPhoneBR", () => {
   });
 
   it("deve formatar 11 dígitos corretamente", () => {
-    expect(formatPhoneBR("11999999999")).toBe("(11) 9 9999-9999");
+    expect(formatPhoneBR("11999999999")).toBe("(11) 99999-9999");
   });
 
   it("deve formatar 10 dígitos corretamente (sem 9)", () => {
@@ -26,10 +26,10 @@ describe("formatPhoneBR", () => {
   });
 
   it("deve remover caracteres não numéricos", () => {
-    expect(formatPhoneBR("(11) 9999-9999")).toBe("(11) 9 9999-9999");
+    expect(formatPhoneBR("(11) 9999-9999")).toBe("(11) 9999-9999");
   });
 
   it("deve limitar a 11 dígitos", () => {
-    expect(formatPhoneBR("119999999991234")).toBe("(11) 9 9999-9999");
+    expect(formatPhoneBR("119999999991234")).toBe("(11) 99999-9999");
   });
 });

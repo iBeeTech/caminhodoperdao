@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
+import { formatPhoneBR } from "../../../utils/formatters/phone";
 import PhotoUploader from "../components/PhotoUploader";
 import { perfilStyles as s } from "./perfil.styles";
 import {
@@ -187,7 +188,7 @@ const PeregrinoPerfil: React.FC = () => {
             <div style={{ height: 18 }} />
 
             <ReadRow label="Nome" value={me.profile.name} />
-            <ReadRow label="Telefone" value={formatPhone(me.profile.phone)} />
+            <ReadRow label="Telefone" value={formatPhoneBR(me.profile.phone)} />
             <ReadRow label="E-mail" value={me.email} />
           </section>
 
@@ -296,11 +297,5 @@ const PeregrinoPerfil: React.FC = () => {
   );
 };
 
-/** (16) 99999-9999 — só para leitura; o campo de digitar guarda só números. */
-function formatPhone(digits: string): string {
-  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return digits;
-}
 
 export default PeregrinoPerfil;

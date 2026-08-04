@@ -1,36 +1,57 @@
 /**
- * Formatação de telefone brasileiro com suporte a backspace
- * 
- * Converte "11999999999" para "(11)9 9999-9999"
- * Permite deletar caracteres especiais com backspace
+ * Máscara de telefone brasileiro: `(16) 98222-1415`.
+ *
+ * Formata enquanto a pessoa digita e aceita apagar normalmente, porque trabalha
+ * sempre a partir dos DÍGITOS: o texto formatado é reconstruído do zero a cada
+ * tecla, em vez de tentar remendar a string anterior.
+ *
+ * Corta em 11 dígitos — o máximo que existe no Brasil (DDD + 9 dígitos). Quem
+ * colar um número com o código do país precisa ser tratado ANTES daqui: veja
+ * `stripCountryCode`.
  */
 
+/** DDD + 9 dígitos. Não existe telefone brasileiro maior que isso. */
+export const MAX_PHONE_DIGITS = 11;
+
+export function onlyDigits(input: string): string {
+  return input.replace(/\D/g, "");
+}
+
 export function formatPhoneBR(input: string): string {
-  // Extrair apenas dígitos
-  const digits = input.replace(/\D/g, "").slice(0, 11);
-  
+  const digits = onlyDigits(input).slice(0, MAX_PHONE_DIGITS);
   if (!digits) return "";
 
-  // Formatar baseado no número de dígitos
   if (digits.length <= 2) {
     return `(${digits}${digits.length === 2 ? ")" : ""}`;
   }
 
   const ddd = digits.slice(0, 2);
   const body = digits.slice(2);
-  const first = body.slice(0, 1);
-  const rest = body.slice(1);
 
-  let out = `(${ddd})`;
-  if (first) out += ` ${first}`;
+  // Enquanto não há dígitos suficientes para o traço, mostra o que existe.
+  if (body.length <= 4) return `(${ddd}) ${body}`;
 
-  if (rest.length <= 4) {
-    out += rest;
-  } else {
-    out += `${rest.slice(0, 4)}-${rest.slice(4, 8)}`;
+  // Celular (9 dígitos) parte em 5+4; fixo (8 dígitos) parte em 4+4. O corte é
+  // decidido pelo tamanho do corpo, para o traço não pular de lugar no meio da
+  // digitação.
+  const cut = body.length > 8 ? 5 : 4;
+  return `(${ddd}) ${body.slice(0, cut)}-${body.slice(cut)}`;
+}
+
+/**
+ * Tira o código do país colado por engano.
+ *
+ * ⚠️ **55 no começo nem sempre é o país:** 55 também é o DDD de Santa Maria (RS).
+ * Por isso a regra não olha só o começo — só considera código de país quando o
+ * número passa de 11 dígitos, que é o único caso em que o 55 sobra de verdade.
+ * Quem é do DDD 55 digita 11 dígitos e nunca cai aqui.
+ */
+export function stripCountryCode(rawDigits: string): { digits: string; hadCountryCode: boolean } {
+  const digits = onlyDigits(rawDigits);
+  if (digits.length > MAX_PHONE_DIGITS && digits.startsWith("55")) {
+    return { digits: digits.slice(2, 2 + MAX_PHONE_DIGITS), hadCountryCode: true };
   }
-
-  return out;
+  return { digits: digits.slice(0, MAX_PHONE_DIGITS), hadCountryCode: false };
 }
 
 export default formatPhoneBR;
