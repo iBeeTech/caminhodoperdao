@@ -37,11 +37,20 @@ interface TestimonialsSectionProps {
   // Quando false, oculta o bloco "Deixe seu depoimento" (usado dentro de /depoimentos,
   // onde o formulário já está logo acima).
   showSubmitLink?: boolean;
+  /**
+   * Quantos depoimentos mostrar. A home fica com 3 — ali eles são um convite,
+   * não o conteúdo. A página `/depoimentos` pede um número alto, porque lá eles
+   * SÃO o conteúdo e a pessoa foi até lá justamente para ler vários.
+   */
+  limit?: number;
 }
 
-const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ showSubmitLink = true }) => {
+const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
+  showSubmitLink = true,
+  limit = 3,
+}) => {
   const { t } = useTranslation("landing");
-  const { data: testimonials = [], isLoading, error } = useTestimonials(false, 3);
+  const { data: testimonials = [], isLoading, error } = useTestimonials(false, limit);
 
   if (isLoading) {
     return (

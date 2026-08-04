@@ -25,14 +25,20 @@ import { useUserSession } from "../../../utils/auth/useUserSession";
  * Tutoriais e Dashboard soltos lado a lado, a barra virava uma parede de texto
  * que não cabia em tela nenhuma:
  *
- * - **Home** — as seções da página inicial (âncoras) mais os depoimentos.
- * - **Memórias** — o que ficou registrado das caminhadas: testemunhos e fotos.
- * - **Medalhas** — o catálogo, aberto a quem não tem conta.
- * - **Tutoriais** — os passo a passo de cancelamento.
- * - **Dashboard** — só para quem está logado.
+ * - **Home** — as seções da página inicial (âncoras).
+ * - **Memórias** — o que ficou registrado das caminhadas: depoimentos,
+ *   testemunhos e fotos.
+ * - **Conquistas** — o catálogo de medalhas, aberto a quem não tem conta.
+ * - **Meu Caminho** — só para quem está logado.
  *
- * "Inscrição" saiu junto com a seção de inscrição da home: inscrever-se passa a
- * acontecer dentro da conta.
+ * O grupo abre no PASSAR DO MOUSE e só FIXA no clique. Quem está de passagem vê
+ * o conteúdo sem clicar; quem quer ler com calma clica e o menu para de sumir
+ * quando o mouse escapa. No celular, onde não existe "passar o mouse", o toque
+ * conta como clique e abre do mesmo jeito.
+ *
+ * "Inscrição" saiu junto com a seção de inscrição da home (a inscrição passa a
+ * acontecer dentro da conta) e "Tutoriais" foi removido: os passo a passo de
+ * cancelamento não valem mais.
  */
 
 interface HeaderProps {
@@ -92,7 +98,11 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
   const { navigationLinkClicked, navigationMenuToggled } = useAnalytics();
   const { isLoggedIn } = useUserSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // Dois estados, não um: `openGroup` é o que está visível agora (pode ter sido
+  // só o mouse passando), `pinnedGroup` é o que a pessoa fixou no clique. Com um
+  // estado só, tirar o mouse fecharia o que ela acabou de fixar.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [pinnedGroup, setPinnedGroup] = useState<string | null>(null);
 
   const navigationId = "primary-navigation";
   const navigationLabel = t("header.navigationLabel", {
@@ -114,25 +124,20 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
         { label: t("nav.schedule") as string, href: `${anchorBase}#schedule` },
         { label: t("nav.about") as string, href: `${anchorBase}#about` },
         { label: t("nav.contact") as string, href: `${anchorBase}#contact` },
-        { label: t("nav.testimonials") as string, href: "/depoimentos" },
       ],
     },
     {
       label: "Memórias",
       items: [
+        { label: t("nav.testimonials") as string, href: "/depoimentos" },
         { label: t("nav.testimonies") as string, href: "/testemunhos" },
         { label: t("nav.gallery") as string, href: "/gallery" },
       ],
     },
-    { label: "Medalhas", href: "/medalhas" },
-    {
-      label: "Tutoriais",
-      items: [
-        { label: "Camisetas", href: "/tutoriais?tipo=camiseta" },
-        { label: "Inscrição", href: "/tutoriais?tipo=inscricao" },
-      ],
-    },
-    ...(isLoggedIn ? [{ label: "Dashboard", href: "/dashboard" }] : []),
+    { label: "Conquistas", href: "/medalhas" },
+    // "Meu Caminho" no lugar de "Dashboard": a palavra descreve o que a pessoa
+    // vai encontrar (a caminhada dela, ano a ano) em vez do tipo de tela.
+    ...(isLoggedIn ? [{ label: "Meu Caminho", href: "/dashboard" }] : []),
   ];
 
   const handleNavClick = (
@@ -153,12 +158,38 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
     }
     setIsMenuOpen(false);
     setOpenGroup(null);
+    setPinnedGroup(null);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key !== "Escape") return;
-    if (openGroup) setOpenGroup(null);
-    else if (isMenuOpen) setIsMenuOpen(false);
+    if (openGroup) {
+      setOpenGroup(null);
+      setPinnedGroup(null);
+    } else if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  const openOnHover = (label: string) => {
+    if (!pinnedGroup) setOpenGroup(label);
+  };
+
+  const closeOnLeave = (label: string) => {
+    // Menu fixado ignora a saída do mouse: foi exatamente para isso que a
+    // pessoa clicou.
+    if (pinnedGroup === label) return;
+    setOpenGroup(current => (current === label ? null : current));
+  };
+
+  const togglePin = (label: string) => {
+    if (pinnedGroup === label) {
+      setPinnedGroup(null);
+      setOpenGroup(null);
+      return;
+    }
+    setPinnedGroup(label);
+    setOpenGroup(label);
   };
 
   return (
@@ -179,18 +210,15 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
                     <NavItem
                       key={group.label}
                       style={{ position: "relative" }}
-                      onMouseLeave={() =>
-                        setOpenGroup(current => (current === group.label ? null : current))
-                      }
+                      onMouseEnter={() => openOnHover(group.label)}
+                      onMouseLeave={() => closeOnLeave(group.label)}
                     >
                       <NavLink
                         as="button"
                         type="button"
                         aria-haspopup="true"
                         aria-expanded={openGroup === group.label}
-                        onClick={() =>
-                          setOpenGroup(current => (current === group.label ? null : group.label))
-                        }
+                        onClick={() => togglePin(group.label)}
                         style={triggerStyle}
                       >
                         {group.label} <span style={{ fontSize: "0.7rem" }}>▾</span>
@@ -246,6 +274,7 @@ const Header: React.FC<HeaderProps> = ({ title, showNavigation = true }) => {
                 const nextState = !isMenuOpen;
                 setIsMenuOpen(nextState);
                 setOpenGroup(null);
+                setPinnedGroup(null);
                 navigationMenuToggled(nextState ? "open" : "close", "mobile_menu");
               }}
             >

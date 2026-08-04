@@ -5,15 +5,16 @@ import { EDITION_THEMES, NEXT_EDITION, editionNumber } from "../../../data/editi
 /**
  * A estrada das edições.
  *
- * Cada edição é uma pedra: as que a pessoa caminhou ficam acesas em dourado, a
- * do ano que vem fica apagada e pontilhada, com a data.
+ * ⚠️ **A linha liga uma pedra à seguinte, e só.** A versão anterior desenhava um
+ * traço de ponta a ponta como fundo da faixa, e ele passava POR TRÁS das pedras
+ * e continuava depois da última — parecia uma régua riscando a tela, não uma
+ * estrada. Agora cada trecho é um pedaço entre dois vizinhos, e depois do último
+ * não há nada.
  *
- * ⚠️ **Todas as pedras cabem na tela.** A primeira versão rolava na horizontal,
- * e rolagem lateral é o gesto que menos gente descobre — quem não arrastasse
- * nunca veria as edições antigas, que são justamente as que dão sentido à
- * palavra "estrada". Agora as pedras QUEBRAM EM LINHAS, e o asfalto é um fundo
- * repetido a cada faixa em vez de um traço por pedra: sai um `<li>` conector
- * para cada edição (eram 19), e a linha passa a acompanhar a quebra sozinha.
+ * O caminho **serpenteia**: as linhas alternam de direção e uma curva liga o fim
+ * de uma ao começo da outra. É o que faz parecer estrada de verdade, e é
+ * também o que permite mostrar todas as edições sem rolagem lateral — o gesto
+ * que menos gente descobre.
  *
  * O balão mostra tema e número de peregrinos. Passar o mouse ABRE, clicar
  * TRAVA — no celular não existe "passar o mouse", então sem o clique a
@@ -22,35 +23,35 @@ import { EDITION_THEMES, NEXT_EDITION, editionNumber } from "../../../data/editi
 
 const c = theme.colors;
 
-const STONE = 44;
-const CAPTION = 16;
-const ROW_GAP = 14;
-/** Altura de uma faixa da estrada. É com ela que o asfalto de fundo se alinha. */
-const ROW_HEIGHT = STONE + 6 + CAPTION + ROW_GAP;
+const STONE = 46;
+/** Quantas pedras por linha, por faixa de largura. */
+const BREAKPOINTS: { minWidth: number; perRow: number }[] = [
+  { minWidth: 820, perRow: 7 },
+  { minWidth: 640, perRow: 6 },
+  { minWidth: 480, perRow: 5 },
+  { minWidth: 0, perRow: 4 },
+];
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: { position: "relative" },
-  track: {
+  row: {
     display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-start",
-    gap: `${ROW_GAP}px`,
-    columnGap: 18,
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    // O asfalto: uma linha horizontal na altura do centro da pedra, repetida a
-    // cada faixa. Desenhada como fundo, e não como elemento, é o que faz a
-    // estrada continuar certa quando as pedras quebram de linha.
-    backgroundImage: `repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent ${STONE / 2 - 2}px,
-      rgba(255,255,255,0.14) ${STONE / 2 - 2}px,
-      rgba(255,255,255,0.14) ${STONE / 2 + 1}px,
-      transparent ${STONE / 2 + 1}px,
-      transparent ${ROW_HEIGHT}px
-    )`,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  segment: {
+    flex: 1,
+    height: 5,
+    borderRadius: 3,
+    background: "rgba(255,255,255,0.16)",
+    marginBottom: 22,
+    minWidth: 8,
+  },
+  segmentOn: { background: `linear-gradient(90deg, ${c.goldDark}, ${c.gold})` },
+  segmentNext: {
+    background: "none",
+    borderTop: "3px dashed rgba(255,255,255,0.32)",
+    height: 0,
   },
   stoneWrap: {
     display: "flex",
@@ -87,23 +88,40 @@ const styles: Record<string, React.CSSProperties> = {
   },
   stoneNext: {
     background: "rgba(255,255,255,0.04)",
-    border: `2px dashed rgba(242,184,36,0.55)`,
+    border: "2px dashed rgba(242,184,36,0.55)",
     color: "rgba(253,233,176,0.85)",
   },
   stoneSelected: { outline: `3px solid ${c.goldSoft}`, outlineOffset: 3 },
-  /** A edição mais recente já realizada, para ela não se perder no meio. */
-  stoneCurrent: { boxShadow: `0 0 0 3px rgba(253,233,176,0.35)` },
-  caption: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.6)",
-    height: CAPTION,
-    lineHeight: `${CAPTION}px`,
-  },
+  stoneCurrent: { boxShadow: "0 0 0 3px rgba(253,233,176,0.35)" },
+  caption: { fontSize: 11, color: "rgba(255,255,255,0.6)", height: 16, lineHeight: "16px" },
   captionOn: { color: c.goldSoft, fontWeight: 700 },
+
+  // A curva que liga o fim de uma linha ao começo da seguinte. Duas bordas com
+  // canto arredondado bastam — nada de SVG para desenhar um "U".
+  turnRow: { display: "flex", height: 26 },
+  turn: {
+    width: 46,
+    height: 26,
+    border: "3px solid rgba(255,255,255,0.16)",
+    borderTop: "none",
+  },
+  turnRight: {
+    borderLeft: "none",
+    borderBottomRightRadius: 26,
+    marginLeft: "auto",
+    marginRight: STONE / 2 - 2,
+  },
+  turnLeft: {
+    borderRight: "none",
+    borderBottomLeftRadius: 26,
+    marginRight: "auto",
+    marginLeft: STONE / 2 - 2,
+  },
+  turnOn: { borderColor: c.goldDark },
 
   balloon: {
     position: "absolute",
-    bottom: `calc(100% + 10px)`,
+    bottom: "calc(100% + 10px)",
     left: "50%",
     transform: "translateX(-50%)",
     width: 210,
@@ -117,7 +135,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   balloonTitle: { margin: 0, fontSize: 13, fontWeight: 800, color: c.primary },
   balloonRow: { margin: "6px 0 0", fontSize: 12, lineHeight: 1.5, color: c.text },
-  balloonMuted: { margin: "6px 0 0", fontSize: 12, lineHeight: 1.5, color: c.muted, fontStyle: "italic" },
+  balloonMuted: {
+    margin: "6px 0 0",
+    fontSize: 12,
+    lineHeight: 1.5,
+    color: c.muted,
+    fontStyle: "italic",
+  },
   balloonTag: {
     display: "inline-block",
     marginTop: 8,
@@ -139,11 +163,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRight: "7px solid transparent",
     borderTop: "8px solid #fff",
   },
-  hint: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 11,
-    margin: "14px 0 0",
-  },
+  hint: { color: "rgba(255,255,255,0.5)", fontSize: 11, margin: "16px 0 0" },
 };
 
 interface RoadOfEditionsProps {
@@ -163,7 +183,7 @@ interface BalloonProps {
 }
 
 const Balloon: React.FC<BalloonProps> = ({ year, isWalked, isNext, participants }) => {
-  const theme2025Onwards = EDITION_THEMES[year];
+  const editionTheme = EDITION_THEMES[year];
   return (
     <div style={styles.balloon} role="tooltip">
       <p style={styles.balloonTitle}>
@@ -180,9 +200,9 @@ const Balloon: React.FC<BalloonProps> = ({ year, isWalked, isNext, participants 
         <p style={styles.balloonMuted}>Não temos o número de peregrinos deste ano.</p>
       )}
 
-      {theme2025Onwards ? (
+      {editionTheme ? (
         <p style={styles.balloonRow}>
-          <strong>Tema:</strong> {theme2025Onwards}
+          <strong>Tema:</strong> {editionTheme}
         </p>
       ) : (
         <p style={styles.balloonMuted}>
@@ -196,12 +216,43 @@ const Balloon: React.FC<BalloonProps> = ({ year, isWalked, isNext, participants 
   );
 };
 
+/** Quantas pedras cabem numa linha, para a largura atual. */
+function usePerRow(ref: React.RefObject<HTMLDivElement>): number {
+  const [perRow, setPerRow] = React.useState(7);
+
+  React.useEffect(() => {
+    const element = ref.current;
+    if (!element) return undefined;
+
+    const measure = () => {
+      const width = element.clientWidth;
+      const match = BREAKPOINTS.find(breakpoint => width >= breakpoint.minWidth);
+      setPerRow(match ? match.perRow : 4);
+    };
+    measure();
+
+    // ResizeObserver, e não `window.resize`: o painel muda de largura quando a
+    // barra lateral some ou o cartão vizinho cresce, sem a janela mudar.
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return perRow;
+}
+
 const RoadOfEditions: React.FC<RoadOfEditionsProps> = ({
   editions,
   walkedYears,
   currentYear,
   participants,
 }) => {
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+  const perRow = usePerRow(wrapRef);
   const walked = React.useMemo(() => new Set(walkedYears), [walkedYears]);
   const [hovered, setHovered] = React.useState<number | null>(null);
   const [selected, setSelected] = React.useState<number | null>(null);
@@ -211,62 +262,120 @@ const RoadOfEditions: React.FC<RoadOfEditionsProps> = ({
   const shown = selected ?? hovered;
 
   const allStones = [...editions, NEXT_EDITION.year];
+  const rows: number[][] = [];
+  for (let index = 0; index < allStones.length; index += perRow) {
+    rows.push(allStones.slice(index, index + perRow));
+  }
+
+  const renderStone = (year: number) => {
+    const isNext = year === NEXT_EDITION.year;
+    const isOn = walked.has(year);
+    const isSelected = selected === year;
+    return (
+      <div
+        key={year}
+        style={styles.stoneWrap}
+        onMouseEnter={() => setHovered(year)}
+        onMouseLeave={() => setHovered(current => (current === year ? null : current))}
+      >
+        {shown === year && (
+          <Balloon
+            year={year}
+            isWalked={isOn}
+            isNext={isNext}
+            participants={participants[String(year)]}
+          />
+        )}
+
+        <button
+          type="button"
+          style={{
+            ...styles.stone,
+            ...(isNext ? styles.stoneNext : isOn ? styles.stoneOn : styles.stoneOff),
+            ...(year === currentYear ? styles.stoneCurrent : {}),
+            ...(isSelected ? styles.stoneSelected : {}),
+          }}
+          aria-pressed={isSelected}
+          aria-label={`${isNext ? NEXT_EDITION.number : editionNumber(year)}ª edição, ${year}`}
+          onClick={() => setSelected(current => (current === year ? null : year))}
+        >
+          {isNext ? NEXT_EDITION.number : editionNumber(year)}ª
+        </button>
+
+        <span
+          style={{
+            ...styles.caption,
+            ...(isOn ? styles.captionOn : {}),
+            ...(isNext ? { color: "rgba(253,233,176,0.8)", fontWeight: 700 } : {}),
+          }}
+        >
+          {year}
+        </span>
+      </div>
+    );
+  };
 
   return (
-    <div style={styles.wrap}>
-      <ul style={styles.track}>
-        {allStones.map(year => {
-          const isNext = year === NEXT_EDITION.year;
-          const isOn = walked.has(year);
-          const isSelected = selected === year;
-          return (
-            <li
-              key={year}
-              style={styles.stoneWrap}
-              onMouseEnter={() => setHovered(year)}
-              onMouseLeave={() => setHovered(current => (current === year ? null : current))}
+    <div style={styles.wrap} ref={wrapRef}>
+      {rows.map((row, rowIndex) => {
+        // Linhas ímpares correm ao contrário: é a alternância que faz o caminho
+        // serpentear em vez de recomeçar do zero a cada linha.
+        const isReversed = rowIndex % 2 === 1;
+        const isLastRow = rowIndex === rows.length - 1;
+        const lastOfRow = row[row.length - 1];
+        const firstOfNextRow = rows[rowIndex + 1]?.[0];
+
+        return (
+          <React.Fragment key={row[0]}>
+            <div
+              style={{
+                ...styles.row,
+                flexDirection: isReversed ? "row-reverse" : "row",
+              }}
             >
-              {shown === year && (
-                <Balloon
-                  year={year}
-                  isWalked={isOn}
-                  isNext={isNext}
-                  participants={participants[String(year)]}
+              {row.map((year, indexInRow) => {
+                const previous = row[indexInRow - 1];
+                const isNextStone = year === NEXT_EDITION.year;
+                const bothWalked =
+                  previous !== undefined && walked.has(previous) && walked.has(year);
+                return (
+                  <React.Fragment key={year}>
+                    {indexInRow > 0 && (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          ...styles.segment,
+                          ...(bothWalked ? styles.segmentOn : {}),
+                          ...(isNextStone ? styles.segmentNext : {}),
+                        }}
+                      />
+                    )}
+                    {renderStone(year)}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+
+            {!isLastRow && (
+              <div style={styles.turnRow} aria-hidden="true">
+                <span
+                  style={{
+                    ...styles.turn,
+                    ...(isReversed ? styles.turnLeft : styles.turnRight),
+                    ...(walked.has(lastOfRow) && firstOfNextRow !== undefined && walked.has(firstOfNextRow)
+                      ? styles.turnOn
+                      : {}),
+                  }}
                 />
-              )}
-
-              <button
-                type="button"
-                style={{
-                  ...styles.stone,
-                  ...(isNext ? styles.stoneNext : isOn ? styles.stoneOn : styles.stoneOff),
-                  ...(year === currentYear ? styles.stoneCurrent : {}),
-                  ...(isSelected ? styles.stoneSelected : {}),
-                }}
-                aria-pressed={isSelected}
-                aria-label={`${isNext ? NEXT_EDITION.number : editionNumber(year)}ª edição, ${year}`}
-                onClick={() => setSelected(current => (current === year ? null : year))}
-              >
-                {isNext ? NEXT_EDITION.number : editionNumber(year)}ª
-              </button>
-
-              <span
-                style={{
-                  ...styles.caption,
-                  ...(isOn ? styles.captionOn : {}),
-                  ...(isNext ? { color: "rgba(253,233,176,0.8)", fontWeight: 700 } : {}),
-                }}
-              >
-                {year}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
 
       <p style={styles.hint}>
         Passe o mouse — ou toque — em uma edição para ver os detalhes. Clique para deixar o
-        balão fixo. A pedra com o contorno é a que está fixada.
+        balão fixo; a pedra com o contorno é a que está fixada.
       </p>
     </div>
   );

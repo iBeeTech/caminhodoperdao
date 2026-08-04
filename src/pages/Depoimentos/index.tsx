@@ -161,7 +161,9 @@ const Depoimentos: React.FC = () => {
         </FormSection>
 
         {/* Mesmos depoimentos da home, logo abaixo do formulário (sem o CTA, que já está acima). */}
-        <TestimonialsSection showSubmitLink={false} />
+        {/* 60 em vez de 3: aqui os depoimentos SAO o conteudo, e quem abriu
+            esta pagina veio para ler varios. */}
+        <TestimonialsSection showSubmitLink={false} limit={60} />
       </Main>
     </Page>
   );

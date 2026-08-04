@@ -900,6 +900,27 @@ Quinta leva do mesmo dia (só código, sem migration):
   `/api/editions` (público, cache 1h) soma `registrations` +
   `registrations_old`, só `PAID`. Hoje devolve `{"2026": 630}`.
 
+Sexta leva do mesmo dia (só código):
+
+- ✅ **Menu abre no mouse, fixa no clique.** Dois estados separados (`openGroup`
+  e `pinnedGroup`): com um só, tirar o mouse fecharia o que a pessoa acabou de
+  fixar. No celular o toque conta como clique e abre igual.
+- ✅ **Grupos novos:** "Home" (âncoras da página inicial), "Memórias"
+  (Depoimentos, Testemunhos, Galeria), "Conquistas" (o catálogo de medalhas) e
+  **"Meu Caminho"** no lugar de "Dashboard" — a palavra diz o que a pessoa vai
+  encontrar, não o tipo de tela.
+- ✅ **Tutoriais REMOVIDOS** — página, rota e item de menu apagados. Os passo a
+  passo de cancelamento não valem mais.
+- ✅ **`/depoimentos` mostra 60 em vez de 3.** Na home eles são um convite; na
+  página própria são o conteúdo, e quem abriu foi ler vários. O formulário de
+  envio já existia ali e continua.
+- ✅ **A estrada virou caminho sinuoso.** A linha agora liga uma pedra à
+  seguinte, e só: antes era um traço de ponta a ponta desenhado como fundo, que
+  passava POR TRÁS das pedras e continuava depois da última — parecia régua
+  riscando a tela. As linhas alternam de direção e uma curva liga o fim de uma
+  ao começo da outra; o número de pedras por linha se ajusta à largura por
+  `ResizeObserver`.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial
