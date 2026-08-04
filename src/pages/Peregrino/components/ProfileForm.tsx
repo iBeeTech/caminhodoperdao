@@ -354,7 +354,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             preencher a tela inteira é o tipo de coisa que faz desistir. */}
         {isEmergencyPhoneOwn && (
           <p style={styles.cepError}>
-            É o seu próprio telefone. Use o número de outra pessoa.
+            O contato de emergência não pode ser o seu próprio número.
           </p>
         )}
       </div>
