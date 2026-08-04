@@ -230,6 +230,35 @@ export function createRegistration(input: {
   return request("/api/me/registration", { method: "POST", body: JSON.stringify(input) });
 }
 
+export interface MyTransfer {
+  id: string;
+  toName: string;
+  status: "PENDENTE" | "LIBERADA";
+  isDonation: boolean;
+  code: string | null;
+}
+
+export function fetchMyTransfer(): Promise<{ transfer: MyTransfer | null }> {
+  return request("/api/me/registration/transfer");
+}
+
+export function transferAction(input: {
+  action: "create" | "release" | "cancel" | "accept";
+  toName?: string;
+  isDonation?: boolean;
+  code?: string;
+  acceptsTerms?: boolean;
+}): Promise<{ status?: string; code?: string | null; accepted?: boolean }> {
+  return request("/api/me/registration/transfer", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function cancelRegistration(): Promise<{ canceled: boolean; refundRequested: boolean }> {
+  return request("/api/me/registration/cancel", { method: "POST", body: "{}" });
+}
+
 /**
  * Link de WhatsApp da organização, com rodízio entre os voluntários
  * (`/api/whatsapp/next`). Buscado ANTES do clique de propósito: resolver a URL
@@ -272,6 +301,14 @@ export function messageForError(error: unknown): string {
     invite_not_found: "Código de convite não encontrado.",
     invite_revoked: "Este código de convite foi cancelado.",
     invite_used: "Este código de convite já foi usado.",
+    no_active_registration: "Você não tem inscrição ativa nesta edição.",
+    transfer_in_progress: "Existe uma transferência em andamento. Cancele-a antes.",
+    transfer_already_open: "Você já tem uma transferência aberta.",
+    no_open_transfer: "Nenhuma transferência aberta.",
+    transfer_not_found: "Código de transferência inválido ou já usado.",
+    cannot_accept_own: "Você não pode receber a sua própria inscrição.",
+    invalid_to_name: "Escreva o nome de quem vai receber a inscrição.",
+    missing_code: "Informe o código da transferência.",
     cpf_encryption_not_configured: "Não foi possível salvar o CPF agora. Fale com a organização.",
   };
   return map[error.message] || "Não foi possível salvar. Tente de novo.";

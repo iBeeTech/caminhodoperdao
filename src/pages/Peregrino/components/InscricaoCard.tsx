@@ -6,10 +6,14 @@ import {
   MyRegistration,
   PilgrimProfile,
   SessionExpiredError,
+  MyTransfer,
+  cancelRegistration,
   createRegistration,
   fetchMyRegistration,
+  fetchMyTransfer,
   messageForError,
   saveProfile,
+  transferAction,
 } from "../api";
 
 /**
@@ -28,8 +32,13 @@ import {
  * 4. **Inscrita** — some o botão e aparece o status.
  *
  * ⚠️ **Ainda não dá para pagar.** A adquirente será trocada e não foi
- * escolhida; a inscrição nasce pendente e a tela diz isso. Cancelar e transferir
- * dependem dessa mesma decisão e ainda não existem.
+ * escolhida; a inscrição nasce pendente e a tela diz isso.
+ *
+ * Cancelar e transferir vivem aqui, junto da inscrição, porque é onde a pessoa
+ * vai procurar. Transferir tem TRÊS passos de propósito — indicar, liberar,
+ * receber — e o "liberar" é separado porque o acerto de dinheiro entre as duas
+ * pessoas acontece por fora: quem cede só libera quando o PIX cai. Quem quer
+ * doar a vaga libera na hora, sem esperar nada.
  */
 
 const c = theme.colors;
@@ -191,6 +200,50 @@ const styles: Record<string, React.CSSProperties> = {
     color: c.text,
     boxSizing: "border-box",
   },
+  actionsRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginTop: 18,
+    paddingTop: 16,
+    borderTop: `1px solid ${c.border}`,
+  },
+  ghostButton: {
+    padding: "0.6rem 1rem",
+    borderRadius: theme.radius.sm,
+    border: `1px solid ${c.border}`,
+    background: c.surface,
+    color: c.text,
+    fontWeight: 700,
+    fontSize: "0.9rem",
+    cursor: "pointer",
+  },
+  dangerButton: {
+    padding: "0.6rem 1rem",
+    borderRadius: theme.radius.sm,
+    border: "1px solid #fecaca",
+    background: "#fef2f2",
+    color: "#b91c1c",
+    fontWeight: 700,
+    fontSize: "0.9rem",
+    cursor: "pointer",
+  },
+  codeBox: {
+    marginTop: 12,
+    padding: "12px 14px",
+    borderRadius: theme.radius.md,
+    background: c.background,
+    border: `1px dashed ${c.goldDark}`,
+    textAlign: "center",
+  },
+  code: {
+    fontSize: 26,
+    fontWeight: 800,
+    letterSpacing: 6,
+    color: c.primary,
+    fontFamily: "monospace",
+    margin: 0,
+  },
   editLink: {
     background: "none",
     border: "none",
@@ -256,6 +309,13 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [transfer, setTransfer] = React.useState<MyTransfer | null>(null);
+  const [isTransferOpen, setIsTransferOpen] = React.useState(false);
+  const [isCancelOpen, setIsCancelOpen] = React.useState(false);
+  const [toName, setToName] = React.useState("");
+  const [isDonation, setIsDonation] = React.useState(false);
+  const [receiveCode, setReceiveCode] = React.useState("");
+
   React.useEffect(() => {
     let isActive = true;
     fetchMyRegistration()
@@ -265,10 +325,65 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
       .catch(loadError => {
         if (loadError instanceof SessionExpiredError) onSessionExpired();
       });
+    fetchMyTransfer()
+      .then(result => {
+        if (isActive) setTransfer(result.transfer);
+      })
+      .catch(() => undefined);
     return () => {
       isActive = false;
     };
   }, [onSessionExpired]);
+
+  /** Roda uma ação de transferência e recarrega o que a tela mostra. */
+  const runTransfer = async (input: Parameters<typeof transferAction>[0]) => {
+    setIsBusy(true);
+    setError(null);
+    try {
+      await transferAction(input);
+      const [refreshedTransfer, refreshedRegistration] = await Promise.all([
+        fetchMyTransfer(),
+        fetchMyRegistration(),
+      ]);
+      setTransfer(refreshedTransfer.transfer);
+      setData(refreshedRegistration);
+      setIsTransferOpen(false);
+      setToName("");
+      setReceiveCode("");
+    } catch (transferError) {
+      if (transferError instanceof SessionExpiredError) {
+        onSessionExpired();
+        return;
+      }
+      setError(messageForError(transferError));
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsBusy(true);
+    setError(null);
+    try {
+      const result = await cancelRegistration();
+      setData(await fetchMyRegistration());
+      setIsCancelOpen(false);
+      if (result.refundRequested) {
+        setError(
+          "Inscrição cancelada. O pedido de devolução foi aberto e a organização vai " +
+            "devolver na chave PIX do seu cadastro."
+        );
+      }
+    } catch (cancelError) {
+      if (cancelError instanceof SessionExpiredError) {
+        onSessionExpired();
+        return;
+      }
+      setError(messageForError(cancelError));
+    } finally {
+      setIsBusy(false);
+    }
+  };
 
   const countdown = useCountdown(data?.opensAt ?? Date.now());
 
@@ -365,11 +480,64 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
               assim que o pagamento abrir.
             </div>
           )}
-          <div style={styles.soon}>
-            <strong>Em breve neste espaço:</strong> cancelar a inscrição e passar a vaga
-            para outra pessoa. As duas coisas mexem em dinheiro e dependem da adquirente
-            nova, que ainda não foi escolhida.
-          </div>
+          {transfer ? (
+            <div style={styles.soon}>
+              <p style={{ margin: 0 }}>
+                <strong>Transferência para {transfer.toName}</strong> —{" "}
+                {transfer.status === "LIBERADA"
+                  ? "liberada. Passe o código abaixo para essa pessoa."
+                  : "aguardando você liberar."}
+              </p>
+
+              {transfer.status === "LIBERADA" && transfer.code && (
+                <div style={styles.codeBox}>
+                  <p style={styles.code}>{transfer.code}</p>
+                </div>
+              )}
+
+              <div style={styles.actionsRow}>
+                {transfer.status === "PENDENTE" && (
+                  <button
+                    type="button"
+                    style={{ ...styles.primaryButton, marginTop: 0 }}
+                    onClick={() => runTransfer({ action: "release" })}
+                    disabled={isBusy}
+                  >
+                    Liberar inscrição
+                  </button>
+                )}
+                <button
+                  type="button"
+                  style={styles.ghostButton}
+                  onClick={() => runTransfer({ action: "cancel" })}
+                  disabled={isBusy}
+                >
+                  Desistir da transferência
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={styles.actionsRow}>
+              <button
+                type="button"
+                style={styles.ghostButton}
+                onClick={() => setIsTransferOpen(true)}
+                disabled={isBusy}
+              >
+                Transferir minha inscrição
+              </button>
+              <button
+                type="button"
+                style={styles.dangerButton}
+                onClick={() => setIsCancelOpen(true)}
+                disabled={isBusy}
+              >
+                Cancelar minha inscrição
+              </button>
+            </div>
+          )}
+
+          {error && <div style={styles.error}>{error}</div>}
         </>
       ) : (
         <>
@@ -417,7 +585,168 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
           >
             {data.isOpen ? "Quero me inscrever" : "Inscrições ainda fechadas"}
           </button>
+
+          {/* Recebeu uma vaga de alguém: o código entra aqui. Fica junto da
+              inscrição porque é a mesma pergunta — "como consigo minha vaga?" */}
+          <div style={styles.actionsRow}>
+            <div style={{ ...styles.field, marginTop: 0, flex: "1 1 220px" }}>
+              <label style={styles.label} htmlFor="ins-receive">
+                Recebeu uma inscrição de alguém? Digite o código
+              </label>
+              <input
+                id="ins-receive"
+                style={styles.input}
+                value={receiveCode}
+                onChange={event => setReceiveCode(event.target.value.toUpperCase())}
+                placeholder="Ex.: KJ7T2WQ9"
+              />
+            </div>
+            <button
+              type="button"
+              style={{
+                ...styles.primaryButton,
+                marginTop: 0,
+                alignSelf: "flex-end",
+                ...(receiveCode.trim() && !isBusy ? {} : styles.buttonOff),
+              }}
+              onClick={() =>
+                runTransfer({ action: "accept", code: receiveCode.trim(), acceptsTerms: true })
+              }
+              disabled={!receiveCode.trim() || isBusy}
+            >
+              Finalizar inscrição
+            </button>
+          </div>
+
+          {error && <div style={styles.error}>{error}</div>}
         </>
+      )}
+
+      {isTransferOpen && (
+        <div style={styles.overlay}>
+          <button
+            type="button"
+            style={styles.backdrop}
+            aria-label="Fechar"
+            onClick={() => setIsTransferOpen(false)}
+          />
+          <div style={styles.modal} role="dialog" aria-modal="true" aria-label="Transferir inscrição">
+            <div style={styles.modalHead}>
+              <h3 style={styles.modalTitle}>Transferir minha inscrição</h3>
+              <button
+                type="button"
+                style={styles.close}
+                onClick={() => setIsTransferOpen(false)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={styles.help}>
+              Sua vaga <strong>continua sua</strong> até você liberar. Primeiro escreva
+              para quem ela vai; depois, quando o dinheiro combinado cair na sua conta,
+              clique em "Liberar inscrição" e passe o código para essa pessoa.
+            </p>
+
+            {error && <div style={styles.error}>{error}</div>}
+
+            <div style={styles.field}>
+              <label style={styles.label} htmlFor="tr-name">
+                Nome de quem vai receber
+              </label>
+              <input
+                id="tr-name"
+                style={styles.input}
+                value={toName}
+                onChange={event => setToName(event.target.value)}
+                placeholder="Nome completo da pessoa"
+              />
+            </div>
+
+            <div style={styles.choiceRow}>
+              <input
+                id="tr-donation"
+                type="checkbox"
+                checked={isDonation}
+                onChange={event => setIsDonation(event.target.checked)}
+              />
+              <label style={styles.choiceLabel} htmlFor="tr-donation">
+                Estou <strong>doando</strong> a vaga — libere o código na hora, não espero
+                pagamento nenhum.
+              </label>
+            </div>
+
+            <button
+              type="button"
+              style={{
+                ...styles.primaryButton,
+                ...(toName.trim().length >= 3 && !isBusy ? {} : styles.buttonOff),
+              }}
+              onClick={() => runTransfer({ action: "create", toName: toName.trim(), isDonation })}
+              disabled={toName.trim().length < 3 || isBusy}
+            >
+              {isDonation ? "Doar e gerar código" : "Indicar pessoa"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isCancelOpen && (
+        <div style={styles.overlay}>
+          <button
+            type="button"
+            style={styles.backdrop}
+            aria-label="Fechar"
+            onClick={() => setIsCancelOpen(false)}
+          />
+          <div style={styles.modal} role="dialog" aria-modal="true" aria-label="Cancelar inscrição">
+            <div style={styles.modalHead}>
+              <h3 style={styles.modalTitle}>Cancelar minha inscrição</h3>
+              <button
+                type="button"
+                style={styles.close}
+                onClick={() => setIsCancelOpen(false)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={styles.help}>
+              Sua vaga volta para a fila na hora e <strong>não dá para desfazer</strong>. Se
+              você só não pode mais ir, considere <strong>transferir</strong> a vaga em vez
+              de cancelar — assim ela não fica vazia.
+            </p>
+
+            <div style={styles.warn}>
+              Se a inscrição já estiver paga, abrimos um pedido de devolução e a
+              organização devolve na chave PIX do seu cadastro
+              {me.profile.refundPixKey ? "." : " — que ainda não está preenchida."}
+            </div>
+
+            {error && <div style={styles.error}>{error}</div>}
+
+            <div style={styles.actionsRow}>
+              <button
+                type="button"
+                style={{ ...styles.dangerButton, ...(isBusy ? styles.buttonOff : {}) }}
+                onClick={handleCancel}
+                disabled={isBusy}
+              >
+                {isBusy ? "Cancelando..." : "Sim, cancelar minha inscrição"}
+              </button>
+              <button
+                type="button"
+                style={styles.ghostButton}
+                onClick={() => setIsCancelOpen(false)}
+                disabled={isBusy}
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {isModalOpen && (

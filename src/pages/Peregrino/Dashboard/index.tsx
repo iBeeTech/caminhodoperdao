@@ -302,18 +302,20 @@ const PeregrinoDashboard: React.FC = () => {
             </p>
 
             <div style={s.stats}>
-              <div style={s.stat}>
-                <p style={s.statValue}>{walkedCount}</p>
-                <p style={s.statLabel}>caminhadas declaradas</p>
-              </div>
-              <div style={s.stat}>
-                <p style={s.statValue}>{editions.length}</p>
-                <p style={s.statLabel}>edições já realizadas</p>
-              </div>
-              <div style={s.stat}>
-                <p style={s.statValue}>{me.badges.length}</p>
-                <p style={s.statLabel}>medalhas conquistadas</p>
-              </div>
+              {[
+                { icon: "🥾", value: walkedCount, label: "caminhadas declaradas" },
+                { icon: "📅", value: editions.length, label: "edições já realizadas" },
+                { icon: "🏅", value: me.badges.length, label: "medalhas conquistadas" },
+              ].map(item => (
+                <div key={item.label} style={s.stat}>
+                  <span style={s.statIcon} aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  <p style={s.statValue}>{item.value}</p>
+                  <p style={s.statLabel}>{item.label}</p>
+                  <span style={s.statAccent} aria-hidden="true" />
+                </div>
+              ))}
             </div>
           </div>
 

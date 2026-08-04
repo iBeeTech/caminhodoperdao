@@ -46,20 +46,44 @@ export const dashboardStyles: Record<string, React.CSSProperties> = {
     maxWidth: 560,
   },
 
-  stats: { display: "flex", flexWrap: "wrap", gap: 12, margin: "22px 0 0" },
+  stats: { display: "flex", flexWrap: "wrap", gap: 14, margin: "22px 0 0" },
+  // O número era pequeno e o rótulo cinza-claro: dava para ler, mas não para
+  // BATER O OLHO. Agora o número domina o cartão, o rótulo tem contraste de
+  // verdade e um ícone dá o assunto antes da leitura.
   stat: {
-    flex: "1 1 150px",
+    flex: "1 1 170px",
     background: c.surface,
     border: `1px solid ${c.border}`,
-    borderRadius: theme.radius.md,
-    padding: "14px 16px",
+    borderRadius: theme.radius.lg,
+    padding: "18px 18px 16px",
+    boxShadow: theme.shadows.sm,
+    position: "relative",
+    overflow: "hidden",
   },
-  statValue: { color: c.primary, fontSize: 26, fontWeight: 800, margin: 0, lineHeight: 1.1 },
+  statIcon: { fontSize: 20, lineHeight: 1, margin: "0 0 10px", display: "block" },
+  statValue: {
+    color: c.primary,
+    fontSize: 34,
+    fontWeight: 800,
+    margin: 0,
+    lineHeight: 1,
+    letterSpacing: -0.5,
+  },
   statLabel: {
-    color: c.muted,
-    fontSize: 12,
-    margin: "4px 0 0",
-    lineHeight: 1.4,
+    color: c.text,
+    fontSize: 13,
+    fontWeight: 600,
+    margin: "6px 0 0",
+    lineHeight: 1.35,
+  },
+  // Faixa dourada na base: dá identidade ao cartão sem competir com o número.
+  statAccent: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 3,
+    background: `linear-gradient(90deg, ${c.gold}, ${c.goldSoft})`,
   },
 
   // Cartão claro: o padrão da página.
