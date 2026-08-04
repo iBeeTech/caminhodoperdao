@@ -8,7 +8,15 @@ import { clearUserToken, getUserToken } from "../../utils/auth/userSession";
  * resposta mudasse só uma das duas seria corrigida.
  */
 
-export type BadgeTier = "bronze" | "prata" | "ouro";
+export type BadgeTier =
+  | "bronze"
+  | "prata"
+  | "ouro"
+  | "primeira"
+  | "veterano"
+  | "fundador"
+  | "servo"
+  | "jubileu";
 
 export interface Badge {
   id: string;
@@ -16,6 +24,8 @@ export interface Badge {
   description: string;
   tier: BadgeTier;
   year?: number;
+  /** O que vai no centro do medalhão quando não é um ano. */
+  symbol?: string;
 }
 
 export interface NextBadge {

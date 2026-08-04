@@ -81,65 +81,106 @@ const s: Record<string, React.CSSProperties> = {
   },
 };
 
-/** Espelho de `functions/_utils/badges.ts`. Mudou lá, muda aqui. */
+/**
+ * Espelho de `functions/_utils/badges.ts`. Mudou lá, muda aqui.
+ *
+ * A ordem é a da raridade: o que se ganha todo ano primeiro, o que quase
+ * ninguém alcança por último.
+ */
 const CATALOG = [
   {
     id: "ano",
     label: "Peregrino do ano",
-    description: "Uma medalha para cada edição em que você caminhou.",
+    description: "Uma para cada edição em que você caminhou.",
     tier: "bronze" as const,
+    symbol: undefined as string | undefined,
+    year: 2026 as number | undefined,
     how: "Marque o ano no seu perfil.",
+    when: "Toda edição",
+  },
+  {
+    id: "prata",
+    label: "5, 10, 15... caminhadas",
+    description: "Uma prata a cada bloco de 5 edições. Elas acumulam.",
+    tier: "prata" as const,
+    symbol: "5",
+    year: undefined,
+    how: "Complete 5 edições — e outra a cada 5.",
+    when: "A cada 5 edições",
+  },
+  {
+    id: "ouro",
+    label: "10, 20, 30... caminhadas",
+    description: "Um ouro a cada bloco de 10 edições. Também acumulam.",
+    tier: "ouro" as const,
+    symbol: "10",
+    year: undefined,
+    how: "Complete 10 edições — e outro a cada 10.",
+    when: "A cada 10 edições",
   },
   {
     id: "primeira",
     label: "Primeira caminhada",
     description: "Toda caminhada começa com um primeiro passo.",
-    tier: "prata" as const,
+    tier: "primeira" as const,
+    symbol: "1",
+    year: undefined,
     how: "Declare a sua primeira edição.",
-  },
-  {
-    id: "contador",
-    label: "Nª caminhada",
-    description: "Conta quantas edições você já caminhou.",
-    tier: "prata" as const,
-    how: "Cresce sozinha a cada ano declarado.",
+    when: "Uma vez na vida",
   },
   {
     id: "veterano",
     label: "Veterano",
-    description: "3 edições ou mais.",
-    tier: "prata" as const,
-    how: "Declare 3 anos.",
-  },
-  {
-    id: "devoto",
-    label: "Peregrino de coração",
-    description: "5 edições ou mais. O caminho já é parte de você.",
-    tier: "ouro" as const,
-    how: "Declare 5 anos.",
-  },
-  {
-    id: "guardiao",
-    label: "Guardião do caminho",
-    description: "10 edições. Poucos chegam até aqui.",
-    tier: "ouro" as const,
-    how: "Declare 10 anos.",
+    description: "5 caminhadas. Você conhece o caminho de cor.",
+    tier: "veterano" as const,
+    symbol: "✦",
+    year: undefined,
+    how: "Complete 5 edições.",
+    when: "Uma vez na vida",
   },
   {
     id: "fundador",
     label: "Fundador",
     description: "Você caminhou na primeira edição, em 2008.",
-    tier: "ouro" as const,
-    how: "Declare o ano de 2008.",
+    tier: "fundador" as const,
+    symbol: "✝",
+    year: undefined,
+    how: "Ter caminhado em 2008.",
+    when: "Impossível conquistar hoje",
   },
   {
     id: "servo",
     label: "Servo",
     description: "Você serve o Caminho do Perdão junto com a organização.",
-    tier: "ouro" as const,
-    how: "Concedida pela organização — é a única que não é auto-declarada.",
+    tier: "servo" as const,
+    symbol: "✚",
+    year: undefined,
+    how: "Concedida pela organização — a única que não é auto-declarada.",
+    when: "Por indicação",
+  },
+  {
+    id: "jubileu",
+    label: "Jubileu",
+    description: "25 caminhadas. Uma vida inteira no caminho.",
+    tier: "jubileu" as const,
+    symbol: "★",
+    year: undefined,
+    how: "Complete 25 edições.",
+    when: "Uma vez na vida",
   },
 ];
+
+/** Nome legível da cor, para a tabela não mostrar o código interno. */
+const TIER_NAMES: Record<string, string> = {
+  bronze: "Bronze",
+  prata: "Prata",
+  ouro: "Ouro",
+  primeira: "Exclusiva — amanhecer",
+  veterano: "Exclusiva — aço",
+  fundador: "Exclusiva — vinho e ouro",
+  servo: "Exclusiva — verde",
+  jubileu: "Exclusiva — ametista",
+};
 
 const MedalhasPage: React.FC = () => {
   const editions = listEditions();
@@ -158,9 +199,10 @@ const MedalhasPage: React.FC = () => {
 
           <h2 style={s.sectionTitle}>As medalhas</h2>
           <p style={s.sectionHelp}>
-            Só a medalha de <strong>Servo</strong> é concedida pela organização. As outras
-            saem do que você mesmo declara — não temos como conferir, então conte com
-            sinceridade.
+            Bronze é a do ano, prata vem a cada 5 caminhadas e ouro a cada 10 — essas
+            acumulam. As de <strong>cor própria</strong> são exclusivas: só se ganham uma
+            vez. Só a de <strong>Servo</strong> é concedida pela organização; as outras
+            saem do que você mesmo declara.
           </p>
 
           <div style={s.showcase}>
@@ -170,6 +212,8 @@ const MedalhasPage: React.FC = () => {
                 label={badge.label}
                 description={badge.description}
                 tier={badge.tier}
+                symbol={badge.symbol}
+                year={badge.year}
               />
             ))}
           </div>
@@ -179,7 +223,8 @@ const MedalhasPage: React.FC = () => {
               <thead>
                 <tr>
                   <th style={s.th}>Medalha</th>
-                  <th style={s.th}>Metal</th>
+                  <th style={s.th}>Cor</th>
+                  <th style={s.th}>Quando</th>
                   <th style={s.th}>Como conquistar</th>
                 </tr>
               </thead>
@@ -187,7 +232,8 @@ const MedalhasPage: React.FC = () => {
                 {CATALOG.map(badge => (
                   <tr key={badge.id}>
                     <td style={{ ...s.td, fontWeight: 700 }}>{badge.label}</td>
-                    <td style={s.td}>{badge.tier}</td>
+                    <td style={s.td}>{TIER_NAMES[badge.tier]}</td>
+                    <td style={s.td}>{badge.when}</td>
                     <td style={s.td}>{badge.how}</td>
                   </tr>
                 ))}

@@ -10,15 +10,44 @@ import { FIRST_EDITION_YEAR } from "./editions";
  *
  * ⚠️ Hoje os anos são AUTO-DECLARADOS (ver migration 029): o histórico apurado
  * de 2026 foi arquivado. Nenhuma medalha aqui prova participação — ela reflete
- * o que a pessoa afirmou.
+ * o que a pessoa afirmou. A única exceção é **Servo**, concedida pela
+ * organização (migration 031).
  *
- * Ficam de fora, por enquanto, os selos que dependem de dado que a declaração
- * não carrega: Servo (staff), Mosteiro, Semeador (convidou alguém) e Testemunha.
- * Voltam quando houver inscrição de verdade no ano, com lastro.
+ * ## As regras (definidas pelo organizador em 04/08/2026)
+ *
+ * | Conquista | Metal | Quando |
+ * |---|---|---|
+ * | Peregrino do ano | bronze | toda edição caminhada |
+ * | Primeira caminhada | exclusiva | a primeira vez, uma vez na vida |
+ * | 5, 10, 15... caminhadas | prata | a cada bloco de 5 |
+ * | 10, 20, 30... caminhadas | ouro | a cada bloco de 10 |
+ * | Veterano | exclusiva | 5 caminhadas |
+ * | Jubileu | exclusiva | 25 caminhadas |
+ * | Fundador | exclusiva | caminhou na 1ª edição |
+ * | Servo | exclusiva | concedida pela organização |
+ *
+ * Prata e ouro **acumulam**: quem tem 20 caminhadas fica com 4 pratas e 2
+ * ouros. É de propósito — a pessoa vê a coleção crescer, e não um número
+ * trocando de lugar. Foi por isso que a medalha "Nª caminhada" saiu: ela era
+ * uma só, mudava de nome todo ano e não somava nada à coleção.
  */
 
-/** Metal da medalha. É só apresentação, mas mora aqui para não divergir. */
-export type BadgeTier = "bronze" | "prata" | "ouro";
+/**
+ * Metal ou cor exclusiva.
+ *
+ * As quatro últimas existem para que conquista rara NÃO se pareça com conquista
+ * comum. Quando Fundador e Servo eram douradas iguais às de 10 anos, a raridade
+ * sumia no meio da fileira.
+ */
+export type BadgeTier =
+  | "bronze"
+  | "prata"
+  | "ouro"
+  | "primeira"
+  | "veterano"
+  | "fundador"
+  | "servo"
+  | "jubileu";
 
 export interface Badge {
   id: string;
@@ -27,36 +56,16 @@ export interface Badge {
   tier: BadgeTier;
   /** Ano da medalha; ausente nos selos que não são de um ano específico. */
   year?: number;
+  /** O que vai no centro do medalhão quando não há ano. */
+  symbol?: string;
 }
 
-/**
- * Os degraus de constância, do menor para o maior.
- *
- * Lista em vez de `if` encadeado porque a tela também precisa deles: é com esta
- * lista que ela mostra a PRÓXIMA medalha, ainda apagada. Um `if` no servidor
- * obrigaria a tela a repetir os números — e a repetição sempre desanda.
- */
-export const MILESTONES: { years: number; label: string; description: string; tier: BadgeTier }[] =
-  [
-    {
-      years: 3,
-      label: "Veterano",
-      description: "3 edições ou mais.",
-      tier: "prata",
-    },
-    {
-      years: 5,
-      label: "Peregrino de coração",
-      description: "5 edições ou mais. O caminho já é parte de você.",
-      tier: "ouro",
-    },
-    {
-      years: 10,
-      label: "Guardião do caminho",
-      description: "10 edições. Poucos chegam até aqui.",
-      tier: "ouro",
-    },
-  ];
+/** A cada quantas caminhadas nasce cada metal. */
+const SILVER_EVERY = 5;
+const GOLD_EVERY = 10;
+/** O grande marco. 25 caminhadas é meia vida do evento. */
+const JUBILEE_YEARS = 25;
+const VETERAN_YEARS = 5;
 
 export interface BadgeContext {
   /** Marcado como servo pela organização (migration 031). */
@@ -69,14 +78,15 @@ export function buildBadges(
 ): Badge[] {
   // Servo é o único selo com LASTRO: não é auto-declarado, foi a organização
   // que marcou. Por isso vale mesmo para quem ainda não declarou ano nenhum —
-  // e por isso vem antes da porta de saída logo abaixo.
+  // e por isso é calculado antes da porta de saída logo abaixo.
   const staffBadge: Badge[] = context.isStaff
     ? [
         {
           id: "servo",
           label: "Servo",
           description: "Você serve o Caminho do Perdão junto com a organização.",
-          tier: "ouro",
+          tier: "servo",
+          symbol: "✚",
         },
       ]
     : [];
@@ -86,6 +96,9 @@ export function buildBadges(
   if (years.length === 0) return staffBadge;
 
   const unique = Array.from(new Set(years)).sort((a, b) => b - a);
+  const count = unique.length;
+
+  // Uma de bronze por edição.
   const badges: Badge[] = unique.map(year => ({
     id: `ano-${year}`,
     label: `Peregrino ${year}`,
@@ -95,42 +108,110 @@ export function buildBadges(
   }));
 
   badges.push({
-    id: "caminhadas",
-    label: unique.length === 1 ? "Primeira caminhada" : `${unique.length}ª caminhada`,
-    description:
-      unique.length === 1
-        ? "Toda caminhada começa com um primeiro passo."
-        : `Você já caminhou ${unique.length} vezes.`,
-    tier: "prata",
+    id: "primeira",
+    label: "Primeira caminhada",
+    description: "Toda caminhada começa com um primeiro passo.",
+    tier: "primeira",
+    symbol: "1",
   });
 
-  // Fundador é o único selo aqui que não depende de quantidade: ou a pessoa
-  // esteve na primeira edição, ou não esteve.
+  // Prata a cada 5, ouro a cada 10. Acumulam: 20 caminhadas = 4 pratas e 2
+  // ouros, e a coleção cresce em vez de um número trocar de lugar.
+  for (let mark = SILVER_EVERY; mark <= count; mark += SILVER_EVERY) {
+    badges.push({
+      id: `prata-${mark}`,
+      label: `${mark} caminhadas`,
+      description: `Você completou ${mark} edições do Caminho do Perdão.`,
+      tier: "prata",
+      symbol: String(mark),
+    });
+  }
+
+  for (let mark = GOLD_EVERY; mark <= count; mark += GOLD_EVERY) {
+    badges.push({
+      id: `ouro-${mark}`,
+      label: `${mark} caminhadas`,
+      description: `Marco de ${mark} edições. O caminho já é história sua.`,
+      tier: "ouro",
+      symbol: String(mark),
+    });
+  }
+
+  if (count >= VETERAN_YEARS) {
+    badges.push({
+      id: "veterano",
+      label: "Veterano",
+      description: `${VETERAN_YEARS} caminhadas. Você conhece o caminho de cor.`,
+      tier: "veterano",
+      symbol: "✦",
+    });
+  }
+
+  if (count >= JUBILEE_YEARS) {
+    badges.push({
+      id: "jubileu",
+      label: "Jubileu",
+      description: `${JUBILEE_YEARS} caminhadas. Uma vida inteira no caminho.`,
+      tier: "jubileu",
+      symbol: "★",
+    });
+  }
+
+  // Fundador não depende de quantidade: ou a pessoa esteve na primeira edição,
+  // ou não esteve.
   if (unique.includes(FIRST_EDITION_YEAR)) {
     badges.push({
       id: "fundador",
       label: "Fundador",
       description: `Você caminhou na primeira edição, em ${FIRST_EDITION_YEAR}.`,
-      tier: "ouro",
-    });
-  }
-
-  // Só o degrau mais alto alcançado. Mostrar "Veterano" ao lado de "Peregrino
-  // de coração" faria a conquista maior parecer menos.
-  const reached = MILESTONES.filter(m => unique.length >= m.years).pop();
-  if (reached) {
-    badges.push({
-      id: `constancia-${reached.years}`,
-      label: reached.label,
-      description: reached.description,
-      tier: reached.tier,
+      tier: "fundador",
+      symbol: "✝",
     });
   }
 
   return [...badges, ...staffBadge];
 }
 
-/** A próxima medalha de constância, para a tela mostrar apagada. */
-export function nextMilestone(walkedCount: number): (typeof MILESTONES)[number] | null {
-  return MILESTONES.find(m => walkedCount < m.years) ?? null;
+export interface NextBadge {
+  years: number;
+  label: string;
+  description: string;
+  tier: BadgeTier;
+}
+
+/**
+ * A próxima medalha a perseguir, para a tela mostrar apagada.
+ *
+ * É sempre o próximo bloco de 5, porque é o degrau mais próximo em qualquer
+ * ponto da jornada. Quando esse bloco também fecha uma dezena, o que se
+ * anuncia é o OURO — prometer prata e entregar ouro junto seria vender menos
+ * do que se tem.
+ */
+export function nextMilestone(walkedCount: number): NextBadge | null {
+  if (walkedCount >= JUBILEE_YEARS) return null;
+
+  const nextMark = (Math.floor(walkedCount / SILVER_EVERY) + 1) * SILVER_EVERY;
+
+  if (nextMark === JUBILEE_YEARS) {
+    return {
+      years: JUBILEE_YEARS,
+      label: "Jubileu",
+      description: `${JUBILEE_YEARS} caminhadas. Uma vida inteira no caminho.`,
+      tier: "jubileu",
+    };
+  }
+  if (nextMark % GOLD_EVERY === 0) {
+    return {
+      years: nextMark,
+      label: `${nextMark} caminhadas`,
+      description: `Marco de ${nextMark} edições, em ouro.`,
+      tier: "ouro",
+    };
+  }
+  return {
+    years: nextMark,
+    label: `${nextMark} caminhadas`,
+    description: `Bloco de ${nextMark} edições, em prata.`,
+    tier: "prata",
+  };
 }

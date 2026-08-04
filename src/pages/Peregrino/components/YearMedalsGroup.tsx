@@ -211,6 +211,7 @@ const YearMedalsGroup: React.FC<YearMedalsGroupProps> = ({ badges }) => {
                   description={badge.description}
                   tier={badge.tier}
                   year={badge.year}
+                  symbol={badge.symbol}
                 />
               ))}
             </div>

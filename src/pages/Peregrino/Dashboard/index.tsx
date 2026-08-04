@@ -367,6 +367,7 @@ const PeregrinoDashboard: React.FC = () => {
                       label={badge.label}
                       description={badge.description}
                       tier={badge.tier}
+                      symbol={badge.symbol}
                     />
                   ))}
                 {me.nextBadge && (

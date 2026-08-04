@@ -882,6 +882,24 @@ Quarta leva do mesmo dia (migration 033):
   quem chega não sabe se já tem conta, e duas caixas separadas fazem a dúvida
   virar hesitação. `/entrar?cadastro=1` abre já no passo de criar conta.
 
+Quinta leva do mesmo dia (só código, sem migration):
+
+- ✅ **Regras de medalha refeitas**, definidas pelo organizador: bronze por
+  edição; **prata a cada 5** e **ouro a cada 10**, e as duas **acumulam** (20
+  caminhadas = 4 pratas + 2 ouros); exclusivas para Primeira caminhada,
+  Veterano (5), Fundador, Servo e **Jubileu (25)**.
+- ✅ **"Nª caminhada" saiu.** Era uma medalha só, que mudava de nome todo ano e
+  não somava nada à coleção — o oposto do que uma medalha faz.
+- ✅ **Cada exclusiva ganhou cor própria** (amanhecer, aço, vinho e ouro, verde,
+  ametista), com brilho ao redor. Enquanto Fundador, Servo e a de 10 anos eram
+  douradas iguais, a raridade sumia no meio da fileira: cinco discos amarelos e
+  nenhuma pista de qual era o difícil.
+- ✅ **A estrada mostra todos os anos sem rolagem**, e o asfalto virou fundo CSS
+  repetido por faixa — saíram 19 elementos que só desenhavam tracinho.
+- ✅ **Balão por edição** com peregrinos e tema; hover abre, clique trava.
+  `/api/editions` (público, cache 1h) soma `registrations` +
+  `registrations_old`, só `PAID`. Hoje devolve `{"2026": 630}`.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial
