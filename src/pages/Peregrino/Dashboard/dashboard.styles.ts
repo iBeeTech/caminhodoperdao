@@ -119,6 +119,20 @@ export const dashboardStyles: Record<string, React.CSSProperties> = {
     padding: "14px 16px",
     marginTop: 22,
   },
+  themeHead: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  themeLink: {
+    color: "#7a5c10",
+    fontSize: 12,
+    fontWeight: 700,
+    textDecoration: "underline",
+    whiteSpace: "nowrap",
+  },
   themeLabel: {
     color: "#7a5c10",
     fontSize: 11,

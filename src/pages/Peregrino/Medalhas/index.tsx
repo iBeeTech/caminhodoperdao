@@ -195,7 +195,7 @@ const MedalhasPage: React.FC = () => {
             </table>
           </div>
 
-          <h2 style={s.sectionTitle}>Os temas de cada edição</h2>
+          <h2 id="temas" style={s.sectionTitle}>Os temas de cada edição</h2>
           <p style={s.sectionHelp}>
             Os temas começaram em 2025. As edições anteriores não tiveram tema definido.
           </p>

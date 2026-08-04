@@ -5,6 +5,7 @@ import Medal from "../components/Medal";
 import RoadOfEditions from "../components/RoadOfEditions";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
+import YearMedalsGroup from "../components/YearMedalsGroup";
 import { dashboardStyles as s } from "./dashboard.styles";
 import { EDITION_THEMES, NEXT_EDITION } from "../../../data/editions";
 import {
@@ -52,6 +53,7 @@ const PeregrinoDashboard: React.FC = () => {
   const [form, setForm] = React.useState<PilgrimProfile>(EMPTY_PROFILE);
   const [cpfInput, setCpfInput] = React.useState("");
   const [whatsappUrl, setWhatsappUrl] = React.useState<string | null>(null);
+  const [participants, setParticipants] = React.useState<Record<string, number>>({});
 
   React.useEffect(() => {
     let isActive = true;
@@ -76,6 +78,14 @@ const PeregrinoDashboard: React.FC = () => {
     fetchWhatsappUrl("Olá! Preciso de ajuda com o meu cadastro no site.").then(url => {
       if (isActive) setWhatsappUrl(url);
     });
+    // Números por edição para o balão da estrada. Falha aqui não derruba nada:
+    // o balão só deixa de mostrar a linha de peregrinos.
+    fetch("/api/editions")
+      .then(response => (response.ok ? response.json() : { participants: {} }))
+      .then(data => {
+        if (isActive) setParticipants((data as { participants: Record<string, number> }).participants ?? {});
+      })
+      .catch(() => undefined);
     return () => {
       isActive = false;
     };
@@ -308,7 +318,12 @@ const PeregrinoDashboard: React.FC = () => {
 
           {EDITION_THEMES[me.currentYear] && (
             <div style={s.themeCallout}>
-              <p style={s.themeLabel}>Tema de {me.currentYear}</p>
+              <div style={s.themeHead}>
+                <p style={s.themeLabel}>Tema de {me.currentYear}</p>
+                <a href="/medalhas#temas" style={s.themeLink}>
+                  Visualizar temas anteriores
+                </a>
+              </div>
               <p style={s.themeText}>{EDITION_THEMES[me.currentYear]}</p>
             </div>
           )}
@@ -318,13 +333,13 @@ const PeregrinoDashboard: React.FC = () => {
             <p style={s.panelHelpOnDark}>
               Uma pedra por edição, da 1ª ({me.firstEditionYear}) até a{" "}
               {me.currentYear - me.firstEditionYear + 1}ª ({me.currentYear}). As douradas
-              são as suas, e a última, apagada, é a próxima: {NEXT_EDITION.date}. Arraste
-              para o lado para ver as edições anteriores.
+              são as suas, e a última, apagada, é a próxima: {NEXT_EDITION.date}.
             </p>
             <RoadOfEditions
               editions={editions}
               walkedYears={me.years}
               currentYear={me.currentYear}
+              participants={participants}
             />
           </div>
 
@@ -341,15 +356,19 @@ const PeregrinoDashboard: React.FC = () => {
               </div>
             ) : (
               <div style={s.medalGrid}>
-                {me.badges.map(badge => (
-                  <Medal
-                    key={badge.id}
-                    label={badge.label}
-                    description={badge.description}
-                    tier={badge.tier}
-                    year={badge.year}
-                  />
-                ))}
+                {/* As medalhas de ano viram uma pilha só: dez iguais em fila
+                    empurravam para fora da tela justamente as raras. */}
+                <YearMedalsGroup badges={me.badges.filter(badge => badge.year !== undefined)} />
+                {me.badges
+                  .filter(badge => badge.year === undefined)
+                  .map(badge => (
+                    <Medal
+                      key={badge.id}
+                      label={badge.label}
+                      description={badge.description}
+                      tier={badge.tier}
+                    />
+                  ))}
                 {me.nextBadge && (
                   <Medal
                     label={me.nextBadge.label}
