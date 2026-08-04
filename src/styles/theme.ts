@@ -16,6 +16,13 @@ export const theme = {
     gradientStart: "#1d2c5e",
     gradientEnd: "#34488f",
     ctaDark: "#2c3e50",
+    // Dourado da logo (o sol atrás da cruz) e o marrom do lettering.
+    // Amarelo é cor de DESTAQUE sobre o azul — medalha, selo, chamada. Usado em
+    // área grande vira aviso de trânsito e some o contraste com o texto escuro.
+    gold: "#f2b824",
+    goldSoft: "#fde9b0",
+    goldDark: "#c8930f",
+    logoBrown: "#5c2a16",
   },
   spacing: {
     xs: "4px",

@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { setUserToken } from "../../../utils/auth/userSession";
+import { peregrinoStyles } from "../peregrino.styles";
+import logo from "../../../assets/logo.png";
 
 /**
  * Entrada do peregrino: entrar, criar conta e confirmar o e-mail.
@@ -16,87 +18,7 @@ type Step = "login" | "signup" | "confirm";
 const MIN_PASSWORD_LENGTH = 8;
 const OTP_LENGTH = 6;
 
-const s: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "40px 20px",
-    background: "#f5f3ef",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    background: "#fff",
-    border: "1px solid #e5e0d8",
-    borderRadius: 16,
-    padding: 32,
-  },
-  title: { fontSize: 24, margin: "0 0 8px", color: "#1d1d1f" },
-  help: { margin: "0 0 24px", color: "#4b5563", fontSize: 14, lineHeight: 1.6 },
-  field: { marginBottom: 16 },
-  label: {
-    display: "block",
-    fontWeight: 700,
-    fontSize: 14,
-    color: "#1d1d1f",
-    marginBottom: 6,
-  },
-  input: {
-    width: "100%",
-    padding: "0.65rem 0.75rem",
-    borderRadius: 8,
-    border: "1px solid #d1d5db",
-    fontSize: 15,
-    boxSizing: "border-box",
-  },
-  otpInput: {
-    width: "100%",
-    padding: "0.7rem 0.75rem",
-    borderRadius: 8,
-    border: "1px solid #d1d5db",
-    fontSize: 26,
-    letterSpacing: 8,
-    textAlign: "center",
-    fontFamily: "monospace",
-    boxSizing: "border-box",
-  },
-  button: {
-    width: "100%",
-    padding: "0.75rem 1rem",
-    borderRadius: 8,
-    border: "1px solid #7a5c2e",
-    background: "#7a5c2e",
-    color: "#fff",
-    fontWeight: 700,
-    fontSize: "1rem",
-    cursor: "pointer",
-    marginTop: 8,
-  },
-  buttonOff: { opacity: 0.55, cursor: "not-allowed" },
-  linkButton: {
-    width: "100%",
-    marginTop: 14,
-    padding: "0.5rem",
-    background: "none",
-    border: "none",
-    color: "#7a5c2e",
-    fontSize: 14,
-    textDecoration: "underline",
-    cursor: "pointer",
-  },
-  error: {
-    background: "#fef2f2",
-    border: "1px solid #fecaca",
-    borderRadius: 8,
-    padding: 12,
-    color: "#991b1b",
-    fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 1.5,
-  },
-};
+const s = peregrinoStyles;
 
 const PeregrinoEntrar: React.FC = () => {
   const navigate = useNavigate();
@@ -224,8 +146,9 @@ const PeregrinoEntrar: React.FC = () => {
   };
 
   return (
-    <div style={s.page}>
+    <div style={s.centered}>
       <form style={s.card} onSubmit={submit}>
+        <img src={logo} alt="Caminho do Perdão" style={s.logo} />
         {step === "confirm" ? (
           <>
             <h1 style={s.title}>Confirme seu e-mail</h1>
@@ -250,7 +173,7 @@ const PeregrinoEntrar: React.FC = () => {
             </div>
             <button
               type="submit"
-              style={{ ...s.button, ...(canConfirm && !isBusy ? {} : s.buttonOff) }}
+              style={{ ...s.primaryButton, ...(canConfirm && !isBusy ? {} : s.buttonOff) }}
               disabled={!canConfirm || isBusy}
             >
               {isBusy ? "Confirmando..." : "Confirmar"}
@@ -312,7 +235,7 @@ const PeregrinoEntrar: React.FC = () => {
             <button
               type="submit"
               style={{
-                ...s.button,
+                ...s.primaryButton,
                 ...((step === "login" ? canLogin : canSignup) && !isBusy ? {} : s.buttonOff),
               }}
               disabled={(step === "login" ? !canLogin : !canSignup) || isBusy}
