@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, Admin, AdminPainel, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas } from "./pages";
 import AdminLayout from "./pages/Admin/AdminLayout";
 
 const AppRoutes: React.FC = () => {
@@ -11,7 +11,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/gallery/:year" element={<GalleryAlbum />} />
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminPainel />} />
-        <Route path="/admin/planilhas" element={<Admin />} />
+        <Route path="/admin/planilhas" element={<AdminPlanilhas />} />
         <Route path="/admin/estorno" element={<AdminEstorno />} />
         <Route path="/admin/inscritos" element={<AdminInscritos />} />
         <Route path="/admin/credenciamento" element={<AdminCredenciamento />} />

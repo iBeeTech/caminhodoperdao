@@ -4,6 +4,7 @@ export { GalleryAlbum } from "./Gallery";
 export { default as ErrorPage } from "./Error/ErrorPage";
 export { default as Admin } from "./Admin/Controller";
 export { default as AdminPainel } from "./Admin/Painel";
+export { default as AdminPlanilhas } from "./Admin/Planilhas";
 export { default as AdminEstorno } from "./Admin/Estorno";
 export { default as AdminInscritos } from "./Admin/Inscritos";
 export { default as AdminCredenciamento } from "./Admin/Credenciamento";

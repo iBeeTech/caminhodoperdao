@@ -80,6 +80,44 @@ const s: Record<string, React.CSSProperties> = {
   tagStaff: { color: "#1e3a8a", background: "#dbeafe", border: "1px solid #bfdbfe" },
   tagPending: { color: "#b91c1c", background: "#fef2f2", border: "1px solid #fecaca" },
   empty: { color: "#777", padding: "1.5rem 0" },
+  adminBox: {
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    padding: "16px 18px",
+    background: "#fff",
+    marginBottom: "1.5rem",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
+  },
+  adminTitle: { fontSize: "1.05rem", margin: "0 0 4px", color: "#1d2c5e" },
+  adminHelp: { color: "#6b7280", fontSize: "0.86rem", margin: "0 0 12px", lineHeight: 1.5 },
+  adminRow: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" },
+  addButton: {
+    padding: "0.6rem 1.1rem",
+    borderRadius: 10,
+    border: "none",
+    background: "#1d2c5e",
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: "0.9rem",
+    cursor: "pointer",
+  },
+  created: {
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: 10,
+    padding: 12,
+    color: "#14532d",
+    fontSize: "0.86rem",
+    marginBottom: 12,
+    lineHeight: 1.5,
+  },
+  tempPassword: {
+    fontFamily: "monospace",
+    fontSize: "1.15rem",
+    fontWeight: 800,
+    letterSpacing: 1,
+    margin: "6px 0",
+  },
   error: {
     background: "#fef2f2",
     border: "1px solid #fecaca",
@@ -89,6 +127,105 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: "0.9rem",
     marginBottom: "1rem",
   },
+};
+
+/**
+ * Criação de conta do PAINEL. Veio da tela de planilhas, onde não tinha nada a
+ * ver com o assunto — aqui fica ao lado do resto que é gente e permissão.
+ *
+ * ⚠️ É outra coisa do papel "admin" logo abaixo. Este cria conta em
+ * `admin_users`, que é o que abre `/admin`. O papel na lista marca quem a pessoa
+ * é no evento e NÃO abre o painel (ver Planning.md, bloco 1).
+ */
+const NewAdminSection: React.FC<{ token: string | null; superAdmin: boolean }> = ({
+  token,
+  superAdmin,
+}) => {
+  const [email, setEmail] = React.useState("");
+  const [isBusy, setIsBusy] = React.useState(false);
+  const [created, setCreated] = React.useState<{ email: string; tempPassword: string } | null>(
+    null
+  );
+  const [error, setError] = React.useState<string | null>(null);
+
+  if (!superAdmin) return null;
+
+  const submit = async () => {
+    setIsBusy(true);
+    setError(null);
+    setCreated(null);
+    try {
+      const response = await fetch("/api/admin/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        created?: boolean;
+        reason?: string;
+        email?: string;
+        tempPassword?: string;
+      };
+
+      if (!response.ok) {
+        setError(response.status === 403 ? "Só o admin geral pode criar admins." : "Não foi possível criar.");
+        return;
+      }
+      if (!data.created) {
+        setError(data.reason === "already_exists" ? "Já existe admin com este e-mail." : "Não foi possível criar.");
+        return;
+      }
+      setCreated({ email: data.email ?? email, tempPassword: data.tempPassword ?? "" });
+      setEmail("");
+    } catch {
+      setError("Falha de conexão.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  return (
+    <section style={s.adminBox}>
+      <h2 style={s.adminTitle}>Criar conta de admin do painel</h2>
+      <p style={s.adminHelp}>
+        Dá acesso a <code>/admin</code>. A senha nasce aleatória e a pessoa é obrigada a
+        trocá-la no primeiro acesso — não existe senha padrão.
+      </p>
+
+      {error && <div style={s.error}>{error}</div>}
+
+      {created && (
+        <div style={s.created}>
+          <p style={{ margin: 0 }}>
+            Conta criada para <strong>{created.email}</strong>. Senha temporária:
+          </p>
+          <p style={s.tempPassword}>{created.tempPassword}</p>
+          <p style={{ margin: 0, fontSize: "0.8rem" }}>
+            Anote agora: ela <strong>não aparece de novo</strong>. Passe por um canal
+            direto, nunca em grupo.
+          </p>
+        </div>
+      )}
+
+      <div style={s.adminRow}>
+        <input
+          style={s.search}
+          placeholder="e-mail do novo admin"
+          value={email}
+          onChange={event => setEmail(event.target.value)}
+          type="email"
+        />
+        <button
+          type="button"
+          style={{ ...s.addButton, ...(email.includes("@") && !isBusy ? {} : { opacity: 0.55 }) }}
+          onClick={submit}
+          disabled={!email.includes("@") || isBusy}
+        >
+          {isBusy ? "Criando..." : "Criar admin"}
+        </button>
+      </div>
+    </section>
+  );
 };
 
 const ContasPage: React.FC = () => {
@@ -199,6 +336,8 @@ const ContasPage: React.FC = () => {
         </div>
       )}
       {error && <div style={s.error}>{error}</div>}
+
+      <NewAdminSection token={token} superAdmin={superAdmin} />
 
       <input
         style={s.search}
