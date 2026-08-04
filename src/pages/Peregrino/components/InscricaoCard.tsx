@@ -701,6 +701,13 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
               clique em "Liberar inscrição" e passe o código para essa pessoa.
             </p>
 
+            <div style={styles.warn}>
+              <strong>Depois de transferida, a inscrição é dela.</strong> Se a vaga for
+              cancelada mais adiante, a devolução vai para quem estiver com a inscrição
+              naquele momento — não para você. Por isso só libere depois de receber o
+              combinado; o acerto entre vocês dois é por fora.
+            </div>
+
             {error && <div style={styles.error}>{error}</div>}
 
             <div style={styles.field}>
@@ -874,7 +881,9 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                   <div style={styles.warn}>
                     Você está recebendo a inscrição
                     {transferFrom ? ` de ${transferFrom}` : ""}. Confira seus dados e aceite
-                    o termo — o aceite de quem cedeu não vale para você.
+                    o termo — o aceite de quem cedeu não vale para você. A partir daqui a
+                    inscrição é sua: se você cancelar depois, a devolução vem para a sua
+                    chave PIX.
                   </div>
                 )}
 

@@ -22,6 +22,20 @@ type Env = UserAuthEnv & EventYearEnv & { REGISTRATION_COST?: string };
  * formulário.
  *
  * Inscrição ainda não paga não gera pedido de estorno: não há o que devolver.
+ *
+ * ## Quem recebe o dinheiro numa inscrição que foi transferida
+ *
+ * Decidido pelo organizador em 04/08/2026: **a devolução vai para quem está com
+ * a inscrição ATIVA no momento do cancelamento** — não para quem pagou lá atrás.
+ *
+ * O código já fazia isso por construção, e agora é intencional e não
+ * coincidência: `auth.sub` é o dono atual da inscrição, e é do cadastro DELE que
+ * saem a chave PIX e os dados do pedido. Depois de uma transferência, o dono
+ * atual é quem recebeu.
+ *
+ * A consequência precisa estar dita na tela ANTES da troca, e está: quem cede
+ * lê que, se a vaga for cancelada depois, o dinheiro não volta para ele. O
+ * acerto entre as duas pessoas é por fora, e o sistema não entra nessa conta.
  */
 export const onRequestPost: PagesFunction<Env> = async context => {
   const auth = await authorizeUserRequest(context.request, context.env);

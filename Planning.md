@@ -961,6 +961,26 @@ Sobra como decisão consciente:
   entender e melhor de segurança: a mensagem contrária transformaria o
   formulário em detector de quem é admin.
 
+### Decidido em 04/08/2026: estorno de inscrição transferida
+
+**A devolução vai para quem está com a inscrição ATIVA no momento do
+cancelamento** — não para quem pagou originalmente.
+
+Era a última pergunta em aberto do bloco 8, e a que fazia a troca virar briga.
+A regra escolhida tem a vantagem de ser a única que o sistema consegue aplicar
+sozinho: o dono atual é quem tem sessão, cadastro e chave PIX no banco. Qualquer
+regra baseada em "quem pagou" exigiria rastrear o pagador ao longo de várias
+trocas e ainda dependeria de acordo entre pessoas que o sistema não vê.
+
+O que isso obriga, e já está feito:
+
+- As duas telas dizem a regra **antes** da troca. Quem cede lê que, se a vaga
+  for cancelada depois, o dinheiro não volta para ele; quem recebe lê que a
+  devolução virá para a chave PIX dele.
+- O acerto de dinheiro entre as duas pessoas continua por fora (PIX direto), e o
+  sistema não entra nessa conta — foi por isso que "liberar" ficou separado de
+  "indicar": quem cede só libera depois de receber.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial
