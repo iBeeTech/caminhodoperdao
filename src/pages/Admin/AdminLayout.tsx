@@ -12,14 +12,14 @@ import { clearAdminToken, getAdminToken, subscribeAdminSession } from "../../uti
 const MOBILE_BREAKPOINT = "768px";
 const DRAWER_WIDTH = "270px";
 
-interface NavItem {
+export interface NavItem {
   to: string;
   label: string;
   /** Só casa a rota exata; usado no "/admin", que é prefixo de todas as outras. */
   exact?: boolean;
 }
 
-interface NavEntry {
+export interface NavEntry {
   label: string;
   /** Link direto na barra (sem dropdown). Exclusivo com items. */
   to?: string;
@@ -29,7 +29,10 @@ interface NavEntry {
   superAdminOnly?: boolean;
 }
 
-const GROUPS: readonly NavEntry[] = [
+export const GROUPS: readonly NavEntry[] = [
+  // Link direto, sem dropdown: é a porta de entrada, e porta não fica dentro de
+  // gaveta.
+  { label: "Painel", to: "/admin", exact: true },
   {
     label: "Inscrições",
     items: [
@@ -38,7 +41,7 @@ const GROUPS: readonly NavEntry[] = [
       { to: "/admin/inscricao-manual", label: "Inscrição manual" },
       { to: "/admin/inscritos", label: "Inscritos" },
       { to: "/admin/lista-espera", label: "Lista de espera" },
-      { to: "/admin", label: "Planilhas", exact: true },
+      { to: "/admin/planilhas", label: "Planilhas" },
     ],
   },
   {

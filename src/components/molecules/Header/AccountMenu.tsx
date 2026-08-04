@@ -2,6 +2,7 @@ import React from "react";
 import { theme } from "../../../styles/theme";
 import { clearUserToken, getUserToken } from "../../../utils/auth/userSession";
 import { useUserSession } from "../../../utils/auth/useUserSession";
+import { isLoginVisible } from "../../../utils/auth/loginVisibility";
 
 /**
  * O canto da conta, no cabeçalho.
@@ -188,6 +189,11 @@ const AccountMenu: React.FC = () => {
   }, [isOpen]);
 
   if (!isLoggedIn) {
+    // Enquanto a área do peregrino está em teste, o botão só aparece para quem
+    // chegou com `?login=true`. Quem já está logado vê o avatar normalmente —
+    // esconder a saída de quem entrou seria prender a pessoa dentro do site.
+    if (!isLoginVisible()) return null;
+
     return (
       <span style={styles.authBox}>
         <a href="/entrar" style={styles.authEnter}>
