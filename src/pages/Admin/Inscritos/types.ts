@@ -5,6 +5,8 @@
 export type Status = "PENDING" | "PAID" | "CANCELED";
 
 export interface Registration {
+  /** Edição a que a inscrição pertence (migration 025). Nulo em linha antiga. */
+  event_year: number | null;
   id: string;
   name: string;
   phone: string | null;

@@ -814,6 +814,28 @@ migrations:
 `wrangler d1 execute caminhodoperdao-db --env production --remote --file migrations/030_user_profile.sql`.
 Sem ela, `/api/me` quebra em toda leitura, e a área logada inteira para.
 
+Segunda leva do mesmo dia (migration 031):
+
+- ✅ **Papéis na conta** — `users` ganhou `is_staff` e `is_admin`, com auditoria
+  (`role_updated_at/by`). Nova tela `/admin/contas`, **restrita ao admin geral**,
+  concede e tira papel. Todo admin é servo, e o servidor força isso.
+  ⚠️ **Marcar não abre porta:** `is_admin = 1` NÃO libera `/admin` — o painel
+  segue exigindo conta em `admin_users`. Esta coluna é a base da unificação
+  (bloco 1), não a unificação em si.
+- ✅ **Selo de Servo** — primeira medalha com LASTRO: não é auto-declarada, foi a
+  organização que marcou. Aparece mesmo para quem não declarou ano nenhum.
+- ✅ **CEP preenche endereço sozinho** no cadastro do peregrino, reaproveitando o
+  `useAddressByCep` que a inscrição da home já usava. O formulário virou
+  componente único (`ProfileForm`), usado no primeiro acesso e no `/perfil` —
+  antes eram duas cópias esperando divergir.
+- ✅ **Primeiro acesso em dois passos** — anos e depois cadastro, com
+  **"Preencher depois"** (`profile_prompted_at`). Os dados vêm depois dos anos
+  de propósito: marcar caixinhas custa dez segundos e já entrega a estrada; o
+  formulário inteiro na primeira tela seria um paredão antes da recompensa.
+- ✅ **Filtro por ano em `/admin/inscritos`** — `event_year` passou a sair da API
+  de inscrições. Os anos do filtro vêm dos dados, então a edição nova aparece
+  sozinha.
+
 Pendências abertas nesta sessão:
 
 1. **A foto do peregrino ainda não existe.** O avatar do cabeçalho é a inicial

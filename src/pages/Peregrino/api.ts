@@ -52,6 +52,9 @@ export interface Me {
   badges: Badge[];
   nextBadge: NextBadge | null;
   hasDeclaredYears: boolean;
+  hasSeenProfilePrompt: boolean;
+  isStaff: boolean;
+  isAdmin: boolean;
   profile: PilgrimProfile;
   hasCpf: boolean;
   cpfMasked: string | null;
@@ -123,6 +126,15 @@ export function saveYears(
   years: number[]
 ): Promise<{ years: number[]; badges: Badge[]; nextBadge: NextBadge | null }> {
   return request("/api/me/years", { method: "POST", body: JSON.stringify({ years }) });
+}
+
+/**
+ * "Preencher depois" do primeiro acesso. Endpoint próprio, e não um PUT com o
+ * perfil vazio: perfil vazio APAGA o que já existe, e pular não pode limpar
+ * nada.
+ */
+export function skipProfilePrompt(): Promise<{ hasSeenProfilePrompt: boolean }> {
+  return request("/api/me/profile-prompt", { method: "POST", body: "{}" });
 }
 
 export function saveProfile(

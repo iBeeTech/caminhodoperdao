@@ -28,6 +28,9 @@ export interface UserProfileRow {
   has_dietary_restriction: number;
   dietary_restriction_details: string | null;
   years_declared_at: number | null;
+  profile_prompted_at: number | null;
+  is_staff: number;
+  is_admin: number;
 }
 
 /** O que a tela recebe. Sem `cpf_encrypted`: cifra não vai para o navegador. */
@@ -54,7 +57,8 @@ export const USER_PROFILE_COLUMNS = `
   name, phone, cpf_encrypted, gender, date_of_birth, cep, address, number,
   complement, city, state, emergency_contact_name, emergency_contact_phone,
   has_allergy_medication, allergy_medication_details,
-  has_dietary_restriction, dietary_restriction_details, years_declared_at
+  has_dietary_restriction, dietary_restriction_details, years_declared_at,
+  profile_prompted_at, is_staff, is_admin
 `;
 
 /** Tamanho máximo de campo de texto livre. Corta payload absurdo na entrada. */

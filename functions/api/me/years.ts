@@ -82,9 +82,18 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       .all<{ year: number }>();
 
     const saved = (results ?? []).map(row => row.year);
+    // O selo de Servo não sai dos anos, sai do papel na organização — precisa
+    // vir do banco, senão ele sumiria da tela toda vez que alguém salvasse os
+    // anos e voltaria só no próximo carregamento.
+    const account = await context.env.DB.prepare(
+      "SELECT is_staff FROM users WHERE id = ?1"
+    )
+      .bind(auth.sub)
+      .first<{ is_staff: number }>();
+
     return json(200, {
       years: saved,
-      badges: buildBadges(saved),
+      badges: buildBadges(saved, { isStaff: account?.is_staff === 1 }),
       nextBadge: nextMilestone(saved.length),
       hasDeclaredYears: true,
     });

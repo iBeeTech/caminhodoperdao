@@ -4,14 +4,20 @@ import { Header } from "../../../components";
 import Medal from "../components/Medal";
 import RoadOfEditions from "../components/RoadOfEditions";
 import YearPicker from "../components/YearPicker";
+import ProfileForm from "../components/ProfileForm";
 import { dashboardStyles as s } from "./dashboard.styles";
 import {
+  EMPTY_PROFILE,
   Me,
+  PilgrimProfile,
   SessionExpiredError,
   fetchAvailableYears,
   fetchMe,
+  fetchWhatsappUrl,
   messageForError,
+  saveProfile,
   saveYears,
+  skipProfilePrompt,
 } from "../api";
 
 /**
@@ -19,9 +25,12 @@ import {
  *
  * Dois estados na mesma rota, de propósito:
  *
- * 1. **Primeiro acesso** — a pessoa declara em quais anos caminhou. Aparece uma
- *    vez só (`hasDeclaredYears`), inclusive para quem não marca nenhum ano.
- *    Depois disso a edição mora no `/perfil`, longe do caminho de todo dia.
+ * 1. **Primeiro acesso**, em dois passos: a pessoa declara em quais anos
+ *    caminhou e depois preenche o cadastro. Cada passo aparece uma vez só
+ *    (`hasDeclaredYears` e `hasSeenProfilePrompt`), e o cadastro tem
+ *    "preencher depois" — pedir dado no primeiro minuto e não deixar sair é a
+ *    forma mais rápida de perder a pessoa antes de ela ver qualquer coisa.
+ *    Depois disso, os dois moram no `/perfil`, longe do caminho de todo dia.
  * 2. **A estrada** — as 19 edições em fila, as caminhadas acesas, o futuro
  *    tracejado, e as medalhas embaixo.
  *
@@ -39,6 +48,10 @@ const PeregrinoDashboard: React.FC = () => {
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [form, setForm] = React.useState<PilgrimProfile>(EMPTY_PROFILE);
+  const [cpfInput, setCpfInput] = React.useState("");
+  const [whatsappUrl, setWhatsappUrl] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     let isActive = true;
     const load = async () => {
@@ -47,6 +60,7 @@ const PeregrinoDashboard: React.FC = () => {
         if (!isActive) return;
         setMe(profile);
         setSelected(profile.years);
+        setForm(profile.profile);
         setAvailable(years.available);
       } catch (loadError) {
         if (!isActive) return;
@@ -58,6 +72,9 @@ const PeregrinoDashboard: React.FC = () => {
       }
     };
     load();
+    fetchWhatsappUrl("Olá! Preciso de ajuda com o meu cadastro no site.").then(url => {
+      if (isActive) setWhatsappUrl(url);
+    });
     return () => {
       isActive = false;
     };
@@ -97,6 +114,52 @@ const PeregrinoDashboard: React.FC = () => {
     setSelected(current =>
       current.includes(year) ? current.filter(y => y !== year) : [...current, year]
     );
+
+  const handleSaveOnboardingProfile = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      const saved = await saveProfile(form, me?.hasCpf ? undefined : cpfInput);
+      setMe(current =>
+        current
+          ? {
+              ...current,
+              profile: saved.profile,
+              hasCpf: saved.hasCpf,
+              cpfMasked: saved.cpfMasked ?? current.cpfMasked,
+              hasSeenProfilePrompt: true,
+            }
+          : current
+      );
+      setForm(saved.profile);
+      setCpfInput("");
+    } catch (saveError) {
+      if (saveError instanceof SessionExpiredError) {
+        navigate("/entrar", { replace: true });
+        return;
+      }
+      setError(messageForError(saveError));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSkipProfile = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      await skipProfilePrompt();
+      setMe(current => (current ? { ...current, hasSeenProfilePrompt: true } : current));
+    } catch (skipError) {
+      if (skipError instanceof SessionExpiredError) {
+        navigate("/entrar", { replace: true });
+        return;
+      }
+      setError(messageForError(skipError));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!me) {
     return (
@@ -146,6 +209,55 @@ const PeregrinoDashboard: React.FC = () => {
               disabled={isSaving}
             >
               Ainda não caminhei nenhuma vez
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Segundo passo do primeiro acesso: o cadastro. Vem DEPOIS dos anos porque
+  // marcar caixinhas custa dez segundos e já entrega a estrada; o formulário
+  // inteiro na primeira tela seria um paredão antes de qualquer recompensa.
+  if (!me.hasSeenProfilePrompt) {
+    return (
+      <>
+        <Header />
+        <div style={s.page}>
+          <div style={{ ...s.onboardCard, maxWidth: 720 }}>
+            <h1 style={s.onboardTitle}>Agora, seus dados</h1>
+            <p style={s.onboardHelp}>
+              É o mesmo cadastro que a inscrição pede. Preenchendo agora, você não
+              precisa digitar tudo de novo depois — e a organização consegue falar com
+              você. Se preferir, dá para deixar para outra hora.
+            </p>
+            {error && <div style={s.error}>{error}</div>}
+
+            <ProfileForm
+              value={form}
+              onChange={setForm}
+              cpfMasked={me.cpfMasked}
+              hasCpf={me.hasCpf}
+              cpfInput={cpfInput}
+              onCpfInputChange={setCpfInput}
+              whatsappUrl={whatsappUrl}
+            />
+
+            <button
+              type="button"
+              style={{ ...s.goldButton, ...(isSaving ? s.buttonOff : {}) }}
+              onClick={handleSaveOnboardingProfile}
+              disabled={isSaving}
+            >
+              {isSaving ? "Salvando..." : "Salvar meus dados"}
+            </button>
+            <button
+              type="button"
+              style={s.ghostButton}
+              onClick={handleSkipProfile}
+              disabled={isSaving}
+            >
+              Preencher depois
             </button>
           </div>
         </div>

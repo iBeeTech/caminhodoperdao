@@ -142,6 +142,7 @@ const InscritosPage: React.FC = () => {
   const [fMed, setFMed] = React.useState("");
   const [fRestr, setFRestr] = React.useState("");
   const [fStaff, setFStaff] = React.useState("");
+  const [fAno, setFAno] = React.useState("");
   const [fAniversariante, setFAniversariante] = React.useState(false);
   // filtros camisetas
   const [cNome, setCNome] = React.useState("");
@@ -214,7 +215,7 @@ const InscritosPage: React.FC = () => {
 
   React.useEffect(() => {
     setPage(1);
-  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fStaff, fAniversariante, cNome, cStatus]);
+  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fStaff, fAno, fAniversariante, cNome, cStatus]);
 
   // Aniversariante: aniversário (mês/dia) dentro de ±7 dias da CAMINHADA (02/08).
   const birthdayWithinWeek = (dob: string | null): boolean => {
@@ -293,6 +294,14 @@ const InscritosPage: React.FC = () => {
     return [...map.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
   }, [regs]);
 
+  // Os anos vêm dos próprios dados, não de uma lista fixa: assim a edição nova
+  // aparece no filtro sozinha, sem ninguém lembrar de mexer aqui.
+  const anosDisponiveis = React.useMemo(() => {
+    const anos = new Set<number>();
+    for (const r of regs) if (r.event_year) anos.add(r.event_year);
+    return [...anos].sort((a, b) => b - a);
+  }, [regs]);
+
   const regsFiltered = regs
     .filter(
       (r) =>
@@ -300,6 +309,7 @@ const InscritosPage: React.FC = () => {
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
         (!fStaff || (fStaff === "staff" ? r.is_staff === 1 : r.is_staff === 0)) &&
+        (!fAno || String(r.event_year ?? "") === fAno) &&
         (!fStatus || r.status === fStatus) &&
         (!fPernoite ||
           (fPernoite === "granted"
@@ -435,6 +445,19 @@ const InscritosPage: React.FC = () => {
               >
                 🎂 Aniversariantes ({anivCount})
               </button>
+              {anosDisponiveis.length > 0 && (
+                <label style={s.field}>
+                  Ano
+                  <select style={s.miniSelect} value={fAno} onChange={(e) => setFAno(e.target.value)}>
+                    <option value="">Todos</option>
+                    {anosDisponiveis.map((ano) => (
+                      <option key={ano} value={String(ano)}>
+                        {ano} ({regs.filter((r) => r.event_year === ano).length})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <label style={s.field}>
                 Status
                 <select style={s.miniSelect} value={fStatus} onChange={(e) => setFStatus(e.target.value)}>

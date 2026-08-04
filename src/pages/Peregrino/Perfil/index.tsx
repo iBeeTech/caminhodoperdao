@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components";
 import YearPicker from "../components/YearPicker";
+import ProfileForm from "../components/ProfileForm";
 import { perfilStyles as s } from "./perfil.styles";
 import {
   EMPTY_PROFILE,
@@ -31,13 +32,6 @@ import {
  */
 
 const CPF_HELP_MESSAGE = "Olá! Preciso corrigir o CPF da minha conta no site.";
-
-const GENDERS = [
-  { value: "", label: "Prefiro não informar" },
-  { value: "masculino", label: "Masculino" },
-  { value: "feminino", label: "Feminino" },
-  { value: "outro", label: "Outro" },
-];
 
 interface ReadRowProps {
   label: string;
@@ -98,11 +92,6 @@ const PeregrinoPerfil: React.FC = () => {
       isActive = false;
     };
   }, [navigate]);
-
-  const setField = <K extends keyof PilgrimProfile>(key: K, value: PilgrimProfile[K]) => {
-    setFormSaved(false);
-    setForm(current => ({ ...current, [key]: value }));
-  };
 
   const handleSaveYears = async () => {
     setIsSavingYears(true);
@@ -263,256 +252,18 @@ const PeregrinoPerfil: React.FC = () => {
               <div style={{ marginTop: 18 }}>
                 {formError && <div style={s.error}>{formError}</div>}
 
-                <div style={s.grid}>
-                  <div style={{ ...s.field, ...s.fieldWide }}>
-                    <label style={s.label} htmlFor="name">
-                      Nome completo
-                    </label>
-                    <input
-                      id="name"
-                      style={s.input}
-                      value={form.name}
-                      onChange={e => setField("name", e.target.value)}
-                      autoComplete="name"
-                    />
-                  </div>
-
-                  <div style={{ ...s.field, ...s.fieldWide }}>
-                    <label style={s.label} htmlFor="cpf">
-                      CPF
-                    </label>
-                    <input
-                      id="cpf"
-                      style={{ ...s.input, ...(me.hasCpf ? s.inputLocked : {}) }}
-                      value={me.hasCpf ? me.cpfMasked ?? "cadastrado" : cpfInput}
-                      onChange={e => setCpfInput(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                      readOnly={me.hasCpf}
-                      inputMode="numeric"
-                      placeholder={me.hasCpf ? "" : "somente números"}
-                    />
-                    <p style={s.hint}>
-                      {me.hasCpf
-                        ? "Se você precisa editar o CPF entre em contato conosco por WhatsApp"
-                        : "O CPF entra uma vez só. Depois, para corrigir, fale conosco por WhatsApp."}
-                      {whatsappUrl && (
-                        <>
-                          {" "}
-                          <a
-                            href={whatsappUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={s.hintLink}
-                          >
-                            Falar no WhatsApp
-                          </a>
-                        </>
-                      )}
-                    </p>
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="phone">
-                      Telefone
-                    </label>
-                    <input
-                      id="phone"
-                      style={s.input}
-                      value={form.phone}
-                      onChange={e => setField("phone", e.target.value.replace(/\D/g, "").slice(0, 11))}
-                      inputMode="numeric"
-                      placeholder="DDD + número"
-                      autoComplete="tel"
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="dateOfBirth">
-                      Data de nascimento
-                    </label>
-                    <input
-                      id="dateOfBirth"
-                      style={s.input}
-                      type="date"
-                      value={form.dateOfBirth}
-                      onChange={e => setField("dateOfBirth", e.target.value)}
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="gender">
-                      Sexo
-                    </label>
-                    <select
-                      id="gender"
-                      style={s.input}
-                      value={form.gender}
-                      onChange={e => setField("gender", e.target.value)}
-                    >
-                      {GENDERS.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="cep">
-                      CEP
-                    </label>
-                    <input
-                      id="cep"
-                      style={s.input}
-                      value={form.cep}
-                      onChange={e => setField("cep", e.target.value.replace(/\D/g, "").slice(0, 8))}
-                      inputMode="numeric"
-                      autoComplete="postal-code"
-                    />
-                  </div>
-
-                  <div style={{ ...s.field, ...s.fieldWide }}>
-                    <label style={s.label} htmlFor="address">
-                      Endereço
-                    </label>
-                    <input
-                      id="address"
-                      style={s.input}
-                      value={form.address}
-                      onChange={e => setField("address", e.target.value)}
-                      autoComplete="street-address"
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="number">
-                      Número
-                    </label>
-                    <input
-                      id="number"
-                      style={s.input}
-                      value={form.number}
-                      onChange={e => setField("number", e.target.value)}
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="complement">
-                      Complemento
-                    </label>
-                    <input
-                      id="complement"
-                      style={s.input}
-                      value={form.complement}
-                      onChange={e => setField("complement", e.target.value)}
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="city">
-                      Cidade
-                    </label>
-                    <input
-                      id="city"
-                      style={s.input}
-                      value={form.city}
-                      onChange={e => setField("city", e.target.value)}
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="state">
-                      Estado (sigla)
-                    </label>
-                    <input
-                      id="state"
-                      style={s.input}
-                      value={form.state}
-                      onChange={e =>
-                        setField(
-                          "state",
-                          e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2)
-                        )
-                      }
-                      placeholder="MG"
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="emergencyContactName">
-                      Contato de emergência
-                    </label>
-                    <input
-                      id="emergencyContactName"
-                      style={s.input}
-                      value={form.emergencyContactName}
-                      onChange={e => setField("emergencyContactName", e.target.value)}
-                    />
-                  </div>
-
-                  <div style={s.field}>
-                    <label style={s.label} htmlFor="emergencyContactPhone">
-                      Telefone da emergência
-                    </label>
-                    <input
-                      id="emergencyContactPhone"
-                      style={s.input}
-                      value={form.emergencyContactPhone}
-                      onChange={e =>
-                        setField(
-                          "emergencyContactPhone",
-                          e.target.value.replace(/\D/g, "").slice(0, 11)
-                        )
-                      }
-                      inputMode="numeric"
-                    />
-                  </div>
-
-                  <div style={{ ...s.field, ...s.fieldWide }}>
-                    <div style={s.checkRow}>
-                      <input
-                        id="hasAllergyMedication"
-                        type="checkbox"
-                        checked={form.hasAllergyMedication}
-                        onChange={e => setField("hasAllergyMedication", e.target.checked)}
-                      />
-                      <label style={s.label} htmlFor="hasAllergyMedication">
-                        Tenho alergia ou uso medicação
-                      </label>
-                    </div>
-                    {form.hasAllergyMedication && (
-                      <input
-                        style={s.input}
-                        value={form.allergyMedicationDetails}
-                        onChange={e => setField("allergyMedicationDetails", e.target.value)}
-                        placeholder="Qual alergia / qual medicação"
-                        aria-label="Detalhes da alergia ou medicação"
-                      />
-                    )}
-                  </div>
-
-                  <div style={{ ...s.field, ...s.fieldWide }}>
-                    <div style={s.checkRow}>
-                      <input
-                        id="hasDietaryRestriction"
-                        type="checkbox"
-                        checked={form.hasDietaryRestriction}
-                        onChange={e => setField("hasDietaryRestriction", e.target.checked)}
-                      />
-                      <label style={s.label} htmlFor="hasDietaryRestriction">
-                        Tenho restrição alimentar
-                      </label>
-                    </div>
-                    {form.hasDietaryRestriction && (
-                      <input
-                        style={s.input}
-                        value={form.dietaryRestrictionDetails}
-                        onChange={e => setField("dietaryRestrictionDetails", e.target.value)}
-                        placeholder="Qual restrição"
-                        aria-label="Detalhes da restrição alimentar"
-                      />
-                    )}
-                  </div>
-                </div>
+                <ProfileForm
+                  value={form}
+                  onChange={next => {
+                    setFormSaved(false);
+                    setForm(next);
+                  }}
+                  cpfMasked={me.cpfMasked}
+                  hasCpf={me.hasCpf}
+                  cpfInput={cpfInput}
+                  onCpfInputChange={setCpfInput}
+                  whatsappUrl={whatsappUrl}
+                />
 
                 {formSaved && <div style={s.ok}>Dados salvos.</div>}
 

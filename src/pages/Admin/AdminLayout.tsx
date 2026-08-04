@@ -53,6 +53,7 @@ const GROUPS: readonly NavEntry[] = [
     label: "Sistema",
     superAdminOnly: true,
     items: [
+      { to: "/admin/contas", label: "Contas e papéis" },
       { to: "/admin/convites", label: "Convites" },
       { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/pernoiteExtra", label: "Pernoite extra" },

@@ -58,10 +58,32 @@ export const MILESTONES: { years: number; label: string; description: string; ti
     },
   ];
 
-export function buildBadges(years: readonly number[]): Badge[] {
+export interface BadgeContext {
+  /** Marcado como servo pela organização (migration 031). */
+  isStaff?: boolean;
+}
+
+export function buildBadges(
+  years: readonly number[],
+  context: BadgeContext = {}
+): Badge[] {
+  // Servo é o único selo com LASTRO: não é auto-declarado, foi a organização
+  // que marcou. Por isso vale mesmo para quem ainda não declarou ano nenhum —
+  // e por isso vem antes da porta de saída logo abaixo.
+  const staffBadge: Badge[] = context.isStaff
+    ? [
+        {
+          id: "servo",
+          label: "Servo",
+          description: "Você serve o Caminho do Perdão junto com a organização.",
+          tier: "ouro",
+        },
+      ]
+    : [];
+
   // Sem anos, sem medalha. Devolver uma medalha "vazia" faria a tela mostrar
   // conquista para quem ainda não caminhou.
-  if (years.length === 0) return [];
+  if (years.length === 0) return staffBadge;
 
   const unique = Array.from(new Set(years)).sort((a, b) => b - a);
   const badges: Badge[] = unique.map(year => ({
@@ -105,7 +127,7 @@ export function buildBadges(years: readonly number[]): Badge[] {
     });
   }
 
-  return badges;
+  return [...badges, ...staffBadge];
 }
 
 /** A próxima medalha de constância, para a tela mostrar apagada. */

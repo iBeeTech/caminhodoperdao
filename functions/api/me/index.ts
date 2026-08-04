@@ -79,13 +79,18 @@ export const onRequestGet: PagesFunction<Env> = async context => {
       currentYear: getEventYear(context.env),
       firstEditionYear: FIRST_EDITION_YEAR,
       years,
-      badges: buildBadges(years),
+      badges: buildBadges(years, { isStaff: row.is_staff === 1 }),
       // A próxima medalha, ainda apagada. Sai do servidor junto com as
       // conquistadas para a tela não ter de repetir os números dos degraus.
       nextBadge: nextMilestone(years.length),
       // Quem nunca respondeu a pergunta dos anos vê o primeiro acesso; quem já
       // respondeu (mesmo que com nenhum ano) vai direto para a estrada.
       hasDeclaredYears: row.years_declared_at !== null,
+      // Idem para o cadastro: quem já preencheu OU já clicou em "preencher
+      // depois" não vê o convite de novo.
+      hasSeenProfilePrompt: row.profile_prompted_at !== null,
+      isStaff: row.is_staff === 1,
+      isAdmin: row.is_admin === 1,
       profile: toProfileView(row),
       // O CPF só sai daqui MASCARADO. A tela precisa que a pessoa se reconheça
       // ("é o meu mesmo"), não precisa do número inteiro — e um CPF completo
@@ -152,7 +157,8 @@ export const onRequestPut: PagesFunction<Env> = async context => {
              emergency_contact_name = ?11, emergency_contact_phone = ?12,
              has_allergy_medication = ?13, allergy_medication_details = ?14,
              has_dietary_restriction = ?15, dietary_restriction_details = ?16,
-             cpf_encrypted = ?17, updated_at = ?18
+             cpf_encrypted = ?17, updated_at = ?18,
+             profile_prompted_at = COALESCE(profile_prompted_at, ?18)
            WHERE id = ?19`
         )
           .bind(...bindings, cpfEncrypted, now, auth.sub)
@@ -171,7 +177,8 @@ export const onRequestPut: PagesFunction<Env> = async context => {
            emergency_contact_name = ?11, emergency_contact_phone = ?12,
            has_allergy_medication = ?13, allergy_medication_details = ?14,
            has_dietary_restriction = ?15, dietary_restriction_details = ?16,
-           updated_at = ?17
+           updated_at = ?17,
+           profile_prompted_at = COALESCE(profile_prompted_at, ?17)
          WHERE id = ?18`
       )
         .bind(...bindings, now, auth.sub)
@@ -185,6 +192,7 @@ export const onRequestPut: PagesFunction<Env> = async context => {
       profile: toProfileView(saved),
       hasCpf: saved.cpf_encrypted !== null,
       cpfMasked: rawCpf ? maskCpf(rawCpf) : null,
+      hasSeenProfilePrompt: true,
     });
   } catch (error) {
     console.error("PUT /api/me falhou:", error);
