@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Header } from "../../../components";
 import Medal from "../components/Medal";
 import RoadOfEditions from "../components/RoadOfEditions";
@@ -336,9 +336,14 @@ const PeregrinoDashboard: React.FC = () => {
             <div style={s.themeCallout}>
               <div style={s.themeHead}>
                 <p style={s.themeLabel}>Tema de {me.currentYear}</p>
-                <a href="/medalhas#temas" style={s.themeLink}>
+                {/* Link do React Router, e não <a href>: o <a> recarregava o app
+                    inteiro, e nesse recarregamento o navegador tenta rolar até a
+                    âncora ANTES de o React desenhar a página — o alvo ainda não
+                    existe e a rolagem se perde. Navegando por dentro, a página
+                    monta e o useScrollToHash de lá faz a rolagem. */}
+                <Link to="/medalhas#temas" style={s.themeLink}>
                   Visualizar temas anteriores
-                </a>
+                </Link>
               </div>
               <p style={s.themeText}>{EDITION_THEMES[me.currentYear]}</p>
             </div>
@@ -399,9 +404,12 @@ const PeregrinoDashboard: React.FC = () => {
               </div>
             )}
 
-            <a href="/medalhas" style={s.panelLink}>
+            {/* Mesmo motivo do link de temas acima: navegação por dentro do app.
+                Os dois vão para /medalhas — um recarregar tudo e o outro não
+                seria diferença sem explicação para quem usa. */}
+            <Link to="/medalhas" style={s.panelLink}>
               Ver todas as medalhas e os temas de cada ano
-            </a>
+            </Link>
           </div>
         </div>
       </div>

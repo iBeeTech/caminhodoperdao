@@ -3,6 +3,7 @@ import { Header } from "../../../components";
 import Medal from "../components/Medal";
 import { theme } from "../../../styles/theme";
 import { EDITION_THEMES, NEXT_EDITION, listEditions } from "../../../data/editions";
+import { useScrollToHash } from "../../../hooks/useScrollToHash";
 
 /**
  * `/medalhas` — o catálogo: todas as medalhas que existem e o tema de cada ano.
@@ -184,6 +185,10 @@ const TIER_NAMES: Record<string, string> = {
 
 const MedalhasPage: React.FC = () => {
   const editions = listEditions();
+  // Faz o /medalhas#temas do painel cair direto na tabela de temas. Sem isto o
+  // link levava ao topo da página e a pessoa tinha de rolar até achar a seção —
+  // o React Router não rola por hash sozinho.
+  useScrollToHash();
 
   return (
     <>
@@ -241,9 +246,14 @@ const MedalhasPage: React.FC = () => {
             </table>
           </div>
 
-          <h2 id="temas" style={s.sectionTitle}>Os temas de cada edição</h2>
+          {/* scrollMarginTop por causa do cabeçalho sticky (70px no desktop, 60
+              no celular): sem ele o título para embaixo da barra e a pessoa acha
+              que o link errou o lugar. Mesma folga usada na landing. */}
+          <h2 id="temas" style={{ ...s.sectionTitle, scrollMarginTop: 80 }}>
+            Os temas de cada edição
+          </h2>
           <p style={s.sectionHelp}>
-            Os temas começaram em 2025. As edições anteriores não tiveram tema definido.
+            Os temas registrados começam em 2024.
           </p>
 
           <div style={s.scroller}>
