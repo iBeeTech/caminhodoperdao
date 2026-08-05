@@ -142,7 +142,11 @@ const InscritosPage: React.FC = () => {
   const [fMed, setFMed] = React.useState("");
   const [fRestr, setFRestr] = React.useState("");
   const [fStaff, setFStaff] = React.useState("");
-  const [fAno, setFAno] = React.useState("");
+  // null = o admin ainda não escolheu; cai na edição mais recente (ver anoAtivo).
+  // "" = ele escolheu "Todos" de propósito. São coisas diferentes: sem essa
+  // distinção a tela abriria somando edições, e os contadores do topo — vagas,
+  // mosteiro, pagos — misturariam anos e não significariam nada.
+  const [fAno, setFAno] = React.useState<string | null>(null);
   const [fAniversariante, setFAniversariante] = React.useState(false);
   // filtros camisetas
   const [cNome, setCNome] = React.useState("");
@@ -157,7 +161,11 @@ const InscritosPage: React.FC = () => {
     setLoading(true);
     const h = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch(`/api/admin/registrations?t=${Date.now()}`, { headers: h }),
+      // include_archived=1: traz também as edições que já foram para
+      // registrations_old (migration 027). Esta tela é somente leitura, então
+      // pode listar arquivo; o Credenciamento, que escreve, chama sem o
+      // parâmetro de propósito.
+      fetch(`/api/admin/registrations?include_archived=1&t=${Date.now()}`, { headers: h }),
       fetch(`/api/admin/tshirts?t=${Date.now()}`, { headers: h }),
     ])
       .then(async ([r1, r2]) => {
@@ -213,10 +221,6 @@ const InscritosPage: React.FC = () => {
     }
   }, [token, load]);
 
-  React.useEffect(() => {
-    setPage(1);
-  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fStaff, fAno, fAniversariante, cNome, cStatus]);
-
   // Aniversariante: aniversário (mês/dia) dentro de ±7 dias da CAMINHADA (02/08).
   const birthdayWithinWeek = (dob: string | null): boolean => {
     const m = dob && /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
@@ -227,28 +231,62 @@ const InscritosPage: React.FC = () => {
     return Math.abs(bday - ref) <= week;
   };
 
+  // Os anos vêm dos próprios dados, não de uma lista fixa: assim a edição nova
+  // aparece no filtro sozinha, sem ninguém lembrar de mexer aqui.
+  const anosDisponiveis = React.useMemo(() => {
+    const anos = new Set<number>();
+    for (const r of regs) if (r.event_year) anos.add(r.event_year);
+    return [...anos].sort((a, b) => b - a);
+  }, [regs]);
+
+  // Ano que está valendo agora: o escolhido, ou a edição mais recente enquanto
+  // ninguém escolheu. Derivado em render, sem useEffect — a lista chega por
+  // fetch, e um efeito só para gravar isto no estado criaria um render a mais
+  // exibindo o ano errado no meio do caminho.
+  const anoAtivo = fAno ?? (anosDisponiveis.length ? String(anosDisponiveis[0]) : "");
+
+  // Tudo do ano ativo, antes dos outros filtros: é desta lista que saem os
+  // contadores do topo e os números que aparecem nos próprios filtros.
+  const regsDoAno = React.useMemo(
+    () => (anoAtivo ? regs.filter((r) => String(r.event_year ?? "") === anoAtivo) : regs),
+    [regs, anoAtivo]
+  );
+
+  // Qualquer troca de filtro volta para a página 1 — senão o admin fica preso
+  // numa página que o novo filtro nem tem. Depende de anoAtivo (o valor que
+  // realmente vale), não de fAno, e por isso mora aqui embaixo: array de
+  // dependência é lido durante o render, e lá em cima anoAtivo ainda não existe.
+  React.useEffect(() => {
+    setPage(1);
+  }, [tab, fNome, fStatus, fPernoite, fMed, fRestr, fStaff, anoAtivo, fAniversariante, cNome, cStatus]);
+
+  // ⚠️ Todos os contadores abaixo saem de regsDoAno, nunca de regs. Vaga, cama do
+  // mosteiro e caixa são coisas de UMA edição: somar 2026 com a edição seguinte
+  // daria um "dormindo no mosteiro" maior que o mosteiro.
   const isPeregrino = (r: Registration) => r.is_staff === 0;
-  const paidTotal = regs.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
+  const paidTotal = regsDoAno.filter((r) => r.status === "PAID" && isPeregrino(r)).length;
   // "Pagos — com pernoite" = peregrinos que se INSCREVERAM com pernoite. As pernoites
   // concedidas pelo admin NÃO entram aqui (contam só em 'Pernoite concedida' e no total).
-  const paidPernoite = regs.filter(
+  const paidPernoite = regsDoAno.filter(
     (r) =>
       r.status === "PAID" &&
       isPeregrino(r) &&
       r.sleep_at_monastery === 1 &&
       r.pernoite_granted === 0
   ).length;
-  const pendentes = regs.filter((r) => r.status === "PENDING" && isPeregrino(r)).length;
-  const cancelados = regs.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
-  const staffCount = regs.filter((r) => r.is_staff === 1).length;
-  const pernoiteConcedida = regs.filter((r) => r.status === "PAID" && r.pernoite_granted === 1).length;
+  const pendentes = regsDoAno.filter((r) => r.status === "PENDING" && isPeregrino(r)).length;
+  const cancelados = regsDoAno.filter((r) => r.status === "CANCELED" && isPeregrino(r)).length;
+  const staffCount = regsDoAno.filter((r) => r.is_staff === 1).length;
+  const pernoiteConcedida = regsDoAno.filter(
+    (r) => r.status === "PAID" && r.pernoite_granted === 1
+  ).length;
   // Staff pago que vai dormir no mosteiro (não entra na conta de peregrinos).
-  const staffPernoite = regs.filter(
+  const staffPernoite = regsDoAno.filter(
     (r) => r.status === "PAID" && r.is_staff === 1 && r.sleep_at_monastery === 1
   ).length;
   // Total de pessoas que vão dormir no mosteiro (pagas): com pernoite (inscrição) +
   // pernoite concedida + staff que dorme. = todos PAID com sleep_at_monastery = 1.
-  const dormindoNoMosteiro = regs.filter(
+  const dormindoNoMosteiro = regsDoAno.filter(
     (r) => r.status === "PAID" && r.sleep_at_monastery === 1
   ).length;
 
@@ -271,16 +309,16 @@ const InscritosPage: React.FC = () => {
     { num: staffCount, label: "Staff (cortesia)", c: "#1f2937", bg: "#f3f4f6", b: "#d1d5db" },
   ];
 
-  const anivCount = regs.filter((r) => birthdayWithinWeek(r.date_of_birth)).length;
-  const medCount = regs.filter((r) => hasText(r.allergy_medication_details)).length;
-  const restrCount = regs.filter((r) => hasText(r.dietary_restriction_details)).length;
+  const anivCount = regsDoAno.filter((r) => birthdayWithinWeek(r.date_of_birth)).length;
+  const medCount = regsDoAno.filter((r) => hasText(r.allergy_medication_details)).length;
+  const restrCount = regsDoAno.filter((r) => hasText(r.dietary_restriction_details)).length;
 
   // Quantidade de pessoas por cidade (agrupado sem diferenciar caixa NEM acento/ç),
   // maior primeiro. Ex.: "França", "franca" e "Franca" caem no mesmo grupo; idem
   // "Cássia"/"cassia". Como rótulo, mantém a 1ª grafia acentuada que aparecer.
   const cityCounts = React.useMemo(() => {
     const map = new Map<string, { label: string; n: number }>();
-    for (const r of regs) {
+    for (const r of regsDoAno) {
       const c = (r.city || "").trim();
       if (!c) continue;
       const key = norm(c);
@@ -292,24 +330,15 @@ const InscritosPage: React.FC = () => {
       map.set(key, cur);
     }
     return [...map.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label));
-  }, [regs]);
+  }, [regsDoAno]);
 
-  // Os anos vêm dos próprios dados, não de uma lista fixa: assim a edição nova
-  // aparece no filtro sozinha, sem ninguém lembrar de mexer aqui.
-  const anosDisponiveis = React.useMemo(() => {
-    const anos = new Set<number>();
-    for (const r of regs) if (r.event_year) anos.add(r.event_year);
-    return [...anos].sort((a, b) => b - a);
-  }, [regs]);
-
-  const regsFiltered = regs
+  const regsFiltered = regsDoAno
     .filter(
       (r) =>
         inc(r.name, fNome) &&
         matchYesNo(r.allergy_medication_details, fMed) &&
         matchYesNo(r.dietary_restriction_details, fRestr) &&
         (!fStaff || (fStaff === "staff" ? r.is_staff === 1 : r.is_staff === 0)) &&
-        (!fAno || String(r.event_year ?? "") === fAno) &&
         (!fStatus || r.status === fStatus) &&
         (!fPernoite ||
           (fPernoite === "granted"
@@ -448,13 +477,21 @@ const InscritosPage: React.FC = () => {
               {anosDisponiveis.length > 0 && (
                 <label style={s.field}>
                   Ano
-                  <select style={s.miniSelect} value={fAno} onChange={(e) => setFAno(e.target.value)}>
-                    <option value="">Todos</option>
+                  <select
+                    style={s.miniSelect}
+                    value={anoAtivo}
+                    onChange={(e) => setFAno(e.target.value)}
+                  >
                     {anosDisponiveis.map((ano) => (
                       <option key={ano} value={String(ano)}>
                         {ano} ({regs.filter((r) => r.event_year === ano).length})
                       </option>
                     ))}
+                    {/* Por último de propósito: "Todos" mistura edições e é o
+                        único valor em que os contadores do topo somam anos
+                        diferentes. Serve para busca por nome, não para conferir
+                        vagas. */}
+                    <option value="">Todos os anos</option>
                   </select>
                 </label>
               )}
@@ -535,6 +572,13 @@ const InscritosPage: React.FC = () => {
                       <span style={tag("#374151", "#f3f4f6", "#e5e7eb")}>🚶 Sem pernoite</span>
                     )}
                     {r.is_staff === 1 && <span style={tag("#1f2937", "#f3f4f6", "#d1d5db")}>Staff</span>}
+                    {/* Marca a linha que veio de registrations_old: nenhuma ação
+                        de admin (credenciamento, pernoite, estorno, PIX) alcança
+                        essa tabela. Sem o selo, o admin tentaria agir e nada
+                        aconteceria, sem erro nenhum na tela. */}
+                    {r.archived === 1 && (
+                      <span style={tag("#57534e", "#fafaf9", "#d6d3d1")}>📦 Arquivado</span>
+                    )}
                     {aniv && <span style={tag("#9d174d", "#fdf2f8", "#fbcfe8")}>🎂 Aniversariante</span>}
                   </div>
                   <div style={s.cardRow}>📞 {r.phone || "—"}</div>

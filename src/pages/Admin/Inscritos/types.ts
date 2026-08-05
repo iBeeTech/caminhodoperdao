@@ -23,6 +23,12 @@ export interface Registration {
   checked_in_at: string | null;
   /** E-mail do admin que deu a baixa. */
   checked_in_by: string | null;
+  /**
+   * 1 = edição arquivada (registrations_old, migration 027). Somente leitura:
+   * nenhuma ação de admin escreve nessa tabela. Ausente quando o endpoint é
+   * chamado sem `include_archived=1` — é o caso do Credenciamento.
+   */
+  archived?: number;
 }
 
 export interface Tshirt {
