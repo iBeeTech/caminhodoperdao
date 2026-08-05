@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import {
   getAdminEmailFromToken,
@@ -477,6 +477,22 @@ const AdminLayout: React.FC = () => {
       setOpenLabel(current => (current === label ? null : current));
     }
   };
+
+  // Sessão morta em qualquer página interna do admin leva ao login, sem depender
+  // de a tela filha ter tratado o próprio 401. Cobre os dois jeitos de a sessão
+  // acabar: chegar aqui já sem token (link salvo, aba velha, F5 depois do prazo)
+  // e o token ser apagado no meio do uso pelo adminSessionGuard, que assina
+  // justamente este componente.
+  //
+  // ⚠️ Olha `token`, e NUNCA `adminEmail`. Na troca obrigatória de senha existe
+  // token (só que marcado como mustChange) e adminEmail é null de propósito —
+  // usar adminEmail aqui expulsaria a pessoa do meio da troca de senha.
+  //
+  // /admin fica de fora porque é a própria tela de login: mandar para lá quem já
+  // está lá seria um laço.
+  if (!token && pathname !== "/admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   // Sem sessão (login / troca de senha) a barra some, mas a árvore em volta do
   // <Outlet /> mantém SEMPRE a mesma forma e a mesma posição entre irmãos.

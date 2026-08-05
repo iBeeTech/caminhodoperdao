@@ -9,6 +9,11 @@ import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './styles/theme';
 import './i18n';
 import { canTrackAnalytics, CONSENT_CHANGE_EVENT } from './utils/consent';
+import { installAdminSessionGuard } from './utils/auth/adminSessionGuard';
+
+// Antes de qualquer render: uma tela de admin busca dados já ao montar, e é
+// justamente essa primeira chamada que descobre a sessão vencida.
+installAdminSessionGuard();
 
 /**
  * Componente wrapper para inicializar Amplitude pós-hidratação
