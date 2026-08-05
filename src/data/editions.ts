@@ -5,8 +5,8 @@
  * ano abreviado. "23, 24, 25, 26" parecia idade ou dia do mês; "16ª, 17ª" diz o
  * que a pessoa quer saber — quantas caminhadas já houve.
  *
- * ⚠️ Os temas só começaram em 2025. Ano sem tema fica com `null` e a tela diz
- * isso, em vez de inventar um: tema de evento religioso não se chuta.
+ * ⚠️ Os temas registrados começam em 2024. Ano sem tema a tela diz que não tem,
+ * em vez de inventar um: tema de evento religioso não se chuta.
  */
 
 export const FIRST_EDITION_YEAR = 2008;
@@ -21,12 +21,20 @@ export const NEXT_EDITION = {
   isoDate: "2027-08-01",
 };
 
-/** Temas por ano. Só existe de 2025 em diante. */
+/**
+ * Temas por ano. Só existe de 2024 em diante.
+ *
+ * Ano ausente do mapa é ano SEM tema ("sem tema definido" na tela). Ano com
+ * `null` é ano que teve tema, mas ninguém informou qual ainda ("tema ainda não
+ * registrado"). A tela de medalhas distingue os dois de propósito — não são a
+ * mesma coisa, e chutar o tema de um evento religioso não é opção.
+ */
 export const EDITION_THEMES: Record<number, string | null> = {
-  // ⚠️ PENDENTE: o organizador começou a informar e a frase ficou incompleta.
-  // Fica `null` de propósito até alguém dizer qual foi — a tela mostra
-  // "tema não registrado", que é honesto, em vez de um tema inventado.
-  2025: null,
+  // 2024 e 2025 informados pelo organizador em 05/08/2026. Isto encerra o
+  // "PENDENTE" que 2025 carregava desde 04/08/2026, quando a frase chegou pela
+  // metade e o ano ficou como null em vez de receber um palpite.
+  2024: "Discípulos de Emaús",
+  2025: "Peregrinos na Esperança",
   2026: "Maria, caminho seguro que leva a Jesus",
 };
 
