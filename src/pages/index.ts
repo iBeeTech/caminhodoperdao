@@ -27,3 +27,4 @@ export { default as PeregrinoEntrar } from "./Peregrino/Entrar";
 export { default as PeregrinoPerfil } from "./Peregrino/Perfil";
 export { default as PeregrinoDashboard } from "./Peregrino/Dashboard";
 export { default as PeregrinoMedalhas } from "./Peregrino/Medalhas";
+export { default as UploadFotos } from "./UploadFotos";

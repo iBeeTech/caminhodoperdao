@@ -63,6 +63,21 @@ id = "c1cd94516ced4c65b0addd643bff355e"
 binding = "PROFILE_PHOTO"
 id = "a3c0e434dcd94cdfb5ba4a96b5ea7789"
 
+## Fotos do evento em ALTA RESOLUÇÃO, enviadas pelo fotógrafo em /upload-fotos.
+##
+## Aqui é R2, e não KV como o áudio e o avatar, por dois motivos: o KV tem teto
+## de 25 MB por valor e não foi feito para milhares de arquivos grandes, e o R2
+## não cobra saída de dados — que é justamente o custo que uma galeria de fotos
+## geraria. 3032 fotos ocupam ~10 GB; a cota grátis do R2 é 10 GB.
+##
+## A ressalva histórica de que "o R2 exige cartão na conta" (ver Planning.md,
+## bloco 9) NÃO VALE MAIS: conferido em 05/08/2026, o R2 já está habilitado na
+## conta iBeeTech, com os baldes nutrition-scans e totem-media em uso desde
+## julho. Foi o que destravou esta decisão.
+[[env.production.r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "caminhodoperdao-fotos"
+
 ## Workers AI: transcrição dos áudios de testemunho (Whisper).
 [env.production.ai]
 binding = "AI"
@@ -92,6 +107,12 @@ id = "03bb19062a464b9e9398f91657730a82"
 [[env.preview.kv_namespaces]]
 binding = "PROFILE_PHOTO"
 id = "783ee73839a0477ca855a783b97cce6a"
+
+## Mesmo motivo do D1 e dos KVs acima: foto de teste não vai para o balde de
+## produção. Testar upload é justamente o que mais gera lixo.
+[[env.preview.r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "caminhodoperdao-fotos-test"
 
 [env.preview.ai]
 binding = "AI"

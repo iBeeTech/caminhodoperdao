@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas, UploadFotos } from "./pages";
 import AdminLayout from "./pages/Admin/AdminLayout";
 
 const AppRoutes: React.FC = () => {
@@ -30,6 +30,9 @@ const AppRoutes: React.FC = () => {
       <Route path="/dashboard" element={<PeregrinoDashboard />} />
       <Route path="/perfil" element={<PeregrinoPerfil />} />
       <Route path="/medalhas" element={<PeregrinoMedalhas />} />
+      {/* Link com segredo e prazo, entregue ao fotógrafo. Fora do /admin de
+          propósito: quem envia as fotos não tem conta no painel. */}
+      <Route path="/upload-fotos" element={<UploadFotos />} />
       <Route path="/convite" element={<Convite />} />
       <Route path="/staff" element={<Staff />} />
       <Route path="/depoimentos" element={<Depoimentos />} />
