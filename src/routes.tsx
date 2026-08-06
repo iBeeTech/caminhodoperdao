@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas, UploadFotos } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas, UploadFotos, PedidoDeFotos } from "./pages";
 import AdminLayout from "./pages/Admin/AdminLayout";
 
 const AppRoutes: React.FC = () => {
@@ -8,6 +8,9 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/gallery" element={<Gallery />} />
+      {/* Antes de /gallery/:year: "pedido" também casaria com :year, e a tela do
+          álbum tentaria abrir o ano "pedido". */}
+      <Route path="/gallery/pedido" element={<PedidoDeFotos />} />
       <Route path="/gallery/:year" element={<GalleryAlbum />} />
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminPainel />} />

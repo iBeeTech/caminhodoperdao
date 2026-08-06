@@ -1,10 +1,12 @@
 /// <reference types="@cloudflare/workers-types" />
+import { GalleryManifest, manifestKey } from "../_utils/photoGallery";
 
 interface Env {
   GITHUB_GALLERY_REPO?: string;
   GITHUB_GALLERY_BRANCH?: string;
   GITHUB_GALLERY_TOKEN?: string;
   GALLERY_YEARS?: string;
+  PHOTOS?: R2Bucket;
 }
 
 interface GithubContentItem {
@@ -22,11 +24,17 @@ interface GalleryAlbum {
   year: number;
   coverUrl?: string;
   photos: GalleryPhoto[];
+  /** Total real de fotos do ano. `photos` traz só uma amostra quando o ano vem do R2. */
+  total?: number;
+  /** Ano servido pelo R2: a tela do álbum busca o índice em /api/fotos/album. */
+  source?: "r2" | "github";
 }
 
 const DEFAULT_REPO = "iBeeTech/caminhodoperdao-gallery";
 const DEFAULT_BRANCH = "main";
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+/** Quantas fotos vão na amostra do ano no R2 — o suficiente para a capa da vitrine. */
+const AMOSTRA_R2 = 12;
 
 export const onRequestGet: PagesFunction<Env> = async context => {
   try {
@@ -44,6 +52,14 @@ export const onRequestGet: PagesFunction<Env> = async context => {
     const albums: GalleryAlbum[] = [];
 
     for (const year of allYears) {
+      // Ano com manifesto no R2 tem precedência: é o caminho novo, e a pasta
+      // antiga no GitHub pode continuar existindo com um punhado de fotos.
+      const doR2 = await buildAlbumFromR2(context.env, year);
+      if (doR2) {
+        albums.push(doR2);
+        continue;
+      }
+
       const folder = String(year);
       const items = await fetchGithubContents(repo, branch, folder, token);
       const photos = items
@@ -55,6 +71,8 @@ export const onRequestGet: PagesFunction<Env> = async context => {
       albums.push({
         year,
         photos,
+        total: photos.length,
+        source: "github",
         coverUrl: pickCover(photos),
       });
     }
@@ -70,6 +88,43 @@ export const onRequestGet: PagesFunction<Env> = async context => {
     });
   }
 };
+
+/**
+ * Monta o álbum de um ano a partir do manifesto no R2.
+ *
+ * Devolve só uma AMOSTRA de fotos, não as 2882: esta resposta alimenta a
+ * vitrine de álbuns, onde aparece uma capa por ano. A lista inteira sai em
+ * /api/fotos/album, que a tela do álbum busca sozinha.
+ */
+async function buildAlbumFromR2(env: Env, year: number): Promise<GalleryAlbum | null> {
+  if (!env.PHOTOS) return null;
+
+  try {
+    const objeto = await env.PHOTOS.get(manifestKey(year));
+    if (!objeto) return null;
+
+    const manifesto = await objeto.json<GalleryManifest>();
+    const nomes = Array.isArray(manifesto.fotos) ? manifesto.fotos : [];
+    if (!nomes.length) return null;
+
+    const amostra = nomes.slice(0, AMOSTRA_R2).map(foto => ({
+      url: `/api/fotos/previews/${year}/${foto.n}`,
+    }));
+
+    return {
+      year,
+      photos: amostra,
+      total: manifesto.total ?? nomes.length,
+      source: "r2",
+      // Capa fixa (a primeira), e não sorteada: sorteio troca a imagem a cada
+      // visita e ainda quebra o cache do navegador sem motivo.
+      coverUrl: `/api/fotos/thumbs/${year}/${nomes[0].n}`,
+    };
+  } catch (error) {
+    console.error(`Falha ao ler manifesto do R2 (${year}):`, error);
+    return null;
+  }
+}
 
 function parseYears(input?: string): number[] {
   if (!input) return [];

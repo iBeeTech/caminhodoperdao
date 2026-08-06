@@ -37,8 +37,14 @@ pages_build_output_dir = "build"
 ## Resend — resposta a este endereço volta com erro, de propósito. Como o botão
 ## "Responder" existe em qualquer app de e-mail, todo corpo de mensagem precisa
 ## dizer que não se responde e oferecer o WhatsApp como canal de contato.
+## PHOTO_PRICE: valor de UMA foto do evento, em reais (venda da galeria, bloco 9).
+## Combinado com a organização em 06/08/2026: R$ 5, tratado como doação para a
+## estrutura da Caminhada. O total do carrinho é calculado no servidor a partir
+## daqui — o que a tela mandar como total é ignorado de propósito.
+## PHOTO_DOWNLOAD_DAYS: por quantos dias os links de download seguem valendo
+## depois do PIX pago. Vencido o prazo, a organização reemite.
 [env.production]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhodoperdao.com.br", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026", REGISTRATION_OPEN_AT = "2027-06-01T00:00:00-03:00", REGISTRATION_FORCE_OPEN = "true" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "https://caminhodoperdao.com.br", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026", REGISTRATION_OPEN_AT = "2027-06-01T00:00:00-03:00", REGISTRATION_FORCE_OPEN = "true", PHOTO_PRICE = "5", PHOTO_DOWNLOAD_DAYS = "30" }
 
 
 
@@ -84,7 +90,7 @@ binding = "AI"
 
 
 [env.preview]
-vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_JWT_SECRET = "CHANGE_ME_STRONG_SECRET", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026", REGISTRATION_OPEN_AT = "2027-06-01T00:00:00-03:00", REGISTRATION_FORCE_OPEN = "true" }
+vars = { SERVICE_VERSION = "0.1.0", SITE_URL = "http://localhost:3000", REACT_APP_AMPLITUDE_KEY = "fa735008fc76815c093b0be0df103334", REACT_APP_AMPLITUDE_ENABLED = "true", REACT_APP_AMPLITUDE_SESSION_REPLAY = "false", REACT_APP_AMPLITUDE_DEBUG = "false", REACT_APP_GALLERY_API_URL = "/api/gallery", GITHUB_GALLERY_REPO = "iBeeTech/caminhodoperdao-gallery", GITHUB_GALLERY_BRANCH = "main", GALLERY_YEARS = "2026,2025", ADMIN_JWT_SECRET = "CHANGE_ME_STRONG_SECRET", ADMIN_DEFAULT_EMAIL = "cassiotakarada7@gmail.com", ADMIN_DEFAULT_PASSWORD = "mudarsenha123", ADMIN_JWT_TTL_SECONDS = "43200", MAX_REGISTRATIONS = "500", MAX_REGISTRATIONS_SLEEP = "80", MAX_REGISTRATIONS_STAFF = "999999", RESEND_FROM = "Caminho do Perdão <nao-responda@caminhodoperdao.com.br>", EVENT_YEAR = "2026", REGISTRATION_OPEN_AT = "2027-06-01T00:00:00-03:00", REGISTRATION_FORCE_OPEN = "true", PHOTO_PRICE = "5", PHOTO_DOWNLOAD_DAYS = "30" }
 
 ## ⚠️ NÃO APONTAR O PREVIEW PARA O BANCO DE PRODUÇÃO.
 ## Até 03/08/2026 os dois usavam o mesmo database_id, então `wrangler pages dev`

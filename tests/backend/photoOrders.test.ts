@@ -1,0 +1,184 @@
+/// <reference types="@cloudflare/workers-types" />
+import { describe, it, expect } from "vitest";
+
+import {
+  isSafePhotoName,
+  isGalleryPrefix,
+  isValidYear,
+  manifestKey,
+  originalKey,
+} from "../../functions/_utils/photoGallery";
+import {
+  MAX_FOTOS_POR_PEDIDO,
+  diasDeDownload,
+  gerarTokenDoPedido,
+  hashTokenDoPedido,
+  normalizarFotos,
+  podeBaixar,
+  precoUnitarioCentavos,
+  PhotoOrderRow,
+} from "../../functions/_utils/photoOrders";
+
+/**
+ * O que se testa aqui é o que separa "foto com marca, de graça" de "arquivo em
+ * alta, que foi vendido". Tudo nesta lista falha em SILÊNCIO: a página continua
+ * bonita, ninguém vê erro, e só se descobre quando as fotos já vazaram ou quando
+ * alguém pagou por um arquivo que não veio.
+ */
+
+function pedidoFake(extra: Partial<PhotoOrderRow> = {}): PhotoOrderRow {
+  return {
+    id: "pedido-1",
+    customer_name: "Maria",
+    email: "maria@exemplo.com",
+    event_year: 2026,
+    photo_count: 2,
+    unit_price_cents: 500,
+    amount_cents: 1000,
+    status: "PAID",
+    payment_ref: "ref-1",
+    correlation_id: null,
+    provider_charge_id: null,
+    qr_code_text: null,
+    qr_code_image: null,
+    access_token_hash: "x",
+    downloads_expire_at: null,
+    created_at: "2026-08-06 10:00:00",
+    paid_at: "2026-08-06 10:05:00",
+    ...extra,
+  };
+}
+
+describe("isSafePhotoName", () => {
+  it("aceita o nome que a câmera gera", () => {
+    expect(isSafePhotoName("_DSC5746.jpg")).toBe(true);
+    expect(isSafePhotoName("IMG_8215.jpg")).toBe(true);
+  });
+
+  it("recusa caminho, para a URL pública não alcançar o arquivo em alta", () => {
+    // Sem isto, /api/fotos/thumbs/2026/../originais/2026/_DSC5746.jpg entregaria
+    // de graça exatamente o que está à venda.
+    expect(isSafePhotoName("../originais/2026/_DSC5746.jpg")).toBe(false);
+    expect(isSafePhotoName("..")).toBe(false);
+    expect(isSafePhotoName("pasta/foto.jpg")).toBe(false);
+    expect(isSafePhotoName("C:\\fotos\\a.jpg")).toBe(false);
+  });
+
+  it("recusa vazio e nome absurdamente longo", () => {
+    expect(isSafePhotoName("")).toBe(false);
+    expect(isSafePhotoName("a".repeat(200) + ".jpg")).toBe(false);
+  });
+});
+
+describe("prefixos e ano", () => {
+  it("só thumbs e previews são públicos", () => {
+    expect(isGalleryPrefix("thumbs")).toBe(true);
+    expect(isGalleryPrefix("previews")).toBe(true);
+    // O prefixo do arquivo vendido NUNCA pode passar pela rota pública.
+    expect(isGalleryPrefix("originais")).toBe(false);
+    expect(isGalleryPrefix("manifestos")).toBe(false);
+  });
+
+  it("ano é sempre quatro dígitos", () => {
+    expect(isValidYear("2026")).toBe(true);
+    expect(isValidYear("26")).toBe(false);
+    expect(isValidYear("../")).toBe(false);
+  });
+
+  it("monta as chaves do balde", () => {
+    expect(manifestKey(2026)).toBe("manifestos/2026.json");
+    expect(originalKey(2026, "_DSC1.jpg")).toBe("originais/2026/_DSC1.jpg");
+  });
+});
+
+describe("normalizarFotos", () => {
+  it("tira repetidas antes de o total ser calculado", () => {
+    // Sem isto, a mesma foto mandada cinco vezes custaria R$ 25 por um arquivo
+    // só — e o segundo INSERT quebraria na chave primária, deixando um pedido
+    // pago e sem itens.
+    const fotos = normalizarFotos(["a.jpg", "a.jpg", "b.jpg"]);
+    expect(fotos).toEqual(["a.jpg", "b.jpg"]);
+  });
+
+  it("recusa a lista inteira quando um nome é perigoso", () => {
+    expect(normalizarFotos(["a.jpg", "../originais/2026/b.jpg"])).toBeNull();
+  });
+
+  it("recusa lista vazia e coisa que não é lista", () => {
+    expect(normalizarFotos([])).toBeNull();
+    expect(normalizarFotos("a.jpg")).toBeNull();
+    expect(normalizarFotos(null)).toBeNull();
+    expect(normalizarFotos([1, 2])).toBeNull();
+  });
+
+  it("recusa carrinho acima do teto", () => {
+    const muitas = Array.from({ length: MAX_FOTOS_POR_PEDIDO + 1 }, (_, i) => `foto${i}.jpg`);
+    expect(normalizarFotos(muitas)).toBeNull();
+  });
+});
+
+describe("preço", () => {
+  it("usa R$ 5 quando a env não está definida", () => {
+    expect(precoUnitarioCentavos({})).toBe(500);
+  });
+
+  it("lê reais e devolve centavos, com vírgula ou ponto", () => {
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "7" })).toBe(700);
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "5,50" })).toBe(550);
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "5.50" })).toBe(550);
+  });
+
+  it("cai no padrão quando a env é lixo, em vez de cobrar zero", () => {
+    // Cobrar zero por engano é pior do que cobrar o padrão: o PIX sairia com
+    // valor inválido e ninguém veria erro nenhum.
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "de graça" })).toBe(500);
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "0" })).toBe(500);
+    expect(precoUnitarioCentavos({ PHOTO_PRICE: "-3" })).toBe(500);
+  });
+});
+
+describe("prazo de download", () => {
+  it("usa 30 dias por padrão e aceita a env", () => {
+    expect(diasDeDownload({})).toBe(30);
+    expect(diasDeDownload({ PHOTO_DOWNLOAD_DAYS: "7" })).toBe(7);
+    expect(diasDeDownload({ PHOTO_DOWNLOAD_DAYS: "zero" })).toBe(30);
+    expect(diasDeDownload({ PHOTO_DOWNLOAD_DAYS: "0" })).toBe(30);
+  });
+});
+
+describe("podeBaixar", () => {
+  it("libera pedido pago sem prazo definido", () => {
+    expect(podeBaixar(pedidoFake())).toBe(true);
+  });
+
+  it("não libera pedido que ainda não foi pago", () => {
+    expect(podeBaixar(pedidoFake({ status: "PENDING" }))).toBe(false);
+    expect(podeBaixar(pedidoFake({ status: "CANCELED" }))).toBe(false);
+  });
+
+  it("não libera depois do prazo", () => {
+    const ontem = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    expect(podeBaixar(pedidoFake({ downloads_expire_at: ontem }))).toBe(false);
+    expect(podeBaixar(pedidoFake({ downloads_expire_at: amanha }))).toBe(true);
+  });
+});
+
+describe("token do pedido", () => {
+  it("gera 64 hexadecimais e nunca repete", () => {
+    const a = gerarTokenDoPedido();
+    const b = gerarTokenDoPedido();
+    expect(a).toMatch(/^[a-f0-9]{64}$/);
+    expect(a).not.toBe(b);
+  });
+
+  it("guarda hash, não o segredo", async () => {
+    const token = gerarTokenDoPedido();
+    const hash = await hashTokenDoPedido(token);
+    expect(hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(hash).not.toBe(token);
+    // Mesmo segredo, mesmo hash: é assim que a busca no banco funciona.
+    expect(await hashTokenDoPedido(token)).toBe(hash);
+    expect(await hashTokenDoPedido(` ${token} `)).toBe(hash);
+  });
+});

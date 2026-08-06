@@ -1,6 +1,10 @@
 import { WooviWebhookPayload } from '../../types/woovi';
 import { enforceCapacity } from '../_utils/enforceCapacity';
 import {
+  confirmarPedidoDeFotos,
+  findPhotoOrderByPaymentRefs,
+} from '../_utils/photoOrderDelivery';
+import {
   getByMonasteryUpgradeRef,
   promoteToMonastery,
   clearMonasteryUpgradeRef,
@@ -214,6 +218,15 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
           console.log(`Compra de camiseta marcada como PAID: ${tshirtPurchase.customer_name}`);
         }
 
+        // Compra de fotos da galeria: marca como paga, define o prazo dos links
+        // e manda o e-mail de entrega.
+        const photoOrder = await findPhotoOrderByPaymentRefs(context.env.DB, paymentRefs);
+        if (photoOrder) {
+          matchedAny = true;
+          await confirmarPedidoDeFotos(context.env, photoOrder);
+          console.log(`Pedido de fotos confirmado: ${photoOrder.id} (${photoOrder.photo_count} foto(s))`);
+        }
+
         // Pagamento da DIFERENÇA da troca geral -> pernoite: promove a inscrição (já PAGA)
         // para pernoite. A inscrição em si continua PAID; só passa a dormir no mosteiro.
         const upgrade = await findMonasteryUpgradeByPaymentRefs(context.env.DB, paymentRefs);
@@ -261,6 +274,20 @@ export const onRequestPost = async (context: { request: Request; env: any }) => 
 
           console.log('Resultado do update da camiseta (expirado):', updateResult);
           console.log(`Compra de camiseta marcada como CANCELED (expirada): ${tshirtPurchase.customer_name}`);
+        }
+
+        // Cobrança de fotos expirada: o carrinho não virou compra. O pedido vira
+        // CANCELED e as fotos continuam à venda para qualquer um.
+        const photoOrder = await findPhotoOrderByPaymentRefs(context.env.DB, paymentRefs);
+        if (photoOrder) {
+          matchedAny = true;
+          await context.env.DB
+            .prepare(
+              "UPDATE photo_order SET status = 'CANCELED', updated_at = ? WHERE id = ? AND status = 'PENDING'"
+            )
+            .bind(new Date().toISOString(), photoOrder.id)
+            .run();
+          console.log(`Pedido de fotos cancelado (expirado): ${photoOrder.id}`);
         }
 
         // Cobrança de diferença (upgrade) expirada: a troca não se concretizou. A inscrição
