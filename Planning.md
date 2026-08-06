@@ -447,7 +447,29 @@ fotos em alta resolução** para publicar. O pedido é mostrar prévia com marca
 d'água, deixar o peregrino escolher e comprar, e liberar o **download
 automático assim que o PIX for pago**.
 
-### Como é hoje
+### ✅ FEITO em 06/08/2026 — o que está no ar
+
+O fotógrafo enviou **2882 fotos (10,9 GB)** por `/upload-fotos` entre 05/08
+22h54 e 06/08 04h38, sem nenhuma falha. Tudo abaixo desta seção descreve o
+levantamento e as decisões; o que efetivamente ficou pronto:
+
+- **Três prefixos no R2**: `thumbs/2026/` (400px, com marca), `previews/2026/`
+  (1200px, com marca) e `originais/2026/` (arquivo da câmera, privado).
+- **Marca d'água gravada**, repetida por toda a foto — decisão do organizador em
+  06/08/2026, para print de tela não render foto limpa. Script em Python/Pillow.
+- **Índice em manifesto** (`manifestos/2026.json`, 150 KB) servido por
+  `/api/fotos/album`. Foi o que substituiu a API do GitHub e o teto de 1000.
+- **Venda a R$ 5 por foto** (migration 036), um PIX por carrinho, entrega
+  automática pelo webhook que já atendia inscrição, camiseta e pernoite. O
+  álbum de 2026 avisa que o valor é **doação para a estrutura da Caminhada**.
+- **Galeria aberta**, sem exigir login (decidido em 06/08/2026).
+
+Pendências conhecidas: as três câmeras têm relógios que não batem entre si (a
+Leica marca 19h–20h em fotos de sol a pino), então o álbum é ordenado por
+câmera, não pelo horário. O horário de cada foto está no manifesto para
+reordenar quando alguém informar a hora real.
+
+### Como era antes de 06/08/2026
 
 As fotos vivem num **repositório do GitHub** (`iBeeTech/caminhodoperdao-gallery`,
 uma pasta por ano). `functions/api/gallery.ts` lista os arquivos pela **Contents
