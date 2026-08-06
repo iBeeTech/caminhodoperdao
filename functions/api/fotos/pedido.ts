@@ -9,6 +9,8 @@ import {
   originalKey,
   vendaAberta,
 } from "../../_utils/photoGallery";
+import { EmailEnv } from "../../_utils/email";
+import { enviarEmailDoPedidoAberto } from "../../_utils/photoOrderDelivery";
 import {
   MAX_FOTOS_POR_PEDIDO,
   PhotoOrderEnv,
@@ -22,7 +24,7 @@ import {
   precoUnitarioCentavos,
 } from "../../_utils/photoOrders";
 
-interface Env extends PhotoOrderEnv {
+interface Env extends PhotoOrderEnv, EmailEnv {
   WOOVI_APP_ID?: string;
   REGISTRATION_COST?: string;
   SITE_URL?: string;
@@ -147,6 +149,25 @@ export const onRequestPost: PagesFunction<Env> = async context => {
     console.error("Falha ao gravar pedido de fotos:", erro);
     return serverError("order_persistence_failed");
   }
+
+  // O link com o token vai por e-mail agora, e não depois: no banco só existe o
+  // hash, então este é o último instante em que dá para mandar o endereço do
+  // pedido para o comprador. Sem isto, fechar a aba antes de pagar significa
+  // perder o pedido — nem o admin consegue reemitir o link.
+  //
+  // waitUntil: o Resend leva centenas de milissegundos e ninguém deve esperar
+  // pelo e-mail para ver o QR Code. Falha de envio não derruba o pedido (a tela
+  // já está com o link na URL); `sendEmail` só registra no log.
+  context.waitUntil(
+    enviarEmailDoPedidoAberto(context.env, {
+      nome,
+      email,
+      token,
+      quantidade: fotos.length,
+      valorTotalCentavos: total,
+      qrCodeText: cobranca.qrCodeText,
+    })
+  );
 
   return json(200, {
     status: "PENDING",

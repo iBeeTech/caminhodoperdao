@@ -106,7 +106,8 @@ const PedidoDeFotosPage: React.FC = () => {
         {!carregando && !pedido && (
           <Erro>
             Não encontramos este pedido. Confira se o endereço foi copiado inteiro — ele é
-            longo e costuma quebrar quando passa por aplicativo de mensagem.
+            longo e costuma quebrar quando passa por aplicativo de mensagem. O link certo está
+            no e-mail que enviamos quando você começou a compra.
           </Erro>
         )}
 
@@ -144,7 +145,8 @@ const PedidoDeFotosPage: React.FC = () => {
                   {copiado ? "Código copiado" : "Copiar o código PIX"}
                 </BotaoPrincipal>
                 <Chave>
-                  Guarde o endereço desta página: é por ele que você volta para baixar as fotos.
+                  Já mandamos o endereço desta página para o seu e-mail. Pode fechar a aba: é por
+                  aquele link que você volta para baixar as fotos.
                 </Chave>
               </Cartao>
             )}
