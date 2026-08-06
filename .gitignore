@@ -25,3 +25,7 @@ yarn-error.log*
 # Exportações do D1 para backup: contêm dado pessoal dos inscritos.
 # O repositório é PÚBLICO — isto nunca pode ser versionado.
 backups/
+
+# Cache do Python (scripts/fotos_*.py)
+__pycache__/
+*.pyc
