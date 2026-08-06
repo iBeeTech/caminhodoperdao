@@ -1,9 +1,16 @@
 /// <reference types="@cloudflare/workers-types" />
 import { badRequest, notFound } from "../../_utils/responses";
-import { GalleryManifest, isValidYear, manifestKey } from "../../_utils/photoGallery";
+import {
+  FIM_DA_VENDA_PADRAO,
+  GalleryManifest,
+  isValidYear,
+  manifestKey,
+  vendaAberta,
+} from "../../_utils/photoGallery";
 
 interface Env {
   PHOTOS: R2Bucket;
+  PHOTO_SALE_UNTIL?: string;
 }
 
 /**
@@ -26,7 +33,16 @@ export const onRequestGet: PagesFunction<Env> = async context => {
 
   const manifesto = await objeto.json<GalleryManifest>();
 
-  return new Response(JSON.stringify(manifesto), {
+  // Quem decide se a venda está aberta é o servidor, não o relógio do celular
+  // de quem visita: relógio adiantado ou atrasado mudaria a tela de lugar.
+  const vende = manifesto.venda !== false && vendaAberta(context.env);
+  const resposta: GalleryManifest & { venda_ate: string } = {
+    ...manifesto,
+    venda: vende,
+    venda_ate: context.env.PHOTO_SALE_UNTIL?.trim() || FIM_DA_VENDA_PADRAO,
+  };
+
+  return new Response(JSON.stringify(resposta), {
     headers: {
       "Content-Type": "application/json",
       // 5 min: o álbum de um evento que já aconteceu muda pouco, mas ainda pode

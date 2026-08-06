@@ -2,7 +2,13 @@
 import { badRequest, json, notFound, serverError } from "../../_utils/responses";
 import { isValidEmail } from "../../_utils/validation";
 import { getPaymentProvider } from "../../_utils/payment";
-import { isValidYear, originalKey } from "../../_utils/photoGallery";
+import {
+  GalleryManifest,
+  isValidYear,
+  manifestKey,
+  originalKey,
+  vendaAberta,
+} from "../../_utils/photoGallery";
 import {
   MAX_FOTOS_POR_PEDIDO,
   PhotoOrderEnv,
@@ -20,6 +26,7 @@ interface Env extends PhotoOrderEnv {
   WOOVI_APP_ID?: string;
   REGISTRATION_COST?: string;
   SITE_URL?: string;
+  PHOTO_SALE_UNTIL?: string;
 }
 
 /**
@@ -49,6 +56,24 @@ export const onRequestPost: PagesFunction<Env> = async context => {
 
   const fotos = normalizarFotos(corpo.fotos);
   if (!fotos) return badRequest("invalid_photos");
+
+  // ⚠️ O prazo é conferido AQUI, e não só na tela. Depois de 31/08 a tela deixa
+  // de mostrar o carrinho, mas uma requisição montada à mão ainda geraria PIX de
+  // um produto que a organização já anunciou como encerrado.
+  if (!vendaAberta(context.env)) {
+    return json(410, {
+      error: "sale_closed",
+      message: "O prazo de compra das fotos em alta terminou. O álbum segue aberto em baixa resolução.",
+    });
+  }
+
+  // Álbum gratuito (2025) não vende: não existe arquivo em alta guardado para
+  // entregar, e cobrar por ele seria vender o que não se tem.
+  const manifesto = await context.env.PHOTOS.get(manifestKey(Number(ano)));
+  const albumVende = manifesto ? (await manifesto.json<GalleryManifest>()).venda !== false : false;
+  if (!albumVende) {
+    return json(409, { error: "album_not_for_sale", message: "Este álbum é gratuito." });
+  }
 
   // As fotos precisam existir no balde. Sem esta checagem, um nome inventado
   // entraria no pedido e o comprador pagaria por um arquivo que não vem.

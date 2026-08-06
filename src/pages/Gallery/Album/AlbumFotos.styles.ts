@@ -1,5 +1,32 @@
 import styled from "styled-components";
 
+/**
+ * Aviso do prazo. Vermelho de propósito e acima do aviso da doação: é a
+ * informação com data para vencer, e quem chega no álbum precisa ler isso antes
+ * de decidir se compra hoje ou deixa para depois.
+ */
+export const AvisoPrazo = styled.section`
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #dc2626;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  color: #7f1d1d;
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  strong {
+    color: #b91c1c;
+  }
+`;
+
 export const Aviso = styled.section`
   display: flex;
   gap: 14px;
@@ -90,6 +117,20 @@ export const Marca = styled.span<{ $escolhida: boolean }>`
   color: #ffffff;
   background: ${({ $escolhida }) => ($escolhida ? "#4f46e5" : "rgba(17, 24, 39, 0.45)")};
   border: 2px solid #ffffff;
+`;
+
+/** Baixar a prévia — só aparece em álbum gratuito ou depois do prazo de venda. */
+export const Baixar = styled.a`
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  background: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
 `;
 
 export const Lupa = styled.button`

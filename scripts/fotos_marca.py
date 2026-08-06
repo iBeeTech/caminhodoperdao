@@ -71,7 +71,8 @@ def _engrossar(layer: Image.Image, raio: int = 1) -> Image.Image:
 
 
 def marca_dagua(im: Image.Image, opacidade: float = 0.34, altura_ratio: float = 0.09,
-                passo: float = 1.08, angulo: int = 30, com_canto: bool = True) -> Image.Image:
+                passo: float = 1.08, angulo: int = 30, com_canto: bool = True,
+                trama_ligada: bool = True) -> Image.Image:
     """Trama diagonal por toda a foto + logo nitido no canto inferior direito.
 
     ⚠️ As marcas sao coladas OPACAS e a transparencia so e aplicada no fim, na
@@ -80,6 +81,12 @@ def marca_dagua(im: Image.Image, opacidade: float = 0.34, altura_ratio: float = 
     """
     base = im.convert("RGBA")
     lado = max(base.width, base.height)
+
+    # Album gratuito (2025) nao leva trama: a trama existe para o arquivo em alta
+    # nao ser levado de graca, e ali nao ha arquivo em alta para vender - o que
+    # existe ja e a versao reduzida. Sobra so a assinatura no canto.
+    if not trama_ligada:
+        return _com_assinatura(base)
 
     # --- trama por toda a foto ---
     tile = _engrossar(lockup(max(12, int(lado * altura_ratio))), 1)
@@ -102,13 +109,17 @@ def marca_dagua(im: Image.Image, opacidade: float = 0.34, altura_ratio: float = 
     if not com_canto:
         return Image.alpha_composite(base, trama).convert("RGB")
 
+    return _com_assinatura(Image.alpha_composite(base, trama))
+
+
+def _com_assinatura(base: Image.Image) -> Image.Image:
+    """Logo nitido no canto inferior direito."""
     canto_mark = com_halo(lockup(max(16, int(base.width * 0.085))), engorda=2, blur=4, forca=0.85)
     canto = Image.new("RGBA", base.size, (0, 0, 0, 0))
     margem = int(base.width * 0.03)
     canto.paste(canto_mark, (base.width - canto_mark.width - margem, base.height - canto_mark.height - margem))
     canto = _transparencia(canto, 0.95)
-
-    return Image.alpha_composite(Image.alpha_composite(base, trama), canto).convert("RGB")
+    return Image.alpha_composite(base.convert("RGBA"), canto).convert("RGB")
 
 
 def preview(path: str, lado_maior: int = 1200) -> Image.Image:

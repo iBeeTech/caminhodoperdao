@@ -21,6 +21,10 @@ export interface AlbumFoto {
 export interface AlbumManifesto {
   ano: number;
   total: number;
+  /** Álbum vendendo o arquivo em alta agora. Falso em álbum gratuito ou com prazo vencido. */
+  venda: boolean;
+  /** Data em que a venda se encerra (ISO). Serve para o aviso na tela. */
+  venda_ate?: string;
   blocos: AlbumBloco[];
   fotos: AlbumFoto[];
 }

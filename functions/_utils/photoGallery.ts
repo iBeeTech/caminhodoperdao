@@ -43,8 +43,36 @@ export interface ManifestBlock {
 export interface GalleryManifest {
   ano: number;
   total: number;
+  /**
+   * Album que vende o arquivo em alta. `false` = album gratuito (2025), onde a
+   * tela esconde a escolha de fotos e libera o download da prévia.
+   * Ausente conta como `true`: o manifesto de 2026 nasceu antes deste campo.
+   */
+  venda?: boolean;
   blocos: ManifestBlock[];
   fotos: ManifestPhoto[];
+}
+
+/**
+ * A venda das fotos de 2026 tem prazo: até 31/08/2026 o arquivo em alta é
+ * vendido (a doação); depois disso, o álbum fica gratuito em baixa resolução.
+ * O aviso na tela promete isso — quem faz valer é esta função, senão alguém
+ * teria de lembrar de desligar a venda na data certa.
+ *
+ * A data vem da env para poder ser esticada sem novo deploy.
+ */
+export const FIM_DA_VENDA_PADRAO = "2026-08-31T23:59:59-03:00";
+
+export function vendaAberta(env: { PHOTO_SALE_UNTIL?: string }, agora = new Date()): boolean {
+  const bruto = env.PHOTO_SALE_UNTIL?.trim() || FIM_DA_VENDA_PADRAO;
+  const limite = new Date(bruto).getTime();
+  // Data inválida na env não pode virar "venda fechada para sempre" nem
+  // "aberta para sempre" sem ninguém perceber: cai no padrão e registra.
+  if (!Number.isFinite(limite)) {
+    console.warn(`PHOTO_SALE_UNTIL inválido ("${bruto}"), usando ${FIM_DA_VENDA_PADRAO}.`);
+    return agora.getTime() <= new Date(FIM_DA_VENDA_PADRAO).getTime();
+  }
+  return agora.getTime() <= limite;
 }
 
 /**

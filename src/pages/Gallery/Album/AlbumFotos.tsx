@@ -13,6 +13,8 @@ import {
 } from "./AlbumView.styles";
 import {
   Aviso,
+  AvisoPrazo,
+  Baixar,
   BlocoBarra,
   BlocoBotao,
   BotaoPrincipal,
@@ -68,6 +70,13 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
     () => (bloco === null ? manifesto.fotos : manifesto.fotos.filter(foto => foto.b === bloco)),
     [manifesto.fotos, bloco]
   );
+
+  // Quem decide se vende é o servidor (o manifesto já chega com a resposta). O
+  // relógio do celular não entra na conta: adiantado ou atrasado, mudaria a tela.
+  const vende = manifesto.venda;
+  const prazo = manifesto.venda_ate
+    ? new Date(manifesto.venda_ate).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+    : "31/08";
 
   const naTela = fotos.slice(0, visiveis);
   const escolhidasSet = React.useMemo(() => new Set(escolhidas), [escolhidas]);
@@ -141,14 +150,37 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
           </BackButton>
         </AlbumHeader>
 
-        <Aviso>
-          <p>
-            <strong>As fotos em alta saem por {formatarReais(PRECO_UNITARIO_CENTAVOS)} cada.</strong>{" "}
-            O valor não é o preço da foto: é uma doação que vira melhoria na estrutura da
-            Caminhada — banheiro, água, apoio no percurso e segurança para o ano que vem.
-            Escolha as suas, pague por PIX e baixe os arquivos originais, sem marca d'água.
-          </p>
-        </Aviso>
+        {vende && (
+          <AvisoPrazo>
+            <p>
+              <strong>Atenção ao prazo:</strong> as fotos em <strong>alta resolução</strong> ficam
+              disponíveis para compra até <strong>{prazo}</strong> — é essa compra que vira a
+              doação. Depois dessa data, as fotos continuam aqui{" "}
+              <strong>gratuitamente, porém em baixa resolução</strong>.
+            </p>
+          </AvisoPrazo>
+        )}
+
+        {vende ? (
+          <Aviso>
+            <p>
+              <strong>
+                As fotos em alta saem por {formatarReais(PRECO_UNITARIO_CENTAVOS)} cada.
+              </strong>{" "}
+              O valor não é o preço da foto: é uma doação que vira melhoria na estrutura da
+              Caminhada — banheiro, água, apoio no percurso e segurança para o ano que vem.
+              Escolha as suas, pague por PIX e baixe os arquivos originais, sem marca d'água.
+            </p>
+          </Aviso>
+        ) : (
+          <Aviso>
+            <p>
+              <strong>Este álbum é gratuito.</strong> Clique em "baixar" em qualquer foto para
+              guardar a sua. As imagens estão em resolução reduzida, boa para celular e redes
+              sociais.
+            </p>
+          </Aviso>
+        )}
 
         <BlocoBarra aria-label="Partes do álbum">
           <BlocoBotao type="button" $ativo={bloco === null} onClick={() => trocarBloco(null)}>
@@ -174,21 +206,31 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
                 key={foto.n}
                 $escolhida={escolhida}
                 tabIndex={0}
-                role="button"
-                aria-pressed={escolhida}
+                role={vende ? "button" : "figure"}
+                aria-pressed={vende ? escolhida : undefined}
                 aria-label={`Foto ${foto.n}`}
-                onClick={() => alternar(foto.n)}
+                onClick={() => vende && alternar(foto.n)}
                 onKeyDown={evento => {
-                  if (evento.key === "Enter" || evento.key === " ") {
+                  if (vende && (evento.key === "Enter" || evento.key === " ")) {
                     evento.preventDefault();
                     alternar(foto.n);
                   }
                 }}
               >
                 <img src={urlDaMiniatura(manifesto.ano, foto.n)} alt="" loading="lazy" />
-                <Marca $escolhida={escolhida} aria-hidden="true">
-                  {escolhida ? "✓" : "+"}
-                </Marca>
+                {vende ? (
+                  <Marca $escolhida={escolhida} aria-hidden="true">
+                    {escolhida ? "✓" : "+"}
+                  </Marca>
+                ) : (
+                  <Baixar
+                    href={urlDaPrevia(manifesto.ano, foto.n)}
+                    download={foto.n}
+                    onClick={evento => evento.stopPropagation()}
+                  >
+                    baixar
+                  </Baixar>
+                )}
                 <Lupa
                   type="button"
                   onClick={evento => {
@@ -209,7 +251,7 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
             : `Mostrando ${naTela.length} de ${fotos.length}...`}
         </Fim>
 
-        {escolhidas.length > 0 && (
+        {vende && escolhidas.length > 0 && (
           <Carrinho>
             <span>
               <strong>{escolhidas.length}</strong> foto(s) escolhida(s) — total{" "}

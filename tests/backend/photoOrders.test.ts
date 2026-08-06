@@ -2,11 +2,13 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  FIM_DA_VENDA_PADRAO,
   isSafePhotoName,
   isGalleryPrefix,
   isValidYear,
   manifestKey,
   originalKey,
+  vendaAberta,
 } from "../../functions/_utils/photoGallery";
 import {
   MAX_FOTOS_POR_PEDIDO,
@@ -161,6 +163,36 @@ describe("podeBaixar", () => {
     const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     expect(podeBaixar(pedidoFake({ downloads_expire_at: ontem }))).toBe(false);
     expect(podeBaixar(pedidoFake({ downloads_expire_at: amanha }))).toBe(true);
+  });
+});
+
+describe("prazo da venda", () => {
+  // O álbum de 2026 ANUNCIA em vermelho que a venda vai até 31/08. Se só a tela
+  // respeitasse a data, a promessa seria de fachada: uma requisição montada à
+  // mão geraria PIX depois do prazo.
+  const antes = new Date("2026-08-30T12:00:00-03:00");
+  const depois = new Date("2026-09-01T12:00:00-03:00");
+
+  it("fecha sozinha depois de 31/08, sem ninguém precisar desligar", () => {
+    expect(vendaAberta({}, antes)).toBe(true);
+    expect(vendaAberta({}, depois)).toBe(false);
+  });
+
+  it("aceita prazo esticado pela env, sem novo deploy", () => {
+    const env = { PHOTO_SALE_UNTIL: "2026-12-31T23:59:59-03:00" };
+    expect(vendaAberta(env, depois)).toBe(true);
+  });
+
+  it("vira o último minuto do dia 31, não o começo", () => {
+    const trintaEUmDeManha = new Date("2026-08-31T09:00:00-03:00");
+    expect(vendaAberta({}, trintaEUmDeManha)).toBe(true);
+    expect(FIM_DA_VENDA_PADRAO.startsWith("2026-08-31T23:59")).toBe(true);
+  });
+
+  it("env com data inválida cai no padrão em vez de fechar ou abrir para sempre", () => {
+    const env = { PHOTO_SALE_UNTIL: "trinta e um de agosto" };
+    expect(vendaAberta(env, antes)).toBe(true);
+    expect(vendaAberta(env, depois)).toBe(false);
   });
 });
 
