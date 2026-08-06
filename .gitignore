@@ -29,3 +29,9 @@ backups/
 # Cache do Python (scripts/fotos_*.py)
 __pycache__/
 *.pyc
+
+# venv do indexador de rostos (scripts/fotos_faces.py)
+.venv-faces/
+
+# modelos de rosto (baixados por scripts/fotos_faces_modelos.sh)
+scripts/modelos/
