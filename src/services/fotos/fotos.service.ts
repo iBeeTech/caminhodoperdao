@@ -107,3 +107,71 @@ export async function buscarPedido(
 export function formatarReais(centavos: number): string {
   return (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
+
+/** O que o servidor responde sobre a busca por rosto de um ano. */
+export interface BuscaPorRostoDisponivel {
+  disponivel: true;
+  /** Arquivo do reconhecedor que indexou o álbum. A tela TEM de baixar este. */
+  modelo: string;
+  /** Tamanho do reconhecedor em bytes, para a tela avisar antes de baixar. */
+  modelo_bytes: number;
+  detector: string;
+  dim: number;
+  limiar: number;
+  min_rosto_px: number;
+  total_rostos: number;
+  total_fotos: number;
+}
+
+export type DisponibilidadeDaBusca = BuscaPorRostoDisponivel | { disponivel: false };
+
+export interface FotoEncontrada {
+  nome: string;
+  /** Semelhança com a selfie, de 0 a 1. A lista já vem da maior para a menor. */
+  score: number;
+}
+
+/**
+ * O álbum deste ano tem busca por rosto?
+ *
+ * Perguntado ao abrir o álbum. São ~200 bytes, e é o que evita oferecer o botão
+ * num ano sem índice — a pessoa esperaria 39 MB de download para receber
+ * "não encontrei nada".
+ */
+export async function disponibilidadeDaBusca(
+  ano: number,
+  signal?: AbortSignal
+): Promise<DisponibilidadeDaBusca> {
+  try {
+    const resposta = await fetch(`/api/fotos/rosto?ano=${ano}`, { signal });
+    if (!resposta.ok) return { disponivel: false };
+    return (await resposta.json()) as DisponibilidadeDaBusca;
+  } catch {
+    return { disponivel: false };
+  }
+}
+
+/**
+ * Manda os 128 números da selfie e recebe as fotos em que a pessoa aparece.
+ *
+ * ⚠️ A selfie NÃO viaja. O que sai daqui é o vetor gerado dentro do navegador
+ * (src/services/fotos/rosto), do qual não se remonta a imagem, mais o tamanho do
+ * rosto — que o servidor precisa saber para recusar selfie ruim, já que não tem
+ * a foto para conferir sozinho.
+ */
+export async function buscarPorRosto(
+  entrada: { ano: number; vetor: number[]; rostoPx: number },
+  signal?: AbortSignal
+): Promise<FotoEncontrada[]> {
+  const resposta = await fetch("/api/fotos/rosto", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ano: entrada.ano, vetor: entrada.vetor, rosto_px: entrada.rostoPx }),
+    signal,
+  });
+
+  const corpo = await resposta.json();
+  if (!resposta.ok) throw new Error(String(corpo?.error ?? "busca_falhou"));
+
+  return (corpo.fotos ?? []) as FotoEncontrada[];
+}

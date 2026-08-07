@@ -2,6 +2,7 @@
 import { badRequest, json, notFound, serverError } from "../../_utils/responses";
 import { isValidYear } from "../../_utils/photoGallery";
 import {
+  DETECTOR_PADRAO,
   FaceIndex,
   FaceIndexMeta,
   MIN_LADO_ROSTO_SELFIE,
@@ -9,6 +10,7 @@ import {
   faceIndexKey,
   indiceConsistente,
   limiarDeBusca,
+  modelKey,
   normalizarVetorDaBusca,
   selfieAceitavel,
 } from "../../_utils/photoFaces";
@@ -122,16 +124,48 @@ export const onRequestPost: PagesFunction<Env> = async context => {
 };
 
 /**
- * GET /api/fotos/rosto?ano=2026 — o album tem busca por rosto?
+ * GET /api/fotos/rosto?ano=2026 — o album tem busca por rosto, e com quais modelos?
  *
- * A tela pergunta antes de mostrar o botao e antes de baixar os 15 MB de modelo.
+ * A tela pergunta antes de mostrar o botao e antes de baixar os 39 MB de modelo.
  * Oferecer a busca num album sem indice faria a pessoa esperar o download para
  * receber "nao encontrei nada".
+ *
+ * A resposta traz os NOMES DOS MODELOS que indexaram este ano, e a tela baixa
+ * exatamente esses. E a trava do erro mais caro desta funcionalidade: comparar
+ * vetor de um modelo com indice de outro nao da erro nenhum, so faz a busca achar
+ * quase ninguem. Com o nome vindo do proprio indice, os dois lados nao tem como
+ * divergir — reindexar com outro modelo passa a mudar a tela sozinho.
  */
 export const onRequestGet: PagesFunction<Env> = async context => {
   const ano = new URL(context.request.url).searchParams.get("ano") ?? "";
   if (!isValidYear(ano)) return badRequest("invalid_year");
 
-  const objeto = await context.env.PHOTOS.head(faceIndexKey(Number(ano), "bin"));
-  return json(200, { ano: Number(ano), disponivel: Boolean(objeto) });
+  let indice: FaceIndex | null;
+  try {
+    indice = await carregarIndice(context.env, Number(ano));
+  } catch (erro: unknown) {
+    console.error("Falha ao carregar o indice de rostos:", erro);
+    return json(200, { ano: Number(ano), disponivel: false });
+  }
+
+  if (!indice) return json(200, { ano: Number(ano), disponivel: false });
+
+  // O tamanho do reconhecedor vai junto para a tela poder avisar "isto vai
+  // baixar X MB" ANTES de comecar. O numero sai do arquivo que esta la, e nao de
+  // uma constante na tela: trocar o modelo cheio pelo comprimido muda o aviso
+  // sozinho, sem ninguem lembrar de mexer no texto.
+  const arquivoDoModelo = await context.env.PHOTOS.head(modelKey(indice.meta.modelo));
+
+  return json(200, {
+    ano: Number(ano),
+    disponivel: true,
+    modelo: indice.meta.modelo,
+    modelo_bytes: arquivoDoModelo?.size ?? 0,
+    detector: indice.meta.detector ?? DETECTOR_PADRAO,
+    dim: indice.meta.dim,
+    limiar: limiarDeBusca(context.env),
+    min_rosto_px: MIN_LADO_ROSTO_SELFIE,
+    total_rostos: indice.meta.total_rostos,
+    total_fotos: indice.meta.total_fotos,
+  });
 };

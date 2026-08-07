@@ -35,3 +35,12 @@ __pycache__/
 
 # modelos de rosto (baixados por scripts/fotos_faces_modelos.sh)
 scripts/modelos/
+
+# Estado local do wrangler (`pages dev`). NUNCA versionar: o R2 da sua maquina
+# guarda faces/<ano>.bin, que e o banco de impressoes faciais de todo mundo que
+# apareceu no evento — e este repositorio e PUBLICO.
+.wrangler/
+
+# motor wasm do onnxruntime, copiado do node_modules pelo scripts/copiar-ort-wasm.js
+# (prebuild). Ver o cabeçalho do script para o porquê de não versionar.
+public/ort/

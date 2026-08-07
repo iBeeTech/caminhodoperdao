@@ -20,7 +20,10 @@
 
 export interface FaceIndexMeta {
   ano: number;
+  /** Nome do arquivo do reconhecedor. E CONTRATO: a tela tem de usar este mesmo. */
   modelo: string;
+  /** Nome do arquivo do detector usado na indexacao. */
+  detector?: string;
   dim: number;
   total_fotos: number;
   total_rostos: number;
@@ -79,6 +82,24 @@ export const MAX_RESULTADOS = 120;
 
 export function faceIndexKey(ano: number, extensao: "bin" | "json"): string {
   return `faces/${ano}.${extensao}`;
+}
+
+/** Detector padrao, quando o indice foi gerado antes de o campo existir. */
+export const DETECTOR_PADRAO = "yunet.onnx";
+
+/**
+ * O nome pedido e um arquivo de modelo, e nao uma tentativa de passear pelo balde?
+ *
+ * A rota /api/fotos/modelo monta a chave do R2 a partir do que veio na URL. Sem
+ * esta trava, "../faces/2026.bin" serviria o indice inteiro de rostos ao primeiro
+ * curioso — o unico arquivo desta funcionalidade que realmente e privado.
+ */
+export function isModelName(nome: string): boolean {
+  return /^[a-z0-9][a-z0-9_.-]{0,63}\.onnx$/.test(nome) && !nome.includes("..");
+}
+
+export function modelKey(nome: string): string {
+  return `modelos/${nome}`;
 }
 
 export function limiarDeBusca(env: { PHOTO_FACE_THRESHOLD?: string }): number {

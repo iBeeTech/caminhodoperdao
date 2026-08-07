@@ -1,10 +1,13 @@
-# Filtro por rosto na galeria — como testar na sua máquina
+# Filtro por rosto na galeria
 
 O peregrino manda uma selfie e a galeria mostra só as fotos em que ele aparece.
-Este documento é o passo a passo para **medir se isso funciona** com as fotos de
-2026, antes de existir tela nenhuma.
 
-O que se quer descobrir, em uma frase:
+Este documento tem duas metades. As seções **1 a 8** são o passo a passo para
+indexar um álbum e **medir se o resultado presta** antes de anunciar a
+funcionalidade — é trabalho que se repete a cada edição. Da seção *"A tela"* em
+diante está como a coisa funciona por dentro e como publicar.
+
+A pergunta que a medição responde, em uma frase:
 
 > de quantas fotos da pessoa ele acha, e quantos estranhos entram junto?
 
@@ -151,26 +154,28 @@ para os outros.
 Achou o número? Ele vai para a variável `PHOTO_FACE_THRESHOLD` no `wrangler.toml`
 (sem ela, o padrão é 0,38).
 
-## 8. Opcional: ver o Worker respondendo
+## 8. Ver a tela inteira funcionando na sua máquina
 
-Prova que o servidor devolve o mesmo que o Python:
+Sobe índice **e** modelos para o R2 da sua máquina e levanta o site:
 
 ```bash
-npx wrangler r2 object put caminhodoperdao-fotos/faces/2026.bin \
-  --file "$PASTA/faces_2026.bin" --local
-npx wrangler r2 object put caminhodoperdao-fotos/faces/2026.json \
-  --file "$PASTA/faces_2026.json" --content-type=application/json --local
-
-npx wrangler pages dev --port 8788 --r2=PHOTOS=caminhodoperdao-fotos
+npm run build
+bash scripts/fotos_faces_publicar.sh --ano 2026 --pasta "$PASTA" --local
+npx wrangler pages dev build --port 8788 --r2=PHOTOS=caminhodoperdao-fotos
 ```
 
-Noutro terminal:
+O `--local` mantém tudo aqui: **nada disso sobe para o R2 de verdade.**
+
+Confira o servidor primeiro:
 
 ```bash
 curl -s "http://127.0.0.1:8788/api/fotos/rosto?ano=2026"
+# {"ano":2026,"disponivel":true,"modelo":"sface.onnx","modelo_bytes":38696353,...}
 ```
 
-O `--local` mantém tudo na sua máquina: **nada disso sobe para o R2 de verdade.**
+Depois abra `http://127.0.0.1:8788/gallery/2026` e use o painel **"Ache as suas
+fotos"**. Repare que a primeira busca baixa 39 MB — é o custo real que o
+peregrino vai pagar.
 
 ## Se der errado
 
@@ -181,6 +186,10 @@ O `--local` mantém tudo na sua máquina: **nada disso sobe para o R2 de verdade
 | Acha pouca gente | veja "fotos sem rosto" no passo 4 antes de culpar o limiar |
 | Nada bate, nem a própria foto | `.bin` e `.json` de rodadas diferentes; reindexe |
 | Busca acha menos que antes | índice e busca com modelos diferentes (cheio × comprimido) |
+| Na tela não casa nada, no Python casa | rode o `fotos_faces_validar_js.mjs`: o JS divergiu do OpenCV |
+| Tela diz "não consegui baixar o reconhecedor" | falta subir `modelos/` para o R2 (`fotos_faces_publicar.sh`) |
+| Painel de busca não aparece no álbum | o ano não tem índice no R2; confira o GET `/api/fotos/rosto?ano=` |
+| `no available backend found` no console | faltou o `npm run build` copiar `public/ort/` (rode `node scripts/copiar-ort-wasm.js`) |
 
 ## O que já foi medido (06/08/2026, álbum de 2026 inteiro)
 
@@ -209,19 +218,103 @@ Nos casos ruins, os estranhos tinham sempre a mesma marca: **óculos escuros e
 boné**. O modelo casa "rosto com metade tapada" com outro rosto igualmente
 tapado — e numa caminhada ao sol isso é meio evento.
 
-### Duas alavancas ainda não usadas
+### Duas alavancas, as duas já na tela
 
-1. **Ordenar por nota na tela** (a resposta do endpoint já vem ordenada). Mesmo
-   com metade errada, as primeiras são as certas: a pessoa reconhece as suas,
-   rola até começar o estranho e para. Custa nada e muda a percepção.
-2. **Pedir 2 ou 3 selfies** e somar os vetores. É o que mais aumenta a precisão,
-   e cabe na mesma tela.
+1. **Ordenar por nota.** A grade mostra as fotos na ordem da resposta, da mais
+   parecida para a menos, e a tela diz isso em voz alta ("role até começar a
+   aparecer gente que não é você e pare por ali"). Mesmo com metade errada, as
+   primeiras são as certas.
+2. **Somar até 3 selfies.** Os vetores são somados e normalizados de novo
+   (`combinarImpressoes`). Cada foto traz um ângulo e uma luz; a média cancela o
+   que é da FOTO e deixa o que é da PESSOA — que é exatamente o que faltava nos
+   casos ruins, todos de óculos escuro e boné.
 
-## O que ainda não existe
+## A tela: como funciona por dentro
 
-A **tela**. Hoje o vetor da selfie é gerado aqui na máquina, pelo Python. Na
-versão final quem gera é o navegador do peregrino, com o mesmo YuNet e o mesmo
-SFace via `opencv.js` — a foto dele não sai do celular, só os 128 números.
+O peregrino manda a selfie e **a foto não sai do celular**. Os dois modelos são
+baixados para o navegador e a impressão digital é calculada lá dentro; o que
+viaja são 128 números, dos quais não se remonta imagem nenhuma.
 
-O endpoint que recebe esses números (`functions/api/fotos/rosto.ts`) **já está
-pronto e testado**. Falta a parte de cima.
+```
+selfie (arquivo)
+  │  imagem.ts        reduz para 1920 no lado maior, encaixa num quadrado 640
+  ▼
+YuNet (onnxruntime-web)
+  │  deteccao.ts      decodifica 12 tensores -> caixas + 5 pontos, suprime repetidos
+  ▼
+alinhamento.ts        gira e recorta o rosto em 112x112
+  ▼
+SFace (onnxruntime-web)
+  │  impressaoDigital.ts   normaliza -> 128 números
+  ▼
+POST /api/fotos/rosto -> as fotos, ordenadas por semelhança
+```
+
+**Por que reimplementar detecção e alinhamento em TypeScript.** Nenhum build
+pronto de `opencv.js` traz o módulo de rosto — conferido no oficial (11 MB) e no
+`@techstark/opencv-js` (13 MB), as classes não estão lá. Então o navegador roda
+os mesmos dois `.onnx` pelo `onnxruntime-web`, e o pós-processamento que o OpenCV
+fazia sozinho (`postProcess` do detector, `alignCrop` do reconhecedor) virou
+código nosso.
+
+**Essa é a peça que falha em silêncio.** Se o JavaScript endireitar de um jeito e
+o Python de outro, nada dá erro: os números saem, o Worker responde rápido, e
+nenhuma foto casa. Nunca. Por isso existe o validador da seção seguinte — rodá-lo
+não é opcional depois de mexer em `deteccao.ts` ou `alinhamento.ts`.
+
+### Conferir a paridade com o Python
+
+```bash
+.venv-faces/bin/python scripts/fotos_faces_referencia.py \
+  --selfie "$PASTA/selfies/maria.jpg"
+node scripts/fotos_faces_validar_js.mjs
+```
+
+Três etapas, e as três precisam passar:
+
+```
+pixels idênticos  37632/37632  (100.0%)      1. o recorte 112x112 bate
+semelhança entre os vetores  1.000000        2. o vetor é o mesmo
+rostos no quadrado de 640   python 1  js 1   3. o rosto está no mesmo lugar
+maior desvio em pixels        0.000
+```
+
+### O peso, e a única alavanca que sobra
+
+| o que baixa | tamanho | quando |
+|---|---|---|
+| runtime wasm (`/ort/`) | 13 MB (comprime bem) | primeira busca |
+| YuNet | 0,2 MB | primeira busca |
+| SFace | **39 MB** | primeira busca |
+
+Nada disso é baixado ao abrir o álbum — só depois do toque no botão. O GET de
+`/api/fotos/rosto` custa 200 bytes e é o que decide se o painel aparece.
+
+Se 39 MB se mostrar inviável na estrada, a saída é o `sface_int8.onnx` (10 MB),
+que o `fotos_faces_modelos.sh` já baixa. **Trocar exige reindexar o álbum inteiro
+com ele** (`--reconhecedor scripts/modelos/sface_int8.onnx`): o modelo comprimido
+gera vetores um pouco diferentes, e misturar os dois não dá erro nenhum — só faz
+a busca achar quase ninguém. A tela se ajusta sozinha, porque o nome do modelo
+vem do índice.
+
+## Publicar em produção
+
+```bash
+bash scripts/fotos_faces_publicar.sh --ano 2026 --pasta "$PASTA"
+curl -s "https://caminhodoperdao.com.br/api/fotos/rosto?ano=2026"
+```
+
+Sobem quatro arquivos, nenhum deles versionado: `faces/2026.bin`,
+`faces/2026.json`, `modelos/yunet.onnx` e `modelos/sface.onnx`. O script confere
+antes que o `.bin` e o `.json` vieram da mesma rodada do indexador — se
+divergirem, cada vetor casa com o nome da foto errada e o peregrino recebe as
+fotos de outra pessoa.
+
+⚠️ **O nome do modelo é a versão.** A rota manda cache de um ano, imutável.
+Regravar `sface.onnx` com outro conteúdo deixa metade dos celulares com o antigo
+guardado, gerando vetores que não casam com o índice. Modelo novo entra com nome
+novo.
+
+O índice fica em bucket **privado** e nunca é servido ao navegador. Publicá-lo
+tornaria a busca mais simples (o celular baixava e comparava sozinho), mas seria
+abrir na internet o banco de rostos de todo mundo que apareceu no evento.

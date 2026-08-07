@@ -28,9 +28,13 @@ import {
   Lupa,
   Marca,
 } from "./AlbumFotos.styles";
+import BuscaPorRosto from "./BuscaPorRosto";
 import {
   AlbumManifesto,
+  BuscaPorRostoDisponivel,
+  FotoEncontrada,
   criarPedido,
+  disponibilidadeDaBusca,
   formatarReais,
   urlDaMiniatura,
   urlDaPrevia,
@@ -65,11 +69,44 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
   const [enviando, setEnviando] = React.useState(false);
   const [erro, setErro] = React.useState("");
   const sentinela = React.useRef<HTMLParagraphElement | null>(null);
+  const [busca, setBusca] = React.useState<BuscaPorRostoDisponivel | null>(null);
+  const [porRosto, setPorRosto] = React.useState<FotoEncontrada[] | null>(null);
 
-  const fotos = React.useMemo(
-    () => (bloco === null ? manifesto.fotos : manifesto.fotos.filter(foto => foto.b === bloco)),
-    [manifesto.fotos, bloco]
-  );
+  // Pergunta se este ano foi indexado. São ~200 bytes: o custo de baixar os
+  // modelos (dezenas de MB) só existe depois que a pessoa toca no botão.
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    disponibilidadeDaBusca(manifesto.ano, controller.signal).then(resposta => {
+      if (resposta.disponivel) setBusca(resposta);
+    });
+
+    return () => controller.abort();
+  }, [manifesto.ano]);
+
+  /**
+   * Quais fotos a grade mostra.
+   *
+   * Com a busca por rosto ativa, a ORDEM é a da resposta (da mais parecida para
+   * a menos) e não a do álbum. É a diferença entre "metade dos resultados está
+   * errada" e "as suas vêm primeiro, role até começar a aparecer estranho e
+   * pare" — mesmo resultado, percepção oposta.
+   */
+  const fotos = React.useMemo(() => {
+    if (porRosto) {
+      const posicao = new Map(porRosto.map((foto, indice) => [foto.nome, indice]));
+      return manifesto.fotos
+        .filter(foto => posicao.has(foto.n))
+        .sort((a, b) => (posicao.get(a.n) ?? 0) - (posicao.get(b.n) ?? 0));
+    }
+    return bloco === null ? manifesto.fotos : manifesto.fotos.filter(foto => foto.b === bloco);
+  }, [manifesto.fotos, bloco, porRosto]);
+
+  const aplicarBuscaPorRosto = (encontradas: FotoEncontrada[] | null) => {
+    setPorRosto(encontradas);
+    setBloco(null);
+    setVisiveis(PASSO);
+  };
 
   // Quem decide se vende é o servidor (o manifesto já chega com a resposta). O
   // relógio do celular não entra na conta: adiantado ou atrasado, mudaria a tela.
@@ -182,21 +219,35 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
           </Aviso>
         )}
 
-        <BlocoBarra aria-label="Partes do álbum">
-          <BlocoBotao type="button" $ativo={bloco === null} onClick={() => trocarBloco(null)}>
-            Todas ({manifesto.total})
-          </BlocoBotao>
-          {manifesto.blocos.map((item, indice) => (
-            <BlocoBotao
-              key={item.titulo}
-              type="button"
-              $ativo={bloco === indice}
-              onClick={() => trocarBloco(indice)}
-            >
-              {item.titulo}
+        {busca && (
+          <BuscaPorRosto
+            ano={manifesto.ano}
+            busca={busca}
+            onResultado={aplicarBuscaPorRosto}
+            filtrando={porRosto !== null}
+          />
+        )}
+
+        {/* Com o filtro por rosto ligado, as partes do álbum sairiam do caminho:
+            a lista já é "as suas fotos", ordenada por semelhança, e dividi-la por
+            trecho do percurso só embaralharia essa ordem. */}
+        {!porRosto && (
+          <BlocoBarra aria-label="Partes do álbum">
+            <BlocoBotao type="button" $ativo={bloco === null} onClick={() => trocarBloco(null)}>
+              Todas ({manifesto.total})
             </BlocoBotao>
-          ))}
-        </BlocoBarra>
+            {manifesto.blocos.map((item, indice) => (
+              <BlocoBotao
+                key={item.titulo}
+                type="button"
+                $ativo={bloco === indice}
+                onClick={() => trocarBloco(indice)}
+              >
+                {item.titulo}
+              </BlocoBotao>
+            ))}
+          </BlocoBarra>
+        )}
 
         <Grade>
           {naTela.map(foto => {

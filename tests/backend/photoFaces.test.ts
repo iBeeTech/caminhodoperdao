@@ -8,7 +8,9 @@ import {
   buscarRostos,
   faceIndexKey,
   indiceConsistente,
+  isModelName,
   limiarDeBusca,
+  modelKey,
   normalizarVetorDaBusca,
   selfieAceitavel,
 } from "../../functions/_utils/photoFaces";
@@ -213,5 +215,39 @@ describe("faceIndexKey", () => {
   it("monta as chaves do balde", () => {
     expect(faceIndexKey(2026, "bin")).toBe("faces/2026.bin");
     expect(faceIndexKey(2026, "json")).toBe("faces/2026.json");
+  });
+});
+
+describe("isModelName", () => {
+  it("aceita os modelos que a tela precisa baixar", () => {
+    expect(isModelName("yunet.onnx")).toBe(true);
+    expect(isModelName("sface.onnx")).toBe(true);
+    expect(isModelName("sface_int8.onnx")).toBe(true);
+    expect(isModelName("face_recognition_sface_2021dec.onnx")).toBe(true);
+  });
+
+  it("nao deixa a URL passear pelo balde", () => {
+    // A rota /api/fotos/modelo monta a chave do R2 com o que veio na URL. Sem
+    // esta trava, "../faces/2026.bin" serviria o INDICE DE ROSTOS de todo mundo
+    // que apareceu no evento — o unico arquivo desta funcionalidade que e
+    // mesmo privado. Os modelos, esses sao publicos no OpenCV Zoo.
+    expect(isModelName("../faces/2026.bin")).toBe(false);
+    expect(isModelName("..%2Ffaces%2F2026.bin")).toBe(false);
+    expect(isModelName("modelos/../faces/2026.json")).toBe(false);
+    expect(isModelName("/etc/passwd")).toBe(false);
+  });
+
+  it("recusa o que nao e modelo", () => {
+    expect(isModelName("2026.bin")).toBe(false);
+    expect(isModelName("sface.onnx.txt")).toBe(false);
+    expect(isModelName("")).toBe(false);
+    expect(isModelName(".onnx")).toBe(false);
+    expect(isModelName(`${"a".repeat(200)}.onnx`)).toBe(false);
+  });
+});
+
+describe("modelKey", () => {
+  it("monta a chave do modelo no balde", () => {
+    expect(modelKey("sface.onnx")).toBe("modelos/sface.onnx");
   });
 });
