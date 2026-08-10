@@ -23,6 +23,7 @@ export { default as AdminPassarCpf } from "./Admin/PassarCpf";
 export { default as AdminPedidosSenha } from "./Admin/PedidosSenha";
 export { default as AdminInscricaoManual } from "./Admin/InscricaoManual";
 export { default as AdminContas } from "./Admin/Contas";
+export { default as AdminPedidosFotos } from "./Admin/PedidosFotos";
 export { default as PeregrinoEntrar } from "./Peregrino/Entrar";
 export { default as PeregrinoPerfil } from "./Peregrino/Perfil";
 export { default as PeregrinoDashboard } from "./Peregrino/Dashboard";

@@ -58,6 +58,7 @@ export const GROUPS: readonly NavEntry[] = [
     items: [
       { to: "/admin/contas", label: "Contas e papéis" },
       { to: "/admin/convites", label: "Convites" },
+      { to: "/admin/pedidos-fotos", label: "Pedidos de fotos" },
       { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
     ],
