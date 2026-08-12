@@ -1,9 +1,9 @@
 -- Acolhimento: quem é de Franca ou Claraval se oferece para receber peregrinos
 -- de fora na própria casa.
 --
--- Por que só essas duas cidades: a caminhada sai de Franca (SP) e termina em
--- Claraval (MG). Quem mora nesse trecho é quem consegue receber alguém sem
--- transformar a hospedagem num segundo deslocamento. Abrir para qualquer
+-- Por que só essas duas cidades: a caminhada acontece em Claraval (MG), e
+-- Franca (SP) fica a uns 20 minutos de lá. Quem mora nas duas consegue receber
+-- alguém sem transformar a hospedagem num segundo deslocamento. Abrir para qualquer
 -- cidade encheria a lista de ofertas inúteis — e a organização não tem como
 -- conferir uma a uma.
 --

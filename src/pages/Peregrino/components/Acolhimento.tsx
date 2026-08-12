@@ -15,8 +15,9 @@ import {
  * Acolhimento — quem mora em Franca ou Claraval recebe peregrinos de fora
  * (migration 038).
  *
- * A caminhada sai de uma cidade e termina na outra: quem está nesse trecho é
- * quem consegue receber alguém sem que a hospedagem vire uma segunda viagem.
+ * A caminhada acontece em **Claraval**. Franca entra na lista porque fica a
+ * uns 20 minutos de lá: quem mora nas duas cidades consegue receber alguém sem
+ * que a hospedagem vire uma segunda viagem.
  *
  * A pergunta vive DENTRO do formulário de inscrição (`InscricaoCard`), e não
  * num cartão à parte. O momento em que a pessoa está decidindo se caminha é o
@@ -161,6 +162,19 @@ export function hostingInputFrom(offer: HostingOffer): HostingInput {
   };
 }
 
+/**
+ * Onde a pessoa está em relação à caminhada.
+ *
+ * A caminhada acontece em Claraval. Dizer "é daqui que a caminhada acontece"
+ * para quem mora em Franca seria simplesmente falso — e a frase existe para
+ * convencer alguém a abrir a casa, então ela precisa ser verdadeira.
+ */
+function distanceSentence(city: HostingOffer["city"] | null): string {
+  return city === "franca"
+    ? "que fica a apenas 20 minutos de onde a caminhada acontece"
+    : "e é daqui que a caminhada acontece";
+}
+
 /** "banho, refeição" — o que a casa oferece além da cama. */
 function extrasOf(offer: HostingOffer): string {
   const extras = [
@@ -206,10 +220,10 @@ export const AcolhimentoFields: React.FC<AcolhimentoFieldsProps> = ({
         <>
           <p style={styles.boxTitle}>Acolhimento</p>
           <p style={styles.help}>
-            Você mora em <strong>{hosting.cityLabel}</strong>, e é daqui que a caminhada
-            acontece. Muita gente vem de longe e não tem onde ficar. Se você tem um canto
-            sobrando — um quarto, um colchão, um sofá —, dá para receber alguém. A
-            organização combina tudo com você antes do dia.
+            Você mora em <strong>{hosting.cityLabel}</strong>,{" "}
+            {distanceSentence(hosting.city)}. Muita gente vem de longe e não tem onde
+            ficar. Se você tem um canto sobrando — um quarto, um colchão, um sofá —, dá
+            para receber alguém. A organização combina tudo com você antes do dia.
           </p>
         </>
       )}
@@ -437,8 +451,9 @@ export const AcolhimentoResumo: React.FC<AcolhimentoResumoProps> = ({
       <div style={styles.box}>
         <p style={styles.boxTitle}>Acolhimento</p>
         <p style={styles.help}>
-          Você mora em <strong>{hosting.cityLabel}</strong>. Se sobrar um canto na sua
-          casa, ainda dá para receber um peregrino que vem de longe.
+          Você mora em <strong>{hosting.cityLabel}</strong>,{" "}
+          {distanceSentence(hosting.city)}. Se sobrar um canto na sua casa, ainda dá para
+          receber um peregrino que vem de longe.
         </p>
         {error && <div style={styles.error}>{error}</div>}
         <button type="button" style={styles.goldButton} onClick={openEditor}>
