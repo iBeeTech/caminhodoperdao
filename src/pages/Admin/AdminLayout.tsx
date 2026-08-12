@@ -62,6 +62,7 @@ export const GROUPS: readonly NavEntry[] = [
       { to: "/admin/pedidos-fotos", label: "Pedidos de fotos" },
       { to: "/admin/pedidos-senha", label: "Pedidos de senha" },
       { to: "/admin/pernoiteExtra", label: "Pernoite extra" },
+      { to: "/admin/sistema", label: "Inscrições abertas/encerradas" },
     ],
   },
 ];

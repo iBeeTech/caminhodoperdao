@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { setUserToken } from "../../../utils/auth/userSession";
 import { peregrinoStyles } from "../peregrino.styles";
+import { useFeatureFlags } from "../../../hooks/useFeatureFlags";
 import logo from "../../../assets/logo.png";
 
 /**
@@ -11,11 +12,21 @@ import logo from "../../../assets/logo.png";
  * direto na confirmação, e quem tenta entrar sem ter confirmado é levado para
  * lá em vez de bater numa parede — foi o motivo de o login ter um erro próprio
  * para "e-mail não confirmado".
+ *
+ * ⚠️ **Com as inscrições encerradas (flag `enrollment`), o formulário CONTINUA
+ * na tela**, com um aviso em cima. Escondê-lo trancaria também quem está na
+ * lista de exceção — e a lista existe exatamente para alguém entrar num
+ * momento em que ninguém mais entra. Quem não está nela recebe a recusa do
+ * servidor, que é quem decide de verdade.
  */
 
 type Step = "login" | "signup" | "confirm";
 
 const MIN_PASSWORD_LENGTH = 8;
+
+/** A mesma frase do aviso e da recusa do servidor — uma explicação só. */
+const CLOSED_MESSAGE =
+  "As inscrições estão encerradas. Não é possível entrar nem criar conta no momento.";
 const OTP_LENGTH = 6;
 
 const s = peregrinoStyles;
@@ -36,6 +47,8 @@ const PeregrinoEntrar: React.FC = () => {
   const [code, setCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [isBusy, setIsBusy] = React.useState(false);
+  const { isEnabled: isEnrollmentOpen } = useFeatureFlags("enrollment");
+  const isClosed = isEnrollmentOpen === false;
 
   // Quem entra cai na caminhada, não no cadastro: o dashboard é o que a pessoa
   // vem ver. O perfil fica a um clique, no menu da conta.
@@ -70,6 +83,10 @@ const PeregrinoEntrar: React.FC = () => {
         setError(null);
         return;
       }
+      if (data.error === "enrollment_closed") {
+        setError(CLOSED_MESSAGE);
+        return;
+      }
       setError("E-mail ou senha incorretos.");
     } catch {
       setError("Falha de conexão. Tente de novo.");
@@ -94,9 +111,11 @@ const PeregrinoEntrar: React.FC = () => {
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
         setError(
-          data.error === "password_too_short"
-            ? `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`
-            : "Não foi possível criar a conta. Confira o e-mail e tente de novo."
+          data.error === "enrollment_closed"
+            ? CLOSED_MESSAGE
+            : data.error === "password_too_short"
+              ? `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`
+              : "Não foi possível criar a conta. Confira o e-mail e tente de novo."
         );
         return;
       }
@@ -203,6 +222,12 @@ const PeregrinoEntrar: React.FC = () => {
         ) : (
           <>
             <h1 style={s.title}>{step === "login" ? "Entrar" : "Criar conta"}</h1>
+            {isClosed && (
+              <div style={s.error} role="status">
+                {CLOSED_MESSAGE} Se a organização liberou o seu acesso, entre normalmente
+                por aqui.
+              </div>
+            )}
             <p style={s.help}>
               {step === "login"
                 ? "Entre para ver sua inscrição, seu histórico e seu credenciamento."

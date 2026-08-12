@@ -21,6 +21,8 @@ import { useScrollToHash } from "../../../hooks/useScrollToHash";
 import type { FieldRefsType } from "../../../utils/landing/types";
 import { identifyRegisteredUser } from "../../../utils/analytics/identity";
 import { isEmailValid } from "../../../utils/validators/email";
+import { useFeatureFlags } from "../../../hooks/useFeatureFlags";
+import EnrollmentClosedModal from "../../../components/molecules/EnrollmentClosedModal/EnrollmentClosedModal";
 
 const DEFAULT_WA_NUMBER = "5516982221415";
 const DEFAULT_WA_MESSAGE = "Olá! Vim pelo site e preciso de ajuda.";
@@ -96,6 +98,26 @@ const LandingController: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [capacityCallout, setCapacityCallout] = useState<string | null>(null);
   const [statusPollingCpf, setStatusPollingCpf] = useState<string | null>(null);
+
+  /**
+   * Inscrições encerradas (flag `enrollment`, migration 002).
+   *
+   * `isEnabled` começa `null` enquanto carrega e o hook cai para `true` se a
+   * leitura falhar. Só tratamos como fechado o `false` explícito: um clique
+   * durante o carregamento leva ao login, como sempre levou — é o servidor que
+   * barra de verdade, e prender o botão por causa de uma leitura pendente
+   * seria pior do que deixar a pessoa ver a tela de entrada.
+   */
+  const { isEnabled: isEnrollmentOpen } = useFeatureFlags("enrollment");
+  const [isEnrollmentClosedModalOpen, setIsEnrollmentClosedModalOpen] = useState(false);
+
+  const goToEnrollment = () => {
+    if (isEnrollmentOpen === false) {
+      setIsEnrollmentClosedModalOpen(true);
+      return;
+    }
+    window.location.assign("/entrar");
+  };
 
   const existingDataRef = useRef<RegistrationStatusResponse | null>(null);
   const pageViewTrackedRef = useRef(false);
@@ -933,6 +955,7 @@ const LandingController: React.FC = () => {
   };
 
   return (
+    <>
     <LandingView
       content={landingContent}
       availability={availability}
@@ -981,16 +1004,12 @@ const LandingController: React.FC = () => {
       onClearFieldError={(field) => clearFieldErrors(field)}
       // A seção de inscrição saiu da home (04/08/2026), então rolar até ela
       // deixaria o botão principal sem fazer nada. O destino agora é a conta,
-      // que é por onde a inscrição vai passar.
-      onPrimaryAction={() => {
-        window.location.assign("/entrar");
-      }}
+      // que é por onde a inscrição vai passar — ou o aviso de encerradas.
+      onPrimaryAction={goToEnrollment}
       onSecondaryAction={() => {
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
       }}
-      onCallToAction={() => {
-        window.location.assign("/entrar");
-      }}
+      onCallToAction={goToEnrollment}
       onReopenRegistration={handleReopenRegistration}
       onNewRegistration={handleStartNewRegistration}
       onChooseRegister={handleChooseRegister}
@@ -1009,6 +1028,11 @@ const LandingController: React.FC = () => {
       onEmergencyContactNameChange={clearEmergencyContactNameError}
       onEmergencyContactPhoneChange={clearEmergencyContactPhoneError}
     />
+    <EnrollmentClosedModal
+      open={isEnrollmentClosedModalOpen}
+      onClose={() => setIsEnrollmentClosedModalOpen(false)}
+    />
+    </>
   );
 };
 

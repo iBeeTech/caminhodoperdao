@@ -3,18 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components";
 import YearPicker from "../components/YearPicker";
 import ProfileForm from "../components/ProfileForm";
+import { AcolhimentoFields, emptyHostingInput, hostingInputFrom } from "../components/Acolhimento";
 import { formatPhoneBR } from "../../../utils/formatters/phone";
 import PhotoUploader from "../components/PhotoUploader";
 import { perfilStyles as s } from "./perfil.styles";
 import {
   EMPTY_PROFILE,
+  HostingInput,
   Me,
+  MyHosting,
   PilgrimProfile,
   SessionExpiredError,
+  cancelHosting,
   fetchAvailableYears,
   fetchMe,
+  fetchMyHosting,
   fetchWhatsappUrl,
   messageForError,
+  saveHosting,
   saveProfile,
   saveYears,
 } from "../api";
@@ -31,6 +37,14 @@ import {
  * 3. **Dados do formulário** — o cadastro inteiro, que a inscrição vai
  *    reaproveitar. Tudo editável, MENOS o CPF: é ele que liga a conta ao
  *    histórico e ao pagamento, então correção passa pela organização.
+ *
+ * O **acolhimento** mora no bloco 3, junto do endereço: quem é de Franca ou
+ * Claraval decide aqui, a qualquer momento, se quer receber peregrinos de fora
+ * — sem depender de estar no meio de uma inscrição.
+ *
+ * ⚠️ A elegibilidade vem do SERVIDOR, pela cidade JÁ SALVA. Quem acabou de
+ * digitar "Franca" no campo só vê o bloco depois de salvar: a regra de quais
+ * cidades valem mora num lugar só, e repeti-la aqui as faria divergir.
  */
 
 const CPF_HELP_MESSAGE = "Olá! Preciso corrigir o CPF da minha conta no site.";
@@ -64,6 +78,11 @@ const PeregrinoPerfil: React.FC = () => {
   const [form, setForm] = React.useState<PilgrimProfile>(EMPTY_PROFILE);
   const [cpfInput, setCpfInput] = React.useState("");
   const [isSavingForm, setIsSavingForm] = React.useState(false);
+
+  // Acolhimento (migration 038). `wantsHosting` é a caixinha "quero receber".
+  const [hosting, setHosting] = React.useState<MyHosting | null>(null);
+  const [wantsHosting, setWantsHosting] = React.useState(false);
+  const [hostingForm, setHostingForm] = React.useState<HostingInput | null>(null);
   const [formSaved, setFormSaved] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
 
@@ -71,12 +90,17 @@ const PeregrinoPerfil: React.FC = () => {
     let isActive = true;
     const load = async () => {
       try {
-        const [profile, years] = await Promise.all([fetchMe(), fetchAvailableYears()]);
+        const [profile, years, myHosting] = await Promise.all([
+          fetchMe(),
+          fetchAvailableYears(),
+          fetchMyHosting(),
+        ]);
         if (!isActive) return;
         setMe(profile);
         setForm(profile.profile);
         setSelectedYears(profile.years);
         setAvailable(years.available);
+        applyHosting(myHosting);
       } catch (loadError) {
         if (!isActive) return;
         if (loadError instanceof SessionExpiredError) {
@@ -94,6 +118,14 @@ const PeregrinoPerfil: React.FC = () => {
       isActive = false;
     };
   }, [navigate]);
+
+  /** Põe o bloco do acolhimento no estado em que o servidor diz que ele está. */
+  const applyHosting = (next: MyHosting) => {
+    setHosting(next);
+    const active = next.offer && next.offer.status === "ATIVO" ? next.offer : null;
+    setWantsHosting(active !== null);
+    setHostingForm(active ? hostingInputFrom(active) : emptyHostingInput(next));
+  };
 
   const handleSaveYears = async () => {
     setIsSavingYears(true);
@@ -135,6 +167,26 @@ const PeregrinoPerfil: React.FC = () => {
       );
       setForm(saved.profile);
       setCpfInput("");
+
+      /**
+       * O acolhimento vai DEPOIS do perfil, de propósito: o servidor confere a
+       * elegibilidade pela cidade JÁ GRAVADA. Se fosse antes, quem acabou de
+       * mudar a cidade para Franca no mesmo salvamento levaria um
+       * "not_eligible_city" por causa da cidade velha.
+       */
+      if (hosting?.eligible && hostingForm) {
+        if (wantsHosting) {
+          await saveHosting(hostingForm);
+        } else if (hosting.offer && hosting.offer.status === "ATIVO") {
+          // Só cancela o que existe. Chamar o DELETE sem oferta devolveria
+          // `no_hosting_offer`, e engolir esse erro engoliria os outros junto.
+          await cancelHosting();
+        }
+      }
+      // Relê do servidor: é ele quem sabe se a mudança de cidade abriu (ou
+      // fechou) o acolhimento para esta pessoa.
+      applyHosting(await fetchMyHosting());
+
       setFormSaved(true);
     } catch (saveError) {
       if (saveError instanceof SessionExpiredError) {
@@ -277,6 +329,23 @@ const PeregrinoPerfil: React.FC = () => {
                   onCpfInputChange={setCpfInput}
                   whatsappUrl={whatsappUrl}
                 />
+
+                {hosting?.eligible && hostingForm && (
+                  <AcolhimentoFields
+                    hosting={hosting}
+                    enabled={wantsHosting}
+                    onToggle={next => {
+                      setFormSaved(false);
+                      setWantsHosting(next);
+                    }}
+                    value={hostingForm}
+                    onChange={next => {
+                      setFormSaved(false);
+                      setHostingForm(next);
+                    }}
+                    disabled={isSavingForm}
+                  />
+                )}
 
                 {formSaved && <div style={s.ok}>Dados salvos.</div>}
 

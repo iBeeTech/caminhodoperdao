@@ -38,6 +38,7 @@ const HINTS: Record<string, string> = {
   "/admin/pedidos-senha": "Pedidos de troca de senha dos outros admins",
   "/admin/pernoiteExtra": "Conceda pernoite a quem se inscreveu sem",
   "/admin/passar-cpf": "Corrija o CPF de uma inscrição",
+  "/admin/sistema": "Abre e encerra as inscrições, e quem entra mesmo encerradas",
 };
 
 const s: Record<string, React.CSSProperties> = {

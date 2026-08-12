@@ -10,6 +10,7 @@ export { default as AdminInscritos } from "./Admin/Inscritos";
 export { default as AdminCredenciamento } from "./Admin/Credenciamento";
 export { default as AdminListaEspera } from "./Admin/ListaEspera";
 export { default as AdminAcolhimento } from "./Admin/Acolhimento";
+export { default as AdminSistema } from "./Admin/Sistema";
 export { default as AdminPernoiteExtra } from "./Admin/PernoiteExtra";
 export { default as AdminConvites } from "./Admin/Convites";
 export { default as AdminConvidarGrupo } from "./Admin/ConvidarGrupo";

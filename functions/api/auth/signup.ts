@@ -5,6 +5,7 @@ import { hashPassword } from "../../_utils/passwordHash";
 import { EmailEnv, sendEmail } from "../../_utils/email";
 import { UserAuthEnv, getUserByEmail, getUserJwtSecret } from "../../_utils/userAuth";
 import { generateOtpCode, hmacHex } from "../../_utils/passwordOtp";
+import { blockWhenEnrollmentClosed } from "../../_utils/enrollmentGate";
 
 type Env = UserAuthEnv & EmailEnv;
 
@@ -43,6 +44,14 @@ export const onRequestPost: PagesFunction<Env> = async context => {
     console.error("signup: segredo ausente para o HMAC do código.");
     return serverError("user_jwt_secret_missing");
   }
+
+  // Inscrições encerradas não abrem conta nova. Diferente do login, aqui a
+  // recusa é explícita mesmo sabendo que ela revela o estado da porta: o
+  // estado da porta já é público (a home diz "inscrições encerradas"), e
+  // devolver "criado" sem criar nada faria a pessoa esperar um e-mail que
+  // nunca chega. Ver `_utils/enrollmentGate.ts`.
+  const closed = await blockWhenEnrollmentClosed(context.env.DB, email);
+  if (closed) return closed;
 
   try {
     const now = Date.now();

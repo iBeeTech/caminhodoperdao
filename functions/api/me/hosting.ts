@@ -6,6 +6,7 @@ import {
   cancelHostingOffer,
   getHostingOffer,
   hostingCityFor,
+  hostingCityLabel,
   saveHostingOffer,
   toHostingView,
   validateHostingInput,
@@ -19,14 +20,10 @@ type Env = UserAuthEnv & EventYearEnv;
  * Quem mora em Franca ou Claraval se oferece para receber peregrinos de fora
  * na própria casa.
  *
- * ⚠️ **Não há GET aqui.** A pergunta é feita DENTRO do formulário de
- * inscrição, e a leitura ("posso acolher?", "o que já ofereci?") vem junto do
- * `GET /api/me/registration` — a tela precisa das duas coisas no mesmo
- * instante, e duas chamadas atrasariam a janela que a pessoa já está olhando.
- *
- * Sobram os dois verbos de escrita, usados quando ela muda de ideia DEPOIS de
- * inscrita:
- *
+ * - **GET** — "posso acolher?" e "o que já ofereci?", para o `/perfil`. A
+ *   janela da inscrição NÃO usa este GET: lá a mesma informação vem junto do
+ *   `GET /api/me/registration`, porque a tela precisa das duas coisas no mesmo
+ *   instante e duas chamadas atrasariam a janela que a pessoa já está olhando.
  * - **PUT** — cria ou atualiza. Gravar por cima de uma oferta cancelada a
  *   reativa (ver `saveHostingOffer`).
  * - **DELETE** — desiste. Vira `CANCELADO`, não some: a organização precisa
@@ -38,18 +35,56 @@ type Env = UserAuthEnv & EventYearEnv;
 
 interface ProfileRow {
   name: string | null;
+  phone: string | null;
   city: string | null;
+  address: string | null;
+  number: string | null;
+  complement: string | null;
 }
 
 async function loadProfile(env: Env, userId: string): Promise<ProfileRow | null> {
   return (
     (await env.DB.prepare(
-      "SELECT name, city FROM users WHERE id = ?1"
+      "SELECT name, phone, city, address, number, complement FROM users WHERE id = ?1"
     )
       .bind(userId)
       .first<ProfileRow>()) ?? null
   );
 }
+
+export const onRequestGet: PagesFunction<Env> = async context => {
+  const auth = await authorizeUserRequest(context.request, context.env);
+  if (auth instanceof Response) return auth;
+
+  try {
+    const eventYear = getEventYear(context.env);
+    const [profile, row] = await Promise.all([
+      loadProfile(context.env, auth.sub),
+      getHostingOffer(context.env.DB, auth.sub, eventYear),
+    ]);
+
+    const city = hostingCityFor(profile?.city);
+    const street = [profile?.address, profile?.number].filter(Boolean).join(", ");
+
+    return json(200, {
+      eventYear,
+      eligible: city !== null,
+      city,
+      cityLabel: city ? hostingCityLabel(city) : null,
+      // A cidade que a pessoa cadastrou, para a tela poder dizer "seu cadastro
+      // diz Ribeirão Preto" em vez de só sumir sem explicação.
+      profileCity: profile?.city ?? "",
+      suggested: {
+        address: [street, profile?.complement].filter(Boolean).join(" - "),
+        contactPhone: profile?.phone ?? "",
+      },
+      offer: row ? toHostingView(row) : null,
+    });
+  } catch (error) {
+    console.error("GET /api/me/hosting falhou:", error);
+    return serverError();
+  }
+};
 
 export const onRequestPut: PagesFunction<Env> = async context => {
   const auth = await authorizeUserRequest(context.request, context.env);

@@ -2,6 +2,7 @@
 import { badRequest, json, serverError, unauthorized } from "../../_utils/responses";
 import { isValidEmail } from "../../_utils/validation";
 import { verifyPassword } from "../../_utils/passwordHash";
+import { blockWhenEnrollmentClosed } from "../../_utils/enrollmentGate";
 import {
   UserAuthEnv,
   createUserJwt,
@@ -28,6 +29,15 @@ export const onRequestPost: PagesFunction<UserAuthEnv> = async context => {
 
   const secret = getUserJwtSecret(context.env);
   if (!secret) return serverError("user_jwt_secret_missing");
+
+  // Inscrições encerradas fecham também a porta: a inscrição inteira acontece
+  // dentro da conta, então login aberto seria "fechado" só na fachada. Quem
+  // está na lista de exceção passa. Ver `_utils/enrollmentGate.ts`.
+  //
+  // Vem ANTES de conferir a senha de propósito: quem não pode entrar não tem
+  // por que ter a senha testada, e a recusa fica igual para todo mundo.
+  const closed = await blockWhenEnrollmentClosed(context.env.DB, email);
+  if (closed) return closed;
 
   try {
     const user = await getUserByEmail(context.env.DB, email);
