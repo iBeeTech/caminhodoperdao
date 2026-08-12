@@ -2,6 +2,14 @@ import React from "react";
 import { theme } from "../../../styles/theme";
 import ProfileForm from "./ProfileForm";
 import {
+  AcolhimentoFields,
+  AcolhimentoResumo,
+  emptyHostingInput,
+  hostingInputFrom,
+} from "./Acolhimento";
+import {
+  HostingInput,
+  HostingOffer,
   Me,
   MyRegistration,
   PilgrimProfile,
@@ -310,6 +318,11 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Acolhimento (migration 038): mais uma pergunta do formulário, e só para
+  // quem mora em Franca ou Claraval. `wantsHosting` é a caixinha marcada.
+  const [wantsHosting, setWantsHosting] = React.useState(false);
+  const [hostingForm, setHostingForm] = React.useState<HostingInput | null>(null);
+
   const [transfer, setTransfer] = React.useState<MyTransfer | null>(null);
   const [isTransferOpen, setIsTransferOpen] = React.useState(false);
   const [isCancelOpen, setIsCancelOpen] = React.useState(false);
@@ -320,6 +333,22 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
   // conferência serve para os dois casos, mudando só o botão do fim.
   const [transferCode, setTransferCode] = React.useState<string | null>(null);
   const [transferFrom, setTransferFrom] = React.useState<string | null>(null);
+
+  /**
+   * Deixa o bloco do acolhimento pronto para a janela abrir.
+   *
+   * Quem já se ofereceu abre com a caixinha marcada e os dados de antes; quem
+   * nunca se ofereceu abre com o endereço e o telefone do cadastro, porque
+   * quase todo mundo recebe em casa mesmo.
+   */
+  const primeHostingForm = (source: MyRegistration) => {
+    const active =
+      source.hosting.offer && source.hosting.offer.status === "ATIVO"
+        ? source.hosting.offer
+        : null;
+    setWantsHosting(active !== null);
+    setHostingForm(active ? hostingInputFrom(active) : emptyHostingInput(source.hosting));
+  };
 
   React.useEffect(() => {
     let isActive = true;
@@ -402,7 +431,12 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
       // Os dois caminhos terminam na mesma janela de conferência — o que muda
       // é o botão do fim.
       setForm(me.profile);
-      setIsEditing(data.missingProfileFields.length > 0);
+      // `data` já chegou: o campo do código só existe depois do primeiro
+      // carregamento. A guarda é para o TypeScript, não para o mundo real.
+      if (data) {
+        primeHostingForm(data);
+        setIsEditing(data.missingProfileFields.length > 0);
+      }
       setIsModalOpen(true);
     } catch (codeError) {
       if (codeError instanceof SessionExpiredError) {
@@ -439,6 +473,12 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
     }
   };
 
+  /** O acolhimento mudou pelo resumo (mudou de ideia, desistiu). */
+  const handleHostingChanged = (offer: HostingOffer | null) =>
+    setData(current =>
+      current ? { ...current, hosting: { ...current.hosting, offer } } : current
+    );
+
   const countdown = useCountdown(data?.opensAt ?? Date.now());
 
   if (!data) return null;
@@ -446,6 +486,7 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
   const openModal = () => {
     setForm(me.profile);
     setError(null);
+    primeHostingForm(data);
     // Perfil incompleto abre direto no formulário: não há o que "conferir".
     setIsEditing(data.missingProfileFields.length > 0);
     setIsModalOpen(true);
@@ -495,6 +536,11 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
         companionName,
         acceptsTerms,
         inviteCode: inviteCode.trim() || undefined,
+        // Só vai quando a pergunta foi feita. `null` (caixinha desmarcada) é
+        // uma resposta de verdade: desfaz uma oferta anterior, se houver.
+        ...(data.hosting.eligible
+          ? { hosting: wantsHosting && hostingForm ? hostingForm : null }
+          : {}),
       });
       setData(await fetchMyRegistration());
       setIsModalOpen(false);
@@ -534,6 +580,14 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
               assim que o pagamento abrir.
             </div>
           )}
+          {/* Já inscrita: o que ela combinou de acolhimento — e, para quem não
+              marcou a caixinha na hora, a porta de quem se lembrou depois. */}
+          <AcolhimentoResumo
+            hosting={data.hosting}
+            onChanged={handleHostingChanged}
+            onSessionExpired={onSessionExpired}
+          />
+
           {transfer ? (
             <div style={styles.soon}>
               <p style={{ margin: 0 }}>
@@ -913,6 +967,20 @@ const InscricaoCard: React.FC<InscricaoCardProps> = ({
                     placeholder="Nome de quem vai com você"
                   />
                 </div>
+
+                {/* Acolhimento: uma pergunta a mais no formulário, e só para
+                    quem mora em Franca ou Claraval. Para o resto do país o
+                    bloco não existe (o próprio componente some). */}
+                {hostingForm && (
+                  <AcolhimentoFields
+                    hosting={data.hosting}
+                    enabled={wantsHosting}
+                    onToggle={setWantsHosting}
+                    value={hostingForm}
+                    onChange={setHostingForm}
+                    disabled={isBusy}
+                  />
+                )}
                   </>
                 )}
 

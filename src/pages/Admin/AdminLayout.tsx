@@ -36,6 +36,7 @@ export const GROUPS: readonly NavEntry[] = [
   {
     label: "Inscrições",
     items: [
+      { to: "/admin/acolhimento", label: "Acolhimento" },
       { to: "/admin/credenciamento", label: "Credenciamento" },
       { to: "/admin/estorno", label: "Estornos" },
       { to: "/admin/inscricao-manual", label: "Inscrição manual" },

@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, AdminPedidosFotos, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas, UploadFotos, PedidoDeFotos } from "./pages";
+import { Landing, Gallery, GalleryAlbum, ErrorPage, AdminPainel, AdminPlanilhas, AdminEstorno, AdminInscritos, AdminCredenciamento, AdminListaEspera, AdminAcolhimento, AdminPernoiteExtra, Staff, ResponsabilityTerms, Depoimentos, Testemunhos, AdminTestemunhos, Convite, AdminConvites, AdminConvidarGrupo, AdminInfoMosteiro, AdminPassarCpf, AdminPedidosSenha, AdminInscricaoManual, AdminContas, AdminPedidosFotos, PeregrinoEntrar, PeregrinoPerfil, PeregrinoDashboard, PeregrinoMedalhas, UploadFotos, PedidoDeFotos } from "./pages";
 import AdminLayout from "./pages/Admin/AdminLayout";
 
 const AppRoutes: React.FC = () => {
@@ -19,6 +19,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/inscritos" element={<AdminInscritos />} />
         <Route path="/admin/credenciamento" element={<AdminCredenciamento />} />
         <Route path="/admin/lista-espera" element={<AdminListaEspera />} />
+        <Route path="/admin/acolhimento" element={<AdminAcolhimento />} />
         <Route path="/admin/pernoiteExtra" element={<AdminPernoiteExtra />} />
         <Route path="/admin/convites" element={<AdminConvites />} />
         <Route path="/admin/convidar-grupo" element={<AdminConvidarGrupo />} />

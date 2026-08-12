@@ -10,6 +10,16 @@ import { CapacityEnv, getCapacityLimits } from "../../_utils/capacity";
 import { bindInviteCode, evaluateInvite, normalizeInviteCode } from "../../_utils/inviteCodes";
 import { insertRegistration } from "../../_utils/registrations";
 import { USER_PROFILE_COLUMNS, UserProfileRow } from "../../_utils/userProfile";
+import {
+  HostingOfferInput,
+  cancelHostingOffer,
+  getHostingOffer,
+  hostingCityFor,
+  hostingCityLabel,
+  saveHostingOffer,
+  toHostingView,
+  validateHostingInput,
+} from "../../_utils/hosting";
 
 interface CpfEnv {
   CPF_ENCRYPTION_KEY?: string;
@@ -100,9 +110,10 @@ export const onRequestGet: PagesFunction<Env> = async context => {
     const eventYear = getEventYear(context.env);
     const window = getRegistrationWindow(context.env);
     const limits = getCapacityLimits(context.env);
-    const [registration, taken] = await Promise.all([
+    const [registration, taken, hostingOffer] = await Promise.all([
       loadMyRegistration(context.env, auth.sub, eventYear),
       countTaken(context.env, eventYear),
+      getHostingOffer(context.env.DB, auth.sub, eventYear),
     ]);
 
     const profile = await context.env.DB.prepare(
@@ -124,6 +135,13 @@ export const onRequestGet: PagesFunction<Env> = async context => {
     if (!profile?.city) missing.push("cidade");
     if (!profile?.state) missing.push("estado");
 
+    // Acolhimento (migration 038): a pergunta "quer receber alguém em casa?"
+    // faz parte do FORMULÁRIO, e por isso a elegibilidade vem junto do resto —
+    // uma segunda chamada só para descobrir se mostra o bloco atrasaria a
+    // janela que a pessoa já está olhando.
+    const hostingCity = hostingCityFor(profile?.city);
+    const street = [profile?.address, profile?.number].filter(Boolean).join(", ");
+
     return json(200, {
       eventYear,
       opensAt: window.opensAt,
@@ -133,6 +151,18 @@ export const onRequestGet: PagesFunction<Env> = async context => {
       // Passando do teto, só entra com convite — mesma regra de 2026.
       needsInviteCode: taken >= limits.maxRegistrationsNonStaff,
       missingProfileFields: missing,
+      hosting: {
+        eligible: hostingCity !== null,
+        city: hostingCity,
+        cityLabel: hostingCity ? hostingCityLabel(hostingCity) : null,
+        // Endereço e telefone do cadastro, para a pessoa só conferir: quase
+        // todo mundo recebe em casa mesmo.
+        suggested: {
+          address: [street, profile?.complement].filter(Boolean).join(" - "),
+          contactPhone: profile?.phone ?? "",
+        },
+        offer: hostingOffer ? toHostingView(hostingOffer) : null,
+      },
       registration: registration
         ? {
             id: registration.id,
@@ -160,6 +190,7 @@ export const onRequestPost: PagesFunction<Env> = async context => {
     companionName?: unknown;
     acceptsTerms?: unknown;
     inviteCode?: unknown;
+    hosting?: unknown;
   } = {};
   try {
     body = await context.request.json();
@@ -214,6 +245,51 @@ export const onRequestPost: PagesFunction<Env> = async context => {
       return conflict("cpf_already_registered");
     }
 
+    /**
+     * Acolhimento, respondido no MESMO formulário (migration 038).
+     *
+     * ⚠️ Validado ANTES de qualquer escrita. Se ficasse para depois de gravar
+     * a inscrição, um endereço em branco no bloco do acolhimento devolveria
+     * erro para uma pessoa que, na verdade, já está inscrita — e ela tentaria
+     * de novo e ouviria "você já tem inscrição nesta edição".
+     *
+     * A cidade sai do CADASTRO, nunca do corpo da requisição.
+     */
+    const hostingCity = hostingCityFor(profile.city);
+    let hostingInput: HostingOfferInput | null = null;
+    if (body.hosting) {
+      if (!hostingCity) return conflict("not_eligible_city");
+      const validation = validateHostingInput(body.hosting);
+      if (!validation.ok) return badRequest(validation.error);
+      hostingInput = validation.value;
+    }
+
+    /**
+     * Grava (ou desfaz) o acolhimento depois que a inscrição já existe.
+     *
+     * Não marcar a caixinha CANCELA uma oferta anterior de propósito: quem
+     * refaz a inscrição está respondendo a pergunta de novo, e a resposta de
+     * agora é a que vale. Deixar a oferta velha de pé faria a organização
+     * mandar alguém para uma casa que já disse não.
+     */
+    const applyHosting = async (): Promise<void> => {
+      if (hostingInput && hostingCity) {
+        const current = await getHostingOffer(context.env.DB, auth.sub, eventYear);
+        await saveHostingOffer(context.env.DB, {
+          id: current?.id ?? crypto.randomUUID(),
+          userId: auth.sub,
+          eventYear,
+          city: hostingCity,
+          input: hostingInput,
+          now: Date.now(),
+        });
+        return;
+      }
+      if (body.hosting === null) {
+        await cancelHostingOffer(context.env.DB, auth.sub, eventYear, Date.now());
+      }
+    };
+
     // CPF cancelado que pertence a OUTRA conta não pode ser reaproveitado por
     // aqui: seria uma pessoa assumindo a linha da outra. Caso raro (só acontece
     // se o CPF trocou de dono), e que precisa de gente olhando.
@@ -264,6 +340,7 @@ export const onRequestPost: PagesFunction<Env> = async context => {
         .run();
 
       if (code) await bindInviteCode(context.env.DB, code, sameCpf.id);
+      await applyHosting();
       return json(200, { id: sameCpf.id, status: "PENDING", paymentPending: true, reactivated: true });
     }
 
@@ -317,6 +394,8 @@ export const onRequestPost: PagesFunction<Env> = async context => {
         .run();
       await bindInviteCode(context.env.DB, code, id);
     }
+
+    await applyHosting();
 
     return json(201, {
       id,

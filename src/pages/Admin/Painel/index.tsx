@@ -29,6 +29,7 @@ const HINTS: Record<string, string> = {
   "/admin/inscricao-manual": "Inscreva quem não tem e-mail ou não consegue sozinho",
   "/admin/inscritos": "Lista completa, com filtros por ano, status e pernoite",
   "/admin/lista-espera": "Quem ficou de fora e quer ser chamado",
+  "/admin/acolhimento": "Casas de Franca e Claraval que recebem peregrinos de fora",
   "/admin/convidar-grupo": "Envie o convite do grupo de WhatsApp",
   "/admin/info-mosteiro": "Mande as instruções para quem vai dormir no mosteiro",
   "/admin/testemunhos": "Ouça e aprove os testemunhos gravados pelo público",

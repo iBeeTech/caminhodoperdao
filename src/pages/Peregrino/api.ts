@@ -206,6 +206,8 @@ export interface MyRegistration {
   needsInviteCode: boolean;
   /** Campos do cadastro que faltam para a inscrição existir. */
   missingProfileFields: string[];
+  /** Acolhimento: se a pessoa é de Franca/Claraval e o que ela já ofereceu. */
+  hosting: HostingEligibility;
   registration: {
     id: string;
     status: "PENDING" | "PAID" | "CANCELED";
@@ -226,8 +228,78 @@ export function createRegistration(input: {
   companionName: string;
   acceptsTerms: boolean;
   inviteCode?: string;
+  /**
+   * Acolhimento respondido no mesmo formulário. `null` = não quero (e cancela
+   * uma oferta anterior, se houver); ausente = não perguntamos.
+   */
+  hosting?: HostingInput | null;
 }): Promise<{ id: string; status: string; paymentPending: boolean }> {
   return request("/api/me/registration", { method: "POST", body: JSON.stringify(input) });
+}
+
+/**
+ * Acolhimento (migration 038): quem mora em Franca ou Claraval se oferece para
+ * receber peregrinos de fora. Quem decide se a pessoa é elegível é o servidor,
+ * pela cidade do cadastro — a tela só obedece ao `eligible` que vem no GET.
+ */
+export interface HostingOffer {
+  id: string;
+  city: "franca" | "claraval";
+  cityLabel: string;
+  spots: number;
+  genderPreference: "qualquer" | "feminino" | "masculino";
+  offersMeal: boolean;
+  offersShower: boolean;
+  offersTransport: boolean;
+  address: string;
+  contactPhone: string;
+  notes: string;
+  status: "ATIVO" | "CANCELADO";
+  updatedAt: number;
+}
+
+/**
+ * Se a pessoa pode acolher, e o que ela já combinou. Vem junto do
+ * `GET /api/me/registration`, porque a pergunta é feita no formulário de
+ * inscrição — uma segunda chamada só para saber se mostra o bloco atrasaria a
+ * janela que ela já está olhando.
+ */
+export interface HostingEligibility {
+  eligible: boolean;
+  city: "franca" | "claraval" | null;
+  cityLabel: string | null;
+  /** Endereço e telefone do cadastro, para a pessoa só conferir. */
+  suggested: { address: string; contactPhone: string };
+  offer: HostingOffer | null;
+}
+
+export interface MyHosting extends HostingEligibility {
+  eventYear: number;
+  /** A cidade que está no cadastro, para a tela explicar por que não dá. */
+  profileCity: string;
+}
+
+export interface HostingInput {
+  spots: number;
+  genderPreference: "qualquer" | "feminino" | "masculino";
+  offersMeal: boolean;
+  offersShower: boolean;
+  offersTransport: boolean;
+  address: string;
+  contactPhone: string;
+  notes: string;
+}
+
+export function fetchMyHosting(): Promise<MyHosting> {
+  return request<MyHosting>("/api/me/hosting");
+}
+
+export function saveHosting(input: HostingInput): Promise<{ offer: HostingOffer | null }> {
+  return request("/api/me/hosting", { method: "PUT", body: JSON.stringify(input) });
+}
+
+export function cancelHosting(): Promise<{ offer: HostingOffer | null }> {
+  return request("/api/me/hosting", { method: "DELETE" });
 }
 
 export interface MyTransfer {
@@ -322,6 +394,13 @@ export function messageForError(error: unknown): string {
     invalid_to_name: "Escreva o nome de quem vai receber a inscrição.",
     missing_code: "Informe o código da transferência.",
     cpf_encryption_not_configured: "Não foi possível salvar o CPF agora. Fale com a organização.",
+    not_eligible_city:
+      "O acolhimento é só para quem mora em Franca ou Claraval. Se você mora em uma delas, corrija a cidade no seu perfil.",
+    invalid_spots: "Diga quantas pessoas você consegue receber (de 1 a 20).",
+    invalid_gender_preference: "Escolha quem você prefere receber.",
+    invalid_hosting_address: "Escreva o endereço de onde a pessoa vai ficar.",
+    invalid_hosting_phone: "Telefone de contato inválido. Use DDD + número.",
+    no_hosting_offer: "Você não tem acolhimento cadastrado nesta edição.",
   };
   return map[error.message] || "Não foi possível salvar. Tente de novo.";
 }
