@@ -22,7 +22,12 @@ import {
   QrCode,
   Selo,
 } from "./Pedido.styles";
-import { PedidoDeFotos, buscarPedido, formatarReais } from "../../../services/fotos/fotos.service";
+import {
+  PedidoDeFotos,
+  buscarPedido,
+  formatarReais,
+  urlDaMiniatura,
+} from "../../../services/fotos/fotos.service";
 
 /**
  * Página do pedido de fotos: mostra o PIX enquanto não pagou e os downloads
@@ -181,7 +186,11 @@ const PedidoDeFotosPage: React.FC = () => {
                 <Grade>
                   {pedido.fotos.map(foto => (
                     <FotoCartao key={foto.nome}>
-                      <img src={foto.previa} alt="" loading="lazy" />
+                      {/* A miniatura é montada aqui, e não usada como veio da
+                          API (`foto.previa`), para levar a mesma versão de cache
+                          do resto do site — senão esta tela mostraria a foto
+                          antiga depois de uma regravação. */}
+                      <img src={urlDaMiniatura(pedido.ano, foto.nome)} alt="" loading="lazy" />
                       <a href={foto.download ?? "#"} download>
                         Baixar em alta
                       </a>

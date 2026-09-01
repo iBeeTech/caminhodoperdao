@@ -23,6 +23,12 @@ export interface AlbumManifesto {
   total: number;
   /** Álbum vendendo o arquivo em alta agora. Falso em álbum gratuito ou com prazo vencido. */
   venda: boolean;
+  /**
+   * As fotos em média resolução (2048px) estão publicadas e liberadas.
+   * Quem responde é o servidor: pedir a média num ano que não tem, ou que ainda
+   * está vendendo, devolve 404 e a tela mostraria imagem quebrada.
+   */
+  medias?: boolean;
   /** Data em que a venda se encerra (ISO). Serve para o aviso na tela. */
   venda_ate?: string;
   blocos: AlbumBloco[];
@@ -58,12 +64,55 @@ export interface PedidoCriado {
   qrCodeImageUrl: string | null;
 }
 
+/**
+ * Versão da publicação das fotos. Vai como `?v=` em toda URL de imagem.
+ *
+ * ⚠️ SUBA ESTE NÚMERO sempre que um arquivo for REGRAVADO por cima no R2 (foi o
+ * que aconteceu em 01/09/2026, quando 2026 perdeu a marca d'água). As fotos são
+ * servidas com `Cache-Control: immutable` de um ano: sem trocar a URL, quem já
+ * abriu o álbum continuaria vendo a versão antiga por meses, e o CDN também.
+ *
+ * Não é preciso mexer aqui quando entram fotos NOVAS: nome novo, URL nova.
+ *
+ * histórico
+ *   1  06/08/2026  publicação do álbum de 2026, com marca d'água
+ *   2  01/09/2026  2026 regravado sem marca, depois do fim da venda
+ */
+const VERSAO_DAS_FOTOS = "2";
+
+function comVersao(caminho: string): string {
+  return `${caminho}?v=${VERSAO_DAS_FOTOS}`;
+}
+
 export function urlDaMiniatura(ano: number, nome: string): string {
-  return `/api/fotos/thumbs/${ano}/${encodeURIComponent(nome)}`;
+  return comVersao(`/api/fotos/thumbs/${ano}/${encodeURIComponent(nome)}`);
 }
 
 export function urlDaPrevia(ano: number, nome: string): string {
-  return `/api/fotos/previews/${ano}/${encodeURIComponent(nome)}`;
+  return comVersao(`/api/fotos/previews/${ano}/${encodeURIComponent(nome)}`);
+}
+
+/**
+ * Foto em média resolução: 2048px.
+ *
+ * É o que o álbum entrega depois que a venda acaba. Só existe quando o
+ * manifesto diz `medias: true` — chamar sem isso dá 404.
+ */
+export function urlDaMedia(ano: number, nome: string): string {
+  return comVersao(`/api/fotos/medias/${ano}/${encodeURIComponent(nome)}`);
+}
+
+/**
+ * A melhor versão pública que este álbum tem para abrir e para baixar.
+ *
+ * Média quando ela existe; prévia (1200px) no resto. A tela toda usa esta
+ * função em vez de escolher o prefixo em cada lugar: assim "ampliar" e "baixar"
+ * nunca discordam sobre qual arquivo é o bom.
+ */
+export function urlDaFotoPublica(manifesto: AlbumManifesto, nome: string): string {
+  return manifesto.medias
+    ? urlDaMedia(manifesto.ano, nome)
+    : urlDaPrevia(manifesto.ano, nome);
 }
 
 /** Devolve null quando o ano não tem álbum no R2 — a galeria antiga assume. */

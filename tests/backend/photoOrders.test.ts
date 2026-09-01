@@ -1,13 +1,19 @@
 /// <reference types="@cloudflare/workers-types" />
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 
 import {
   FIM_DA_VENDA_PADRAO,
+  GalleryEnv,
+  albumVende,
   isSafePhotoName,
   isGalleryPrefix,
   isValidYear,
+  limparMemoDaGaleria,
   manifestKey,
+  mediaPrefix,
+  mediasLiberadas,
   originalKey,
+  temMedias,
   vendaAberta,
 } from "../../functions/_utils/photoGallery";
 import {
@@ -73,9 +79,11 @@ describe("isSafePhotoName", () => {
 });
 
 describe("prefixos e ano", () => {
-  it("só thumbs e previews são públicos", () => {
+  it("thumbs, previews e medias são públicos", () => {
     expect(isGalleryPrefix("thumbs")).toBe(true);
     expect(isGalleryPrefix("previews")).toBe(true);
+    // medias passa pela rota, mas com trava de venda (ver mediasLiberadas).
+    expect(isGalleryPrefix("medias")).toBe(true);
     // O prefixo do arquivo vendido NUNCA pode passar pela rota pública.
     expect(isGalleryPrefix("originais")).toBe(false);
     expect(isGalleryPrefix("manifestos")).toBe(false);
@@ -90,6 +98,64 @@ describe("prefixos e ano", () => {
   it("monta as chaves do balde", () => {
     expect(manifestKey(2026)).toBe("manifestos/2026.json");
     expect(originalKey(2026, "_DSC1.jpg")).toBe("originais/2026/_DSC1.jpg");
+    expect(mediaPrefix(2026)).toBe("medias/2026/");
+  });
+});
+
+/**
+ * A média resolução (2048px, sem trama) é o presente de depois da venda. Se ela
+ * escapar ENQUANTO o álbum vende, quem ia doar R$ 5 baixa de graça uma foto que
+ * serve para quase tudo — e ninguém vê erro nenhum na tela.
+ */
+describe("liberação da média resolução", () => {
+  function baldeFake(manifesto: unknown | null, medias: string[] = []): GalleryEnv["PHOTOS"] {
+    return {
+      get: async (chave: string) =>
+        chave === manifestKey(2026) && manifesto
+          ? ({ json: async () => manifesto } as never)
+          : null,
+      list: async ({ prefix }: { prefix: string }) => ({
+        objects: medias.filter(chave => chave.startsWith(prefix)).map(key => ({ key })),
+      }),
+    } as unknown as GalleryEnv["PHOTOS"];
+  }
+
+  const DENTRO_DO_PRAZO = new Date("2026-08-20T10:00:00-03:00");
+  const DEPOIS_DO_PRAZO = new Date("2026-09-01T10:00:00-03:00");
+
+  beforeEach(() => limparMemoDaGaleria());
+
+  it("não libera enquanto o álbum vende", async () => {
+    const env = { PHOTOS: baldeFake({ ano: 2026, venda: true }) };
+    expect(await albumVende(env, 2026, DENTRO_DO_PRAZO)).toBe(true);
+    expect(await mediasLiberadas(env, 2026, DENTRO_DO_PRAZO)).toBe(false);
+  });
+
+  it("libera quando o prazo da venda vence", async () => {
+    // Manifesto sem o campo `venda` é o de 2026, que nasceu antes dele: conta
+    // como álbum de venda, e quem desliga é a data.
+    const env = { PHOTOS: baldeFake({ ano: 2026 }) };
+    expect(await mediasLiberadas(env, 2026, DENTRO_DO_PRAZO)).toBe(false);
+    limparMemoDaGaleria();
+    expect(await mediasLiberadas(env, 2026, DEPOIS_DO_PRAZO)).toBe(true);
+  });
+
+  it("libera álbum gratuito mesmo dentro do prazo", async () => {
+    const env = { PHOTOS: baldeFake({ ano: 2026, venda: false }) };
+    expect(await mediasLiberadas(env, 2026, DENTRO_DO_PRAZO)).toBe(true);
+  });
+
+  it("ano sem manifesto não libera nada", async () => {
+    // Prudência: o ano que ainda não foi publicado não pode ter as fotos
+    // liberadas por um manifesto que ainda não subiu.
+    const env = { PHOTOS: baldeFake(null) };
+    expect(await mediasLiberadas(env, 2026, DEPOIS_DO_PRAZO)).toBe(false);
+  });
+
+  it("temMedias responde pelo balde, e não por campo do manifesto", async () => {
+    const env = { PHOTOS: baldeFake({ ano: 2026 }, ["medias/2026/_DSC1.jpg"]) };
+    expect(await temMedias(env, 2026)).toBe(true);
+    expect(await temMedias(env, 2025)).toBe(false);
   });
 });
 

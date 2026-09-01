@@ -2,16 +2,15 @@
 import { badRequest, notFound } from "../../_utils/responses";
 import {
   FIM_DA_VENDA_PADRAO,
+  GalleryEnv,
   GalleryManifest,
   isValidYear,
   manifestKey,
+  temMedias,
   vendaAberta,
 } from "../../_utils/photoGallery";
 
-interface Env {
-  PHOTOS: R2Bucket;
-  PHOTO_SALE_UNTIL?: string;
-}
+type Env = GalleryEnv;
 
 /**
  * GET /api/fotos/album?ano=2026 — índice do álbum.
@@ -36,9 +35,17 @@ export const onRequestGet: PagesFunction<Env> = async context => {
   // Quem decide se a venda está aberta é o servidor, não o relógio do celular
   // de quem visita: relógio adiantado ou atrasado mudaria a tela de lugar.
   const vende = manifesto.venda !== false && vendaAberta(context.env);
-  const resposta: GalleryManifest & { venda_ate: string } = {
+
+  // Média resolução (2048px) é o presente de quem não comprou: só existe depois
+  // que a venda daquele ano acabou, e só se as fotos já tiverem sido publicadas
+  // nesse tamanho. Quem responde "já subiu?" é o balde, não um campo escrito à
+  // mão no manifesto — assim ninguém precisa lembrar de regerar o índice.
+  const medias = !vende && (await temMedias(context.env, Number(ano)));
+
+  const resposta: GalleryManifest & { venda_ate: string; medias: boolean } = {
     ...manifesto,
     venda: vende,
+    medias,
     venda_ate: context.env.PHOTO_SALE_UNTIL?.trim() || FIM_DA_VENDA_PADRAO,
   };
 

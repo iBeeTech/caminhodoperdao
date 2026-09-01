@@ -36,8 +36,8 @@ import {
   criarPedido,
   disponibilidadeDaBusca,
   formatarReais,
+  urlDaFotoPublica,
   urlDaMiniatura,
-  urlDaPrevia,
 } from "../../../services/fotos/fotos.service";
 
 interface AlbumFotosProps {
@@ -193,7 +193,8 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
               <strong>Atenção ao prazo:</strong> as fotos em <strong>alta resolução</strong> ficam
               disponíveis para compra até <strong>{prazo}</strong> — é essa compra que vira a
               doação. Depois dessa data, as fotos continuam aqui{" "}
-              <strong>gratuitamente, porém em baixa resolução</strong>.
+              <strong>gratuitamente, em resolução média</strong> — boa para guardar e imprimir
+              pequeno, menor que o arquivo da câmera.
             </p>
           </AvisoPrazo>
         )}
@@ -213,8 +214,10 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
           <Aviso>
             <p>
               <strong>Este álbum é gratuito.</strong> Clique em "baixar" em qualquer foto para
-              guardar a sua. As imagens estão em resolução reduzida, boa para celular e redes
-              sociais.
+              guardar a sua.{" "}
+              {manifesto.medias
+                ? "As imagens estão em resolução média (2048 pixels): boa para o celular, para as redes e para imprimir até mais ou menos 15×20 cm."
+                : "As imagens estão em resolução reduzida, boa para celular e redes sociais."}
             </p>
           </Aviso>
         )}
@@ -275,7 +278,7 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
                   </Marca>
                 ) : (
                   <Baixar
-                    href={urlDaPrevia(manifesto.ano, foto.n)}
+                    href={urlDaFotoPublica(manifesto, foto.n)}
                     download={foto.n}
                     onClick={evento => evento.stopPropagation()}
                   >
@@ -326,7 +329,7 @@ const AlbumFotos: React.FC<AlbumFotosProps> = ({ manifesto, onBack }) => {
             <ModalClose type="button" onClick={() => setAmpliada(null)}>
               ×
             </ModalClose>
-            <ModalImage src={urlDaPrevia(manifesto.ano, ampliada)} alt={`Foto ${ampliada}`} />
+            <ModalImage src={urlDaFotoPublica(manifesto, ampliada)} alt={`Foto ${ampliada}`} />
           </ModalContent>
         </ModalOverlay>
       )}
